@@ -68,7 +68,7 @@ covar.rm$bf<-factor(covar.rm$bf, levels=c('ExclusiveBF','Non_exclusiveBF','No_BF
 covar.rm$personid<-as.factor(covar.rm$personid)
 #Comparison of pathway relative abundances (take time to run)
 pathcom.rm6.rel.gamlss.sexg<-pathway.compare(pathtab=kegg.rm,mapfile=covar.rm,sampleid="sampleid",pathsum="rel",stat.med="gamlss",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,age.limit=6)
-taxcomtab.show(taxcomtab=pathcom.rm6.rel.gamlss.sexg$l3, sumvar="path",tax.lev="l3",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=0.05)
+taxcomtab.show(taxcomtab=pathcom.rm6.rel.gamlss.sexg$l3, sumvar="path",tax.lev="l3",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=0.05,digit=4)
 }
 \keyword{abundance}
 \keyword{comparison.}

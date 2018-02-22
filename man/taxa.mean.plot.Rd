@@ -40,8 +40,9 @@ This function visualize mean relative abundance by group as stacked plots.
 \examples{
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
 data(taxtab.rm7)
+library(magrittr)
 taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
-p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005)
+p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005,show.taxname="short")
 p.bf.l2$p
 }
 \keyword{abundance}

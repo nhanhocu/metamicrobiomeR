@@ -26,9 +26,9 @@
 #' #predict microbiome age (take time to run)
 #' miage<-microbiomeage(l6.relabundtab=gtab)
 #' #list of shared genera that are available in the Bangladesh study and other included studies
-#' kable(miage$sharedgenera.importance)
+#' miage$sharedgenera.importance
 #' #check performance
-#' grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
+#' gridExtra::grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
 #' #replicate the findings of Subramanian et al paper
 #' ggplot2::ggplot() +geom_point(data=miage$microbiomeage.bangladesh$all,aes(x=age.sample, y=age.predicted, colour=health_analysis_groups))
 

@@ -85,32 +85,32 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p="p.nebf",p.adjust=
   test$study[is.na(test$study)]<-"Meta_analysis"
   nstudy<-length(unique(test$study[!is.na(test$study)]))
   my.lines<-data.frame(x=(nstudy-0.5), y=0.5, xend=(nstudy-0.5), yend=(length(unique(test$taxa))+0.5))
-  h<-ggplot2::ggplot(test, aes(pop, plotvar)) +
-    geom_tile(aes(fill=esticat)) +
-    scale_fill_manual(breaks=levels(test$esticat),
+  h<-ggplot2::ggplot(test, ggplot2::aes(pop, plotvar)) +
+    ggplot2::geom_tile(ggplot2::aes(fill=esticat)) +
+    ggplot2::scale_fill_manual(breaks=levels(test$esticat),
                       values = levels(test$esticol),
                       labels = levels(test$esticat),
                       name = "log(OR)")+
-    #scale_y_discrete(limits = rev(levels(test$taxas)))+
-    geom_segment(data=my.lines, aes(x,y,xend=xend, yend=yend), size=2, inherit.aes=F)+
-    ylab("") +xlab("")+
-    theme(legend.title = element_text(size = 10),
-          legend.text = element_text(size = leg.text.size),
-          plot.title = element_text(size=16),
-          axis.title=element_text(size=14,face="bold"),
+    #ggplot2::scale_y_discrete(limits = rev(levels(test$taxas)))+
+    ggplot2::geom_segment(data=my.lines, ggplot2::aes(x,y,xend=xend, yend=yend), size=2, inherit.aes=F)+
+    ggplot2::ylab("") +ggplot2::xlab("")+
+    ggplot2::theme(legend.title = ggplot2::element_text(size = 10),
+          legend.text = ggplot2::element_text(size = leg.text.size),
+          plot.title = ggplot2::element_text(size=16),
+          axis.title=ggplot2::element_text(size=14,face="bold"),
           legend.position="left",
-          plot.background = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          axis.ticks.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.title.x = element_blank(),
-          axis.title.y = element_blank(),
-          axis.text.x =element_text(size=heat.text.x.size, angle=heat.text.x.angle, hjust = 1),
-          legend.key.size = unit(leg.key.size, "cm"))+
-    guides(fill=guide_legend(ncol=1))
+          plot.background = ggplot2::element_blank(),
+          panel.grid.minor = ggplot2::element_blank(),
+          panel.grid.major = ggplot2::element_blank(),
+          panel.background = ggplot2::element_blank(),
+          panel.border = ggplot2::element_blank(),
+          axis.ticks.y = ggplot2::element_blank(),
+          axis.text.y = ggplot2::element_blank(),
+          axis.title.x = ggplot2::element_blank(),
+          axis.title.y = ggplot2::element_blank(),
+          axis.text.x =ggplot2::element_text(size=heat.text.x.size, angle=heat.text.x.angle, hjust = 1),
+          legend.key.size = ggplot2::unit(leg.key.size, "cm"))+
+    ggplot2::guides(fill=ggplot2::guide_legend(ncol=1))
   testf<-metadat$taxsig
   testf$taxa<-testf$id
   testf$taxa<-gsub("k__bacteria.p__","",testf$taxa)
@@ -172,18 +172,18 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p="p.nebf",p.adjust=
   testf$padjustsize<-plyr::mapvalues(testf$padjustsig,from=c("[0,0.1)","[0.1,1]"),to=c("2","1"))
   # dirty truncate large estimate, LL and UL for better plot view
   testf[,c("estimate","ll","ul")]<-apply(testf[,c("estimate","ll","ul")],2,function(x){x[x>=5]=5;x[x<=-5]=-5;x})
-  f<-ggplot2::ggplot(data=testf,aes(x=estimate,y=plotvar,colour=psigcol))+
-    geom_point(shape=as.numeric(as.character(testf$padjustsign)),size=as.numeric(as.character(testf$padjustsize)))+
-    scale_y_discrete(position = "right")+ #,limits = rev(levels(testf$taxa2))
-    geom_errorbarh(aes(xmin=ll,xmax=ul,colour=psigcol),height=0.0)+
-    geom_vline(xintercept=0,linetype="dashed")+
-    scale_colour_manual(breaks=testf$psigcol,values = levels(testf$psigcol))+
-    theme(legend.position="none",
-          plot.background = element_blank(),
-          panel.background = element_blank(),
-          axis.ticks.y= element_blank(),
-          axis.title = element_blank(),
-          axis.text.y =element_text(size=forest.axis.text.y, colour = testf$colp),
-          axis.text.x =element_text(size=forest.axis.text.x))
-  return(grid.arrange(h,f,nrow=1))
+  f<-ggplot2::ggplot(data=testf,ggplot2::aes(x=estimate,y=plotvar,colour=psigcol))+
+    ggplot2::geom_point(shape=as.numeric(as.character(testf$padjustsign)),size=as.numeric(as.character(testf$padjustsize)))+
+    ggplot2::scale_y_discrete(position = "right")+ #,limits = rev(levels(testf$taxa2))
+    ggplot2::geom_errorbarh(ggplot2::aes(xmin=ll,xmax=ul,colour=psigcol),height=0.0)+
+    ggplot2::geom_vline(xintercept=0,linetype="dashed")+
+    ggplot2::scale_colour_manual(breaks=testf$psigcol,values = levels(testf$psigcol))+
+    ggplot2::theme(legend.position="none",
+          plot.background = ggplot2::element_blank(),
+          panel.background = ggplot2::element_blank(),
+          axis.ticks.y= ggplot2::element_blank(),
+          axis.title = ggplot2::element_blank(),
+          axis.text.y =ggplot2::element_text(size=forest.axis.text.y, colour = testf$colp),
+          axis.text.x =ggplot2::element_text(size=forest.axis.text.x))
+  return(gridExtra::grid.arrange(h,f,nrow=1))
 }

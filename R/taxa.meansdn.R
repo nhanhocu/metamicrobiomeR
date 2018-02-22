@@ -13,6 +13,7 @@
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data
 #' data(taxtab.rm7)
+#' library(magrittr)
 #' taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
 
 taxa.meansdn<-function(taxtab, sumvar, groupvar,percent.filter=0.05,relabund.filter=0.00005,othervar="none"){

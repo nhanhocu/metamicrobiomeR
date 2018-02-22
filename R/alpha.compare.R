@@ -30,7 +30,7 @@
 #' samfile$sampleid<-tolower(samfile$fecal.sample.id)
 #' #comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age
 #' alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
-#' kable(alphacom6.rm.sexsg$alphasum[,1:5])
+#' alphacom6.rm.sexsg$alphasum[,1:5]
 
 
 alpha.compare<-function(datlist,depth,mapfile,mapsampleid,comvar,adjustvar,personid="personid", longitudinal="yes",age.limit=1000000,standardize=FALSE,...){
