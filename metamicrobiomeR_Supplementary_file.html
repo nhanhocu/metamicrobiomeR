@@ -2108,7 +2108,7 @@ kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2plus.rmg,tax.lev=&quot;l2&
 <h2>Illustration of meta-analysis workflow</h2>
 <section id="summary-of-four-included-studies" class="level3">
 <h3>Summary of four included studies</h3>
-<pre class="r"><code>#Bangladesh study 
+<pre class="r"><code>#Load example Bangladesh study 
 data(sam.rm)
 patht&lt;-system.file(&quot;extdata/QIIME_outputs/Bangladesh/tax_mapping7&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE)
 taxrel.rm&lt;-read.multi(patht=patht,patternt=&quot;.txt&quot;,assignt=&quot;no&quot;,study=&quot;Subramanian et al 2014 (Bangladesh)&quot;)
@@ -2120,43 +2120,9 @@ for (j in 1:length(taxrel.rm)){
 #all samples from birth to 2 years of age 
 nrow(taxrel.ba[[1]])</code></pre>
 <pre><code>[1] 995</code></pre>
-<pre class="r"><code># samples &lt;=6 months of age 
-s.ba&lt;-table(taxrel.ba[[1]]$sex[taxrel.ba[[1]]$age_in_months&lt;=6])
-
-#Haiti study
-patht&lt;-system.file(&quot;extdata/QIIME_outputs/Haiti/tax_mapping7&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE)
-taxrel.ha&lt;-read.multi(patht=patht,patternt=&quot;.txt&quot;,assignt=&quot;no&quot;,study=&quot;Bender et al 2016 (Haiti)&quot;)
-#all baby stool samples &lt;=6 months of age 
-for (j in (1:length(taxrel.ha))){
-  taxrel.ha[[j]]&lt;-subset(taxrel.ha[[j]],mombb==&quot;B&quot; &amp; sampletype==&quot;STL&quot; &amp;bbage&lt;=183)
-}
-s.ha&lt;-table(taxrel.ha[[1]]$babygender)
-
-# USA(CA_FL)
-patht&lt;-system.file(&quot;extdata/QIIME_outputs/USA(CA_FL)/tax_mapping7&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE)
-taxrel.cf&lt;-read.multi(patht=patht,patternt=&quot;.txt&quot;,assignt=&quot;no&quot;,study=&quot;Pannaraj et al 2017 (USA(CA_FL))&quot;)
-for (j in 1:length(taxrel.cf)){
-  taxrel.cf[[j]]&lt;-subset(taxrel.cf[[j]],mombb==&quot;Baby&quot; &amp; sampletype==&quot;STL&quot; &amp;bbage&lt;=183)
-  taxrel.cf[[j]]$sex&lt;-mapvalues(taxrel.cf[[j]]$babygender, from=c(&quot;&quot;,&quot;F&quot;,&quot;M&quot;), to=c(NA,&quot;Female&quot;,&quot;Male&quot;))
-}
-s.cf&lt;-table(taxrel.cf[[1]]$sex)
-
-# USA(NC)
-patht&lt;-system.file(&quot;extdata/QIIME_outputs/USA(NC)/tax_mapping7&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE)
-taxrel.nc&lt;-read.multi(patht=patht,patternt=&quot;.txt&quot;,assignt=&quot;no&quot;,study=&quot;Thompson et al 2015 (USA(NC))&quot;)
-#all baby stool samples &lt;=6 months of age 
-for (j in (1:length(taxrel.nc))){
-  taxrel.nc[[j]]&lt;-subset(taxrel.nc[[j]],agemo&lt;=6)
-  taxrel.nc[[j]]$sex&lt;-mapvalues(taxrel.nc[[j]]$sex,from=c(&quot;0&quot;,&quot;1&quot;),to=c(&quot;Male&quot;,&quot;Female&quot;))
-}
-s.nc&lt;-table(taxrel.nc[[1]]$sex)
-
-# all four studies
-s4&lt;-rbind(s.ba,s.ha,s.cf,s.nc)
-s4r&lt;-cbind(s4, all=apply(s4,1,sum))
-s4c&lt;-rbind(s4r, sum=apply(s4r,2,sum))
-rownames(s4c)&lt;-c(&quot;Subramanian et al 2014 (Bangladesh)&quot;,&quot;Bender et al 2016 (Haiti)&quot;,&quot;Pannaraj et al 2017 (USA(CA_FL))&quot;,&quot;Thompson et al 2015 (USA(NC))&quot;,&quot;Sum&quot;)
-kable(s4c)</code></pre>
+<pre class="r"><code># number of samples for all four studies (for samples &lt;=6 months of age) 
+data(studysum)
+kable(studysum)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -2527,22 +2493,17 @@ a4</code></pre>
 <section id="predicting-microbiome-age-checking-model-performance-and-replicate-the-results-of-the-bangladesh-study" class="level4">
 <h4>Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study</h4>
 <p>The <em>microbiomeage</em> function get the shared genera list between the Bangladesh study and all other included studies, get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.</p>
-<pre class="r"><code>bal6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/Bangladesh/tax_mapping7&quot;, &quot;Subramanian_et_al_mapping_file_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
+<pre class="r"><code>#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
+bal6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/Bangladesh/tax_mapping7&quot;, &quot;Subramanian_et_al_mapping_file_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
 colnames(bal6)&lt;-tolower(colnames(bal6))
-uncl6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/USA(NC)/tax_mapping7&quot;, &quot;mapping_fileall_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
-colnames(uncl6)&lt;-tolower(colnames(uncl6))
-uncl6$age.sample&lt;-uncl6$agemo
-usl6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/USA(CA_FL)/tax_mapping7&quot;, &quot;USBMK_Mapping_122414.filtered.with_pairing_status_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
-colnames(usl6)&lt;-tolower(colnames(usl6))
-usl6$age.sample&lt;-usl6$bbage/30
-hal6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/Haiti/tax_mapping7&quot;, &quot;Haiti_Mapping.complete_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
-colnames(hal6)&lt;-tolower(colnames(hal6))
-hal6$age.sample&lt;-hal6$bbage/30
-
-gtab&lt;-list(unc=uncl6,ca_fl=usl6[usl6$sampletype==&quot;STL&quot;&amp;usl6$mombb==&quot;Baby&quot;,],haiti=hal6[hal6$sampletype==&quot;STL&quot;&amp;hal6$mombb==&quot;B&quot;,])
-
-#predict microbiome age (take time to run)
-#miage&lt;-microbiomeage(l6.relabundtab=gtab)
+#format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection 
+# Load data of 3 other studies 
+data(gtab.3stud)
+names(gtab.3stud)</code></pre>
+<pre><code>[1] &quot;nc&quot;    &quot;ca_fl&quot; &quot;haiti&quot;</code></pre>
+<pre class="r"><code>#predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies  
+#(take time to run)
+#miage&lt;-microbiomeage(l6.relabundtab=gtab.3stud)
 #load saved results 
 data(miage)
 # list of shared genera that are available in the Bangladesh study and other included studies 
