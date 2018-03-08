@@ -1,4 +1,4 @@
-#' A function to filter relative abundance data
+#' Filter relative abundance data
 #'
 #' This function filters bacterial taxa or pathway relative abundance tables based on the percentage of samples with their availability (prevalence) and relative abundance thresholds.
 #' It will remove taxa/pathway with relative abundance <relabund.filter and available in <percent.filter of number of samples.

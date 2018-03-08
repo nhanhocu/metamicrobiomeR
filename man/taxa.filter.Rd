@@ -2,7 +2,7 @@
 % Please edit documentation in R/taxa.filter.R
 \name{taxa.filter}
 \alias{taxa.filter}
-\title{A function to filter relative abundance data}
+\title{Filter relative abundance data}
 \usage{
 taxa.filter(taxtab, percent.filter = 0.05, relabund.filter = 5e-05)
 }

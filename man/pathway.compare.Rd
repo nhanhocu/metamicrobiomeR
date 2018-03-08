@@ -5,10 +5,10 @@
 \title{Compare (kegg) pathway abundance}
 \usage{
 pathway.compare(pathtab, mapfile, sampleid = "sampleid", pathsum = "rel",
-  stat.med = "gamlss", comvar = "bf", adjustvar = "age.sample",
-  personid = "personid", longitudinal = "yes", p.adjust.method = "fdr",
-  percent.filter = 0.05, relabund.filter = 5e-05, pooldata = FALSE,
-  age.limit = 1e+06, age.lowerlimit = 0, ...)
+  stat.med = "gamlss", transform = "none", comvar = "bf",
+  adjustvar = "age.sample", personid = "personid", longitudinal = "yes",
+  p.adjust.method = "fdr", percent.filter = 0.05, relabund.filter = 5e-05,
+  pooldata = FALSE, age.limit = 1e+06, age.lowerlimit = 0, ...)
 }
 \arguments{
 \item{pathtab}{list of pathway abundance table of all levels.}

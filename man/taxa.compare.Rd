@@ -4,14 +4,17 @@
 \alias{taxa.compare}
 \title{Compare taxa relative abundance}
 \usage{
-taxa.compare(taxtab, propmed.rel = "gamlss", comvar, adjustvar,
-  personid = "personid", longitudinal = "yes", percent.filter = 0.05,
-  relabund.filter = 5e-05, p.adjust.method = "fdr", ...)
+taxa.compare(taxtab, propmed.rel = "gamlss", transform = "none", comvar,
+  adjustvar, personid = "personid", longitudinal = "yes",
+  percent.filter = 0.05, relabund.filter = 5e-05, p.adjust.method = "fdr",
+  ...)
 }
 \arguments{
 \item{taxtab}{taxa relative abundance table (already merged to mapping file) from phylum to species or any preferred highest taxa level.}
 
 \item{propmed.rel}{statistical method for comparing relative abundance. Options are "lm" for LM/LMEM or "gamlss" for GAMLSS with BEZI family.}
+
+\item{transform}{transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation. Default is "none"}
 
 \item{comvar}{main variable for comparison}
 
@@ -39,8 +42,8 @@ This function compares taxa relative abundance summary tables at all levels betw
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
 data(taxtab.rm7)
 #Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take time to run)
-taxacom6.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],taxsum="rel",propmed.rel="lm",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],taxsum="rel",propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
+taxacom6.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="lm",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
+taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
 taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr")
 }
 \keyword{abundance}

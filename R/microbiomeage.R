@@ -11,20 +11,17 @@
 #' @export
 #' @examples
 #' #Load data from each study and put in a list
+#' #load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
 #' bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
 #' colnames(bal6)<-tolower(colnames(bal6))
-#' uncl6<-read.delim(system.file("extdata/QIIME_outputs/USA(NC)/tax_mapping7", "mapping_fileall_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-#' colnames(uncl6)<-tolower(colnames(uncl6))
-#' uncl6$age.sample<-uncl6$agemo
-#' usl6<-read.delim(system.file("extdata/QIIME_outputs/USA(CA_FL)/tax_mapping7", "USBMK_Mapping_122414.filtered.with_pairing_status_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-#' colnames(usl6)<-tolower(colnames(usl6))
-#' usl6$age.sample<-usl6$bbage/30
-#' hal6<-read.delim(system.file("extdata/QIIME_outputs/Haiti/tax_mapping7", "Haiti_Mapping.complete_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-#' colnames(hal6)<-tolower(colnames(hal6))
-#' hal6$age.sample<-hal6$bbage/30
-#' gtab<-list(unc=uncl6,ca_fl=usl6[usl6$sampletype=="STL"&usl6$mombb=="Baby",],haiti=hal6[hal6$sampletype=="STL"&hal6$mombb=="B",])
-#' #predict microbiome age (take time to run)
-#' miage<-microbiomeage(l6.relabundtab=gtab)
+#' #View(bal6)
+#' #format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection
+#' # Load data of 3 other studies
+#' data(gtab.3stud)
+#' names(gtab.3stud)
+#' #predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies
+#' #(take time to run)
+#' miage<-microbiomeage(l6.relabundtab=gtab.3stud)
 #' #list of shared genera that are available in the Bangladesh study and other included studies
 #' miage$sharedgenera.importance
 #' #check performance
@@ -74,33 +71,33 @@ microbiomeage<-function(l6.relabundtab){
   predict<-traindat$age.predicted
   R2 <- 1 - (sum((actual-predict )^2)/sum((actual-mean(actual))^2))
   R2<-round(R2,2)
-  ptrain<-ggplot2::ggplot() +geom_point(data=traindat,aes(x=age.sample, y=age.predicted))+
-    theme(legend.text = element_text(colour="black", size = 10))+
-    annotate("text", x=15, y=5,label=paste("R squared =",R2,sep=" ")) +
-    labs(title="Training set")+
-    theme(legend.key.size = unit(0.5, "cm"),
-          axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          panel.background = element_blank())+
-    xlab("Chronological age (month)") +ylab("Microbiome age (month)")
+  ptrain<-ggplot2::ggplot() +ggplot2::geom_point(data=traindat,ggplot2::aes(x=age.sample, y=age.predicted))+
+    ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 10))+
+    ggplot2::annotate("text", x=15, y=5,label=paste("R squared =",R2,sep=" ")) +
+    ggplot2::labs(title="Training set")+
+    ggplot2::theme(legend.key.size = ggplot2::unit(0.5, "cm"),
+          axis.line = ggplot2::element_line(colour = "black"),
+          panel.grid.major = ggplot2::element_blank(),
+          panel.grid.minor = ggplot2::element_blank(),
+          panel.border = ggplot2::element_blank(),
+          panel.background = ggplot2::element_blank())+
+    ggplot2::xlab("Chronological age (month)") +ggplot2::ylab("Microbiota age (month)")
   bahealthy<-testdat2[testdat2$health_analysis_groups %in% c("Healthy Singletons","Healthy Twins Triplets"),]
   actual<-bahealthy$age.sample
   predict<-bahealthy$age.predicted
   R2 <- 1 - (sum((actual-predict )^2)/sum((actual-mean(actual))^2))
   R2<-round(R2,2)
-  ptest<-ggplot2::ggplot() +geom_point(data=bahealthy,aes(x=age.sample, y=age.predicted))+
-    theme(legend.text = element_text(colour="black", size = 10))+
-    annotate("text", x=15, y=5,label=paste("R squared =",R2,sep=" ")) +
-    labs(title="Test set")+
-    theme(legend.key.size = unit(0.5, "cm"),
-          axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          panel.background = element_blank())+
-    xlab("Chronological age (month)") +ylab("Microbiome age (month)")
+  ptest<-ggplot2::ggplot() +ggplot2::geom_point(data=bahealthy,ggplot2::aes(x=age.sample, y=age.predicted))+
+    ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 10))+
+    ggplot2::annotate("text", x=15, y=5,label=paste("R squared =",R2,sep=" ")) +
+    ggplot2::labs(title="Test set")+
+    ggplot2::theme(legend.key.size = ggplot2::unit(0.5, "cm"),
+          axis.line = ggplot2::element_line(colour = "black"),
+          panel.grid.major = ggplot2::element_blank(),
+          panel.grid.minor = ggplot2::element_blank(),
+          panel.border = ggplot2::element_blank(),
+          panel.background = ggplot2::element_blank())+
+    ggplot2::xlab("Chronological age (month)") +ggplot2::ylab("Microbiome age (month)")
   # predict on other data
   datshare<-list()
   predictdat<-list()

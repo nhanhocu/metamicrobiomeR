@@ -21,20 +21,17 @@ check for performance of the model based on the shared genera list on Bangladesh
 }
 \examples{
 #Load data from each study and put in a list
+#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
 bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
 colnames(bal6)<-tolower(colnames(bal6))
-uncl6<-read.delim(system.file("extdata/QIIME_outputs/USA(NC)/tax_mapping7", "mapping_fileall_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-colnames(uncl6)<-tolower(colnames(uncl6))
-uncl6$age.sample<-uncl6$agemo
-usl6<-read.delim(system.file("extdata/QIIME_outputs/USA(CA_FL)/tax_mapping7", "USBMK_Mapping_122414.filtered.with_pairing_status_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-colnames(usl6)<-tolower(colnames(usl6))
-usl6$age.sample<-usl6$bbage/30
-hal6<-read.delim(system.file("extdata/QIIME_outputs/Haiti/tax_mapping7", "Haiti_Mapping.complete_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-colnames(hal6)<-tolower(colnames(hal6))
-hal6$age.sample<-hal6$bbage/30
-gtab<-list(unc=uncl6,ca_fl=usl6[usl6$sampletype=="STL"&usl6$mombb=="Baby",],haiti=hal6[hal6$sampletype=="STL"&hal6$mombb=="B",])
-#predict microbiome age (take time to run)
-miage<-microbiomeage(l6.relabundtab=gtab)
+#View(bal6)
+#format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection
+# Load data of 3 other studies
+data(gtab.3stud)
+names(gtab.3stud)
+#predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies
+#(take time to run)
+miage<-microbiomeage(l6.relabundtab=gtab.3stud)
 #list of shared genera that are available in the Bangladesh study and other included studies
 miage$sharedgenera.importance
 #check performance

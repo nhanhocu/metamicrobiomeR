@@ -42,7 +42,7 @@
 #' pathcom.rm6.rel.gamlss.sexg<-pathway.compare(pathtab=kegg.rm,mapfile=covar.rm,sampleid="sampleid",pathsum="rel",stat.med="gamlss",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,age.limit=6)
 #' taxcomtab.show(taxcomtab=pathcom.rm6.rel.gamlss.sexg$l3, sumvar="path",tax.lev="l3",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=0.05,digit=4)
 
-pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat.med="gamlss",comvar="bf",adjustvar="age.sample",personid="personid",longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,pooldata=FALSE,age.limit=1000000,age.lowerlimit=0,...){
+pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat.med="gamlss",transform="none", comvar="bf",adjustvar="age.sample",personid="personid",longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,pooldata=FALSE,age.limit=1000000,age.lowerlimit=0,...){
   #sapply(c("lme4","lmerTest","gamlss","gdata","plyr"), require, character.only = TRUE)
   pathlev<-paste("l",1:length(pathtab),sep="")
   estilist<-list()
@@ -66,6 +66,18 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat
       pathrel<-as.data.frame(t(apply(pathtab[[j]], 1, function(x) x / sum(x)))[,pathname])
       pathrel[,sampleid]<-tolower(rownames(pathrel))
       pathdat<-merge(subset(mapfile,age.sample<=age.limit & age.sample>=age.lowerlimit),pathrel,by=sampleid)
+      #transformation of relative abundance
+      if (stat.med=="gamlss" &transform!="none"){
+        stop("gamlss with beta zero-inflated family should only be used for relative abundance without transformation")
+      }
+      if (stat.med=="lm" &transform=="asin.sqrt"){
+        asintransform <- function(p) { asin(sqrt(p)) }
+        pathdat[,pathname]<-apply(pathdat[,pathname],2,asintransform)
+      }
+      if (stat.med=="lm" &transform=="logit"){
+        logittransform <- function(p) { log(p/(1-p)) }
+        pathdat[,pathname]<-apply(pathdat[,pathname],2,logittransform )
+      }
     }
     if (pathsum=="log"){
       # log2 transform
@@ -94,13 +106,31 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat
           estisum<-plyr::rbind.fill(estisum,fitcoefw)
         }
         if (class(fitsum) != "try-error") {
-          fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
-          if (longitudinal=="yes"){
-            fitcoef[,"Pr(>|t|)"]<-2*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+          if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))>1){
+            fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
+            if (longitudinal=="yes"){
+              fitcoef[,"Pr(>|t|)"]<-1.96*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            }
+            fitcoef[,"varname"]<-rownames(fitcoef)
+            fitcoef[,"id"]<-taxname[i]
+            fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
           }
-          fitcoef[,"varname"]<-rownames(fitcoef)
-          fitcoef[,"id"]<-pathname[i]
-          fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          #handling issue when there is one row
+          if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))==1){
+            fitcoef<-as.data.frame(matrix(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",],ncol=ncol(fitsum$coefficients)))
+            rownames(fitcoef)<-rownames(fitsum$coefficients)[rownames(fitsum$coefficients)!="(Intercept)"]
+            colnames(fitcoef)<-colnames(fitsum$coefficients)
+            if (longitudinal=="yes"){
+              fitcoef[,"Pr(>|t|)"]<-1.96*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            }
+            fitcoef[,"varname"]<-rownames(fitcoef)
+            fitcoef[,"id"]<-taxname[i]
+            fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          }
+          # when there is no coef
+          if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))==0){
+            fitcoefw<-NULL
+          }
           estisum<-plyr::rbind.fill(estisum,fitcoefw)
         }
       }
