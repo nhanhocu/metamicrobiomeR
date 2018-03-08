@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2018-02-22" />
+<meta name="date" content="2018-03-08" />
 
 <title>metamicrobiomeR: an R package for analysis of microbiome relative abundance data using zero inflated beta GAMLSS and meta-analysis across studies using random effect model</title>
 
@@ -1482,7 +1482,7 @@ div.tocify {
 <h1 class="title toc-ignore">metamicrobiomeR: an R package for analysis of microbiome relative abundance data using zero inflated beta GAMLSS and meta-analysis across studies using random effect model</h1>
 <h4 class="author"><em>Nhan Thi Ho</em></h4>
 <address class="author_afil">
-Columbia University Medical Center<br><h4 class="date"><em>February 22, 2018</em></h4>
+Columbia University Medical Center<br><h4 class="date"><em>March 08, 2018</em></h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 This document illustrates the use of <em>metamicrobiomeR</em> package which implemented Generalized Additive Model for Location, Scale and Shape (GAMLSS) with zero inflated beta (BEZI) family for the analysis of microbiome relative abundance data and random effect meta-analysis models for pooling estimates across microbiome studies. Alongside, this document introduces comprehensive examples and workflow for the analyses of each microbiome study and meta-analysis pooling estimates across microbiome studies. <strong>Keywords</strong>: GAMLSS, zero inflated beta, meta-analysis, random effect, pooling estimates, microbiome, relative abundance.
@@ -1495,9 +1495,9 @@ This document illustrates the use of <em>metamicrobiomeR</em> package which impl
 <h1>Introduction</h1>
 <p>In this document, we illustrate the use our R package <em>metamicrobiomeR</em> including:</p>
 <ol type="1">
-<li><p>The application of Generalized Additive Model for Location, Scale and Shape (GAMLSS)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with beta zero inflated (BEZI) family for the analysis of microbiome relative abundance data. The GAMLSS with BEZI family allows proper examination of microbiome relative abundance data, which ranges from zero to one and is generally zero-inflated. This model also allows adjusting for covariates and can be used for longitudinal or non-longitudinal study design. In addition, the adjusted estimates (log(odds ratio)) and standard errors from the GAMLSS model facilitate straightforward meta-analysis across studies in later stage. We showed some examples to illustrate the performance of the GAMLSS (in comparison with linear mixed effect models (LMEM)) using gut microbiome data from the Bangladesh study of Subramanian et al.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Their data was downloaded from <a href="https://gordonlab.wustl.edu/Subramanian_6_14/Nature_2014_Processed_16S_rRNA_datasets.html">the authors’ website</a>.</p></li>
+<li><p>The application of Generalized Additive Model for Location, Scale and Shape (GAMLSS)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with beta zero inflated (BEZI) family for the analysis of microbiome relative abundance data. The GAMLSS with BEZI family allows proper examination of microbiome relative abundance data, which ranges from zero to one and is generally zero-inflated. This model also allows adjusting for covariates and can be used for longitudinal or non-longitudinal study design. In addition, the estimates from GAMLSS-BEZI are log(odds ratio) of relative abundances between groups and thus are comparable across studies and thus facilitate straightforward meta-analysis across studies in later stage. We showed some examples to illustrate the performance of the GAMLSS (in comparison with linear/linear mixed effect models (LM) and LM with arcsin squareroot transformation (implemented in MaAsLin software)) using gut microbiome data from the Bangladesh study of Subramanian et al.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> Their data was downloaded from <a href="https://gordonlab.wustl.edu/Subramanian_6_14/Nature_2014_Processed_16S_rRNA_datasets.html">the authors’ website</a>.</p></li>
 <li><p>The application of random effect meta-analysis models for pooling estimates across microbiome studies. This approach allows examination of study-specific effects, heterogeneity across studies and overall effects across studies. We introduced a comprehensive workflow for the analyses of each microbiome study and meta-analysis pooling estimates across microbiome studies. We showed examples for comparison of infant gut microbiome between genders adjusting for breastfeeding status and infant age at stool sample collection in infants &lt;= 6 months. The gut microbiome data used in our examples were from four studies in Bangladesh, Haiti,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> USA(CA_FL),<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and USA(UNC).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p></li>
-<li><p>In addition, we implemented the procedures for predicting microbiome age based on relative abundances of bacterial genera using Random Forest model. This was adapted from the original approach proposed by Subramanian et al. We also illustrate the use of LMEM (for longitudinal data) or linear model (LM) (for non-longitudinal data) for comparison of multiple alpha diversity indexes between groups adjusting for covariates.</p></li>
+<li><p>In addition, we implemented the procedures for predicting microbiome age based on relative abundances of bacterial genera using Random Forest model. This was adapted from the original approach proposed by Subramanian et al. We also illustrate the use of linear mixed model (for longitudinal data) or linear model (for non-longitudinal data) for comparison of multiple alpha diversity indexes between groups adjusting for covariates.</p></li>
 </ol>
 </section>
 <section id="implementation" class="level1">
@@ -1521,7 +1521,7 @@ This document illustrates the use of <em>metamicrobiomeR</em> package which impl
 </tr>
 <tr class="even">
 <td><em>alpha.compare</em></td>
-<td>calculate average of alpha diversity for a specific rarefaction depth and compare between groups</td>
+<td>Calculate average alpha diversity indexes for a specific rarefaction depth, standardize and compare alpha diversity indexes between groups</td>
 </tr>
 <tr class="odd">
 <td><em>microbiomeage</em></td>
@@ -1529,15 +1529,15 @@ This document illustrates the use of <em>metamicrobiomeR</em> package which impl
 </tr>
 <tr class="even">
 <td><em>taxa.filter</em></td>
-<td>Filter taxonomies or pathways using prevalence and relative abundance thresholds</td>
+<td>Filter relative abundances of bacterial taxa or pathways using prevalence and abundance thresholds</td>
 </tr>
 <tr class="odd">
 <td><em>taxa.compare</em></td>
-<td>Compare relative abundances of bacterial taxa at all levels using GAMLSS or linear/linear mixed effect models (LM/LMEM)</td>
+<td>Compare relative abundances of bacterial taxa at all levels using GAMLSS or linear/linear mixed effect models (LM) or linear/linear mixed effect models with arcsin squareroot transformation (LMAS)</td>
 </tr>
 <tr class="even">
 <td><em>pathway.compare</em></td>
-<td>Compare relative abundances of bacterial functional pathways at all levels using GAMLSS or LM/LMEM. Compare of log(absolute abundances) of bacterial functional pathways at all levels using LM/LMEM</td>
+<td>Compare relative abundances of bacterial functional pathways at all levels using GAMLSS or LM or LMAS. Compare of log(absolute abundances) of bacterial functional pathways at all levels using LM</td>
 </tr>
 <tr class="odd">
 <td><em>taxa.meansdn</em></td>
@@ -1553,7 +1553,7 @@ This document illustrates the use of <em>metamicrobiomeR</em> package which impl
 </tr>
 <tr class="even">
 <td><em>meta.taxa</em></td>
-<td>Perform meta-analysis of relative abundance estimates of bacterial taxa or pathways (either from GAMLSS or LM/LMEM) across studies (from combined taxa.compare/pathway.compare outputs of all included studies) using random effect and fixed effect meta-analysis models</td>
+<td>Perform meta-analysis of relative abundance estimates of bacterial taxa or pathways (either from GAMLSS or LM or LMAS) across studies (from combined taxa.compare/pathway.compare outputs of all included studies) using random effect and fixed effect meta-analysis models</td>
 </tr>
 <tr class="odd">
 <td><em>metatab.show</em></td>
@@ -1605,7 +1605,7 @@ p.bf.l2$p</code></pre>
 <section id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-gamlss" class="level5">
 <h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS</h5>
 <pre class="r"><code># Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take time to run)
-#taxacom6.zi.rmg&lt;-taxa.compare(taxtab=taxtab6.rm,taxsum=&quot;rel&quot;,propmed.rel=&quot;gamlss&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+#taxacom6.zi.rmg&lt;-taxa.compare(taxtab=taxtab6.rm,propmed.rel=&quot;gamlss&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #load saved results 
 data(taxacom6.rmg)
 #phylum
@@ -1662,9 +1662,9 @@ kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, sho
 </tbody>
 </table>
 </section>
-<section id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-lmem" class="level5">
-<h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using LMEM</h5>
-<pre class="r"><code>#taxacom6.rmg&lt;-taxa.compare(taxtab=taxtab6.rm[[5]],taxsum=&quot;rel&quot;,propmed.rel=&quot;lm&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+<section id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-lm-without-transformation" class="level5">
+<h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using LM without transformation</h5>
+<pre class="r"><code>#taxacom6.rmg&lt;-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel=&quot;lm&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom6.rmg,tax.select=p.bf.l2$taxuse.rm, showvar=&quot;bfNon_exclusiveBF&quot;, tax.lev=&quot;l2&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
 <table>
@@ -1701,6 +1701,54 @@ kable(taxcomtab.show(taxcomtab=taxacom6.rmg,tax.select=p.bf.l2$taxuse.rm, showva
 </tbody>
 </table>
 </section>
+<section id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-lm-with-arcsin-squareroot-transformation" class="level5">
+<h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using LM with arcsin squareroot transformation</h5>
+<pre class="r"><code>#taxacom6.rmg.as&lt;-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel=&quot;lm&quot;,transform=&quot;asin.sqrt&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+#phylum
+kable(taxcomtab.show(taxcomtab=taxacom6.rmg.as,tax.select=p.bf.l2$taxuse.rm, showvar=&quot;bfNon_exclusiveBF&quot;, tax.lev=&quot;l2&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">id</th>
+<th style="text-align: right;">Estimate.bfNon_exclusiveBF</th>
+<th style="text-align: right;">ll</th>
+<th style="text-align: right;">ul</th>
+<th style="text-align: right;">Pr(&gt;|t|).bfNon_exclusiveBF</th>
+<th style="text-align: right;">pval.adjust.bfNon_exclusiveBF</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td style="text-align: left;">k__bacteria.p__actinobacteria</td>
+<td style="text-align: right;">-0.13</td>
+<td style="text-align: right;">-0.23</td>
+<td style="text-align: right;">-0.03</td>
+<td style="text-align: right;">0.0088</td>
+<td style="text-align: right;">0.0207</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td style="text-align: left;">k__bacteria.p__proteobacteria</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.0103</td>
+<td style="text-align: right;">0.0207</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td style="text-align: left;">k__bacteria.p__bacteroidetes</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.05</td>
+<td style="text-align: right;">0.0292</td>
+<td style="text-align: right;">0.0390</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 <section id="example-2-comparison-between-infants-from-6-months-to-2-years-of-age-with-solid-food-introduction-after-5-months-vs.before-5-months" class="level4">
 <h4>Example 2: Comparison between infants from 6 months to 2 years of age with solid food introduction after 5 months vs. before 5 months</h4>
@@ -1724,7 +1772,7 @@ p.sl.l5$p</code></pre>
 <section id="comparison-between-infants-with-solid-food-introduction-after-5-months-vs.before-5-months-adjusting-for-age-of-infants-at-sample-collection-using-gamlss" class="level5">
 <h5>Comparison between infants with solid food introduction after 5 months vs. before 5 months adjusting for age of infants at sample collection using GAMLSS</h5>
 <pre class="r"><code># comparison of bacterial taxa relative abudnance using LMEM or GAMLSS (take time to run)
-#taxacom.6plus.sl5.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],taxsum=&quot;rel&quot;,propmed.rel=&quot;gamlss&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+#taxacom.6plus.sl5.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #load saved results
 data(taxacom.6plus.sl5.rmg)
 #phylum
@@ -1916,7 +1964,7 @@ kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.zi.rmg,tax.select=p.sl.l5$taxus
 </section>
 <section id="comparison-between-infants-with-solid-food-introduction-after-5-months-vs.before-5-months-adjusting-for-age-of-infants-at-sample-collection-using-lmem" class="level5">
 <h5>Comparison between infants with solid food introduction after 5 months vs. before 5 months adjusting for age of infants at sample collection using LMEM</h5>
-<pre class="r"><code>#taxacom.6plus.sl5.rmg&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],taxsum=&quot;rel&quot;,propmed.rel=&quot;lm&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+<pre class="r"><code>#taxacom.6plus.sl5.rmg&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],propmed.rel=&quot;lm&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.rmg,tax.select=p.sl.l2$taxuse.rm, showvar=&quot;food5&gt;5 months&quot;, tax.lev=&quot;l2&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
 <table>
@@ -2005,6 +2053,97 @@ kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.rmg,tax.select=p.sl.l5$taxuse.r
 </tbody>
 </table>
 </section>
+<section id="comparison-between-infants-with-solid-food-introduction-after-5-months-vs.before-5-months-adjusting-for-age-of-infants-at-sample-collection-using-lmem-with-arcsin-squareroot-transformation" class="level5">
+<h5>Comparison between infants with solid food introduction after 5 months vs. before 5 months adjusting for age of infants at sample collection using LMEM with arcsin squareroot transformation</h5>
+<pre class="r"><code>#taxacom.6plus.sl5.rmg.as&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],propmed.rel=&quot;lm&quot;,transform=&quot;asin.sqrt&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
+#phylum
+kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.rmg.as,tax.select=p.sl.l2$taxuse.rm, showvar=&quot;food5&gt;5 months&quot;, tax.lev=&quot;l2&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">id</th>
+<th style="text-align: right;">Estimate.month.food5&gt;5 months</th>
+<th style="text-align: right;">ll</th>
+<th style="text-align: right;">ul</th>
+<th style="text-align: right;">Pr(&gt;|t|).month.food5&gt;5 months</th>
+<th style="text-align: right;">pval.adjust.food5&gt;5 months</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td style="text-align: left;">k__bacteria.p__bacteroidetes</td>
+<td style="text-align: right;">-0.05</td>
+<td style="text-align: right;">-0.09</td>
+<td style="text-align: right;">-0.01</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">0.1079</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#order
+kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.rmg.as,tax.select=p.sl.l4$taxuse.rm, showvar=&quot;food5&gt;5 months&quot;, tax.lev=&quot;l4&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">id</th>
+<th style="text-align: right;">Estimate.month.food5&gt;5 months</th>
+<th style="text-align: right;">ll</th>
+<th style="text-align: right;">ul</th>
+<th style="text-align: right;">Pr(&gt;|t|).month.food5&gt;5 months</th>
+<th style="text-align: right;">pval.adjust.food5&gt;5 months</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>31</td>
+<td style="text-align: left;">k__bacteria.p__firmicutes.c__clostridia.o__clostridiales</td>
+<td style="text-align: right;">-0.08</td>
+<td style="text-align: right;">-0.14</td>
+<td style="text-align: right;">-0.02</td>
+<td style="text-align: right;">0.0127</td>
+<td style="text-align: right;">0.0887</td>
+</tr>
+<tr class="even">
+<td>26</td>
+<td style="text-align: left;">k__bacteria.p__bacteroidetes.c__bacteroidia.o__bacteroidales</td>
+<td style="text-align: right;">-0.05</td>
+<td style="text-align: right;">-0.09</td>
+<td style="text-align: right;">-0.01</td>
+<td style="text-align: right;">0.0268</td>
+<td style="text-align: right;">0.0939</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#family
+kable(taxcomtab.show(taxcomtab=taxacom.6plus.sl5.rmg.as,tax.select=p.sl.l5$taxuse.rm, showvar=&quot;food5&gt;5 months&quot;, tax.lev=&quot;l5&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">id</th>
+<th style="text-align: right;">Estimate.month.food5&gt;5 months</th>
+<th style="text-align: right;">ll</th>
+<th style="text-align: right;">ul</th>
+<th style="text-align: right;">Pr(&gt;|t|).month.food5&gt;5 months</th>
+<th style="text-align: right;">pval.adjust.food5&gt;5 months</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>54</td>
+<td style="text-align: left;">k__bacteria.p__bacteroidetes.c__bacteroidia.o__bacteroidales.f__prevotellaceae</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">-0.1</td>
+<td style="text-align: right;">-0.01</td>
+<td style="text-align: right;">0.0106</td>
+<td style="text-align: right;">0.1372</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 <section id="gamlss-detects-the-difference-when-there-is-actual-difference-and-does-not-detect-the-difference-when-there-is-no-difference" class="level3">
@@ -2023,10 +2162,11 @@ p.dia.exbf2.6plus.l2$p</code></pre>
 <section id="gamlss-detects-the-difference-when-there-are-actual-difference-in-infants-with-duration-of-exclusive-bf-2-months" class="level4">
 <h4>GAMLSS detects the difference when there are actual difference (In infants with duration of exclusive bf &lt;=2 months)</h4>
 <pre class="r"><code>#comparison 
-#taxacom.6plus.dia.exbf2.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2.rm[[5]],taxsum=&quot;rel&quot;,propmed.rel=&quot;gamlss&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
+
+#GAMLSS
+#taxacom.6plus.dia.exbf2.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
 #load saved results 
 data(taxacom.dia.exbf2.zi.rmg)
-#GAMLSS
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2.zi.rmg,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
 <table>
@@ -2063,6 +2203,7 @@ kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2.zi.rmg,tax.lev=&quot;l2&q
 </tbody>
 </table>
 <pre class="r"><code>#LMEM
+#taxacom.6plus.dia.exbf2.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2.rm[[5]],propmed.rel=&quot;lm&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2.rmg,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
 <table>
@@ -2089,17 +2230,59 @@ kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2.rmg,tax.lev=&quot;l2&quot
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>#LMEM with arcsin squareroot transformation
+#taxacom.6plus.dia.exbf2.rmg.as&lt;-taxa.compare(taxtab=taxtab6plus.exbf2.rm[[5]],propmed.rel=&quot;lm&quot;,transform=&quot;asin.sqrt&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
+kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2.rmg.as,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">id</th>
+<th style="text-align: right;">Estimate.diarrheaYes</th>
+<th style="text-align: right;">ll</th>
+<th style="text-align: right;">ul</th>
+<th style="text-align: right;">Pr(&gt;|t|).diarrheaYes</th>
+<th style="text-align: right;">pval.adjust.diarrheaYes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3</td>
+<td style="text-align: left;">k__bacteria.p__firmicutes</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">0.0269</td>
+<td style="text-align: right;">0.0848</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td style="text-align: left;">k__bacteria.p__actinobacteria</td>
+<td style="text-align: right;">-0.12</td>
+<td style="text-align: right;">-0.23</td>
+<td style="text-align: right;">0.0</td>
+<td style="text-align: right;">0.0424</td>
+<td style="text-align: right;">0.0848</td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="gamlss-does-not-detect-the-difference-does-not-produce-false-discovery-when-there-are-no-actual-difference-in-infants-with-duration-of-exclusive-bf-2-months" class="level4">
 <h4>GAMLSS does not detect the difference (does not produce false discovery) when there are no actual difference (In infants with duration of exclusive bf &gt;2 months)</h4>
-<pre class="r"><code>#taxacom.6plus.dia.exbf2plus.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2plus.rm[[5]],taxsum=&quot;rel&quot;,propmed.rel=&quot;gamlss&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
-#GAMLSS
+<pre class="r"><code>#GAMLSS
+#taxacom.6plus.dia.exbf2plus.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2plus.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2plus.zi.rmg,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,readjust.p=TRUE,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
 <p>id Estimate.diarrheaYes ll ul Pr(&gt;|t|).diarrheaYes pval.adjust.diarrheaYes — ——————— — — ——————— ————————</p>
 <pre class="r"><code>#LMEM
+#taxacom.6plus.dia.exbf2plus.rmg&lt;-taxa.compare(taxtab=taxtab6plus.exbf2plus.rm[[5]],propmed.rel=&quot;lm&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2plus.rmg,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
+<p>id Estimate.diarrheaYes ll ul Pr(&gt;|t|).diarrheaYes pval.adjust.diarrheaYes — ——————— — — ——————— ————————</p>
+<pre class="r"><code>#LMEM with arcsin squareroot transformation
+#taxacom.6plus.dia.exbf2plus.rmg.as&lt;-taxa.compare(taxtab=taxtab6plus.exbf2plus.rm[[5]],propmed.rel=&quot;lm&quot;,transform=&quot;asin.sqrt&quot;,comvar=&quot;diarrhea&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;no&quot;,p.adjust.method=&quot;fdr&quot;)
+#phylum
+kable(taxcomtab.show(taxcomtab=taxacom.6plus.dia.exbf2plus.rmg.as,tax.lev=&quot;l2&quot;,tax.select=p.dia.exbf2.6plus.l2$taxuse.rm,showvar=&quot;diarrheaYes&quot;,p.adjust.method=&quot;fdr&quot;,p.cutoff=0.05))</code></pre>
 <p>id Estimate.diarrheaYes ll ul Pr(&gt;|t|).diarrheaYes pval.adjust.diarrheaYes — ——————— — — ——————— ————————</p>
 </section>
 </section>
@@ -2496,6 +2679,7 @@ a4</code></pre>
 <pre class="r"><code>#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
 bal6&lt;-read.delim(system.file(&quot;extdata/QIIME_outputs/Bangladesh/tax_mapping7&quot;, &quot;Subramanian_et_al_mapping_file_L6.txt&quot;, package = &quot;metamicrobiomeR&quot;, mustWork = TRUE))
 colnames(bal6)&lt;-tolower(colnames(bal6))
+#View(bal6)
 #format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection 
 # Load data of 3 other studies 
 data(gtab.3stud)
@@ -3782,7 +3966,7 @@ meta.niceplot(metadat=metadat,sumtype=&quot;path&quot;,p=&quot;p&quot;,p.adjust=
 </section>
 <section id="discussion-and-conclusion" class="level1">
 <h1>Discussion and Conclusion</h1>
-<p>The GAMLSS with BEZI family is a good model for the analysis of microbiome relative abundance data in that: 1) it has better sensitivity to detect the difference than LMEM (a commonly used model); 2) it detects the difference when there is actual difference and does not detect the difference when there is no actual difference (does not produce false positive). Although there may be large technical difference between microbiome studies, the adjusted estimates (log(odds ratio) of relative abundance) and their standard errors from the GAMLSS models are comparable across studies and thus can be directly used for meta-analysis. Standardization of alpha diversity indexes and predicted microbiome age before comparison also make the estimates for these measures comparable across studies. Random effect meta-analysis models can be directly applied to pool these “comparable” adjusted estimates and their standard errors to examine the overall effects as well as the heterogeneity across microbiome studies. The examples and workflow using our <em>metamicrobiomeR</em> package are reproducible and applicable for the analysis and meta-analysis of other microbiome studies.</p>
+<p>Our <em>metamicrobiomeR</em> package implemented GAMLSS-BEZI for analysis of microbiome relative abundance data and random effect meta-analysis models for meta-analysis across microbiome studies. The advantages of GAMLSS-BEZI are: 1) it directly and properly address the distribution of microbiome relative abundance data which resemble a zero-inflated beta distribution; 2) it has better power to detect differential relative abundances between groups than the commonly used approach LMAS; 3) it controls type I errors well; 4) the estimates from GAMLSS-BEZI are log(odds ratio) of relative abundances between groups and thus are comparable across studies. Besides, standardization of alpha diversity indexes and predicted microbiota age before comparison between groups within each study also make the estimates for these measures comparable across studies. Random effect meta-analysis models can be directly applied to pool these comparable adjusted estimates and their standard errors across studies. This approach allows examination of study-specific effects, heterogeneity between studies, and the overall pooled effects across microbiome studies. The examples and workflow using our “metamicrobiomeR” package are reproducible and applicable for the analysis and meta-analysis of other microbiome studies.</p>
 </section>
 <section id="availability" class="level1">
 <h1>Availability</h1>
