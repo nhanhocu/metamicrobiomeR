@@ -34,7 +34,9 @@ Imports:
 	grDevices,
 	gplots,
 	magrittr,
-	tools
+	tools,
+	sas7bdat,
+	foreign
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
