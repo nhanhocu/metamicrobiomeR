@@ -4,16 +4,19 @@
 \alias{read.multi}
 \title{Read multiple files}
 \usage{
-read.multi(patht, patternt = ".txt", assignt = "no", study = NULL)
+read.multi(patht, patternt = ".txt", assignt = "no", study = NULL,
+  tolower.colnames = TRUE)
 }
 \arguments{
 \item{patht}{path to files.}
 
-\item{patternt}{pattern of files. Options are ".txt" or ".csv".}
+\item{patternt}{pattern of files. Options are ".txt" or ".csv" or ".sav" or ".sas7bdat".}
 
 \item{assignt}{assign files. Default is "no".}
 
 \item{study}{name of the study. Default is NULL.}
+
+\item{tolower.colnames}{turn all column names to lower case. Default is TRUE.}
 }
 \value{
 list of all data files in the path

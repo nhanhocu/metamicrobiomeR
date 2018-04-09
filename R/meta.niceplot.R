@@ -41,7 +41,7 @@
 #' meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
 
 
-meta.niceplot<-function(metadat,sumtype="taxa",level="main",p="p.nebf",p.adjust="p.adjust.nebf",phyla.col=c("select","rainbow"),leg.key.size=1,leg.text.size=8,heat.text.x.size=8,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=8){
+meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col=c("select","rainbow"),leg.key.size=1,leg.text.size=8,heat.text.x.size=8,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=8){
   #require(ggplot2);require(gridExtra);require("gplots");require(reshape2); require(gdata)
   test<-metadat$taxsig.all
   test$taxa<-test$id

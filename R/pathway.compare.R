@@ -42,7 +42,7 @@
 #' pathcom.rm6.rel.gamlss.sexg<-pathway.compare(pathtab=kegg.rm,mapfile=covar.rm,sampleid="sampleid",pathsum="rel",stat.med="gamlss",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,age.limit=6)
 #' taxcomtab.show(taxcomtab=pathcom.rm6.rel.gamlss.sexg$l3, sumvar="path",tax.lev="l3",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=0.05,digit=4)
 
-pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat.med="gamlss",transform="none", comvar="bf",adjustvar="age.sample",personid="personid",longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,pooldata=FALSE,age.limit=1000000,age.lowerlimit=0,...){
+pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",stat.med="gamlss",transform="none", comvar,adjustvar,personid="personid",longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,pooldata=FALSE,age.limit=1000000,age.lowerlimit=0,...){
   #sapply(c("lme4","lmerTest","gamlss","gdata","plyr"), require, character.only = TRUE)
   pathlev<-paste("l",1:length(pathtab),sep="")
   estilist<-list()

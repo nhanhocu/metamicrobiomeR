@@ -4,10 +4,10 @@
 \alias{meta.niceplot}
 \title{Nice meta-analysis plots.}
 \usage{
-meta.niceplot(metadat, sumtype = "taxa", level = "main", p = "p.nebf",
-  p.adjust = "p.adjust.nebf", phyla.col = c("select", "rainbow"),
-  leg.key.size = 1, leg.text.size = 8, heat.text.x.size = 8,
-  heat.text.x.angle = 0, forest.axis.text.y = 8, forest.axis.text.x = 8)
+meta.niceplot(metadat, sumtype = "taxa", level = "main", p, p.adjust,
+  phyla.col = c("select", "rainbow"), leg.key.size = 1, leg.text.size = 8,
+  heat.text.x.size = 8, heat.text.x.angle = 0, forest.axis.text.y = 8,
+  forest.axis.text.x = 8)
 }
 \arguments{
 \item{metadat}{output data from metatab.show.}

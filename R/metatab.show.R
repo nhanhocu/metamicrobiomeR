@@ -41,7 +41,7 @@
 #' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="plot",plot="heatmap")
 
 
-metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar=".nebf",estimate.pattern="Estimate.",se.pattern="Std. Error.",readjust.p=FALSE,p.cutoff.type="p", p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",grid=FALSE,digit=2,p.digit=4,...){
+metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar,estimate.pattern="Estimate.",se.pattern="Std. Error.",readjust.p=FALSE,p.cutoff.type="p", p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",grid=FALSE,digit=2,p.digit=4,...){
   #require(ggplot2);require(plyr)
   mtaba1<-as.data.frame(metatab[[showvar]])
   #remove row with NA values (no meta-analysis)
