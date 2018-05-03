@@ -41,7 +41,7 @@
 #' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="plot",plot="heatmap")
 
 
-metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar,estimate.pattern="Estimate.",se.pattern="Std. Error.",readjust.p=FALSE,p.cutoff.type="p", p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",grid=FALSE,digit=2,p.digit=4,...){
+metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar,estimate.pattern="Estimate.",se.pattern="Std. Error.",p.pattern="Pr(>|t|)",readjust.p=FALSE,p.cutoff.type="p", p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",grid=FALSE,digit=2,p.digit=4,...){
   #require(ggplot2);require(plyr)
   mtaba1<-as.data.frame(metatab[[showvar]])
   #remove row with NA values (no meta-analysis)
@@ -112,7 +112,9 @@ metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar
     #each study
     pooltab<-com.pooled.tab[,c("id","study","pop",colnames(com.pooled.tab)[grep(showvar,colnames(com.pooled.tab))])]
     colnames(pooltab)[grep(estimate.pattern,colnames(pooltab))]<-"estimate"
-    taxsig.stud<-pooltab[pooltab$id %in% taxsig$id,c("estimate","id","study","pop")]
+    colnames(pooltab)[grep(se.pattern,colnames(pooltab))]<-"se"
+    colnames(pooltab)[grep(p.pattern,colnames(pooltab))]<-"p"
+    taxsig.stud<-pooltab[pooltab$id %in% taxsig$id,c("estimate","se","p","id","study","pop")]
     taxsig.all<-plyr::rbind.fill(taxsig.stud,taxsig)
     taxsig.all$id<-as.factor(taxsig.all$id)
     taxsig.all$study<-factor(taxsig.all$study, levels=c(unique(taxsig.stud$study),"Meta_analysis"))

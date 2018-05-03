@@ -1,11 +1,11 @@
 
 
 
-This is an initial version of the package metamicrobiomeR.   
+This is an initial version of the package *metamicrobiomeR*.   
 
 To start, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
 
-The metamicrobiomeR package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
+The *metamicrobiomeR* package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
     with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data and 
     random effect meta-analysis models for meta-analysis pooling estimates across microbiome studies.
     Random Forest model to predict microbiome age based on relative abundances of  
@@ -13,7 +13,7 @@ The metamicrobiomeR package implements Generalized Additive Model for Location, 
     comparison of multiple diversity indexes using linear/linear mixed effect models 
     and some data display/visualization are also implemented.
 
-The paper describing the methods implemented in the "metamicrobiomeR" package as well as simulations, and example analyses/results are now available in preprint at: <https://www.biorxiv.org/content/early/2018/04/04/294678>. 
+The initial version of the manuscript describing the methods implemented in the *metamicrobiomeR* package as well as simulations, and example analyses/results are now available in preprint at: <https://www.biorxiv.org/content/early/2018/04/04/294678>. 
 
 
 ## Some snapshots
@@ -52,50 +52,10 @@ p.bf.l2$p
 #### Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS 
 
 ```r
-# Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take time to run)
+# Comparison of bacterial taxa relative abundance using GAMLSS (take time to run)
 taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm,propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1))
-```
-
-### Alpha diversity 
-#### Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups adjusting for covariates using Bangladesh data 
-
-```r
-data(sam.rm)
-patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
-alpha.rm<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
-names(alpha.rm)<-sub(patht,"",names(alpha.rm))
-samfile<-merge(samde, he50[,c("child.id","gender","month.exbf","month.food")],by="child.id")
-samfile$age.sample<-samfile$age.months
-samfile$bf<-factor(samfile$bf,levels=c("ExclusiveBF","Non_exclusiveBF","No_BF"))
-samfile$personid<-samfile$child.id
-samfile$sampleid<-tolower(samfile$fecal.sample.id)
-#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age 
-alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
-kable(alphacom6.rm.sexsg$alphasum[,1:5])
-```
-
-### Microbiome age
-#### Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study
-The *microbiomeage* function get the shared genera list between the Bangladesh study and all other included studies,  get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.   
-
-```r
-#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
-bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-colnames(bal6)<-tolower(colnames(bal6))
-#View(bal6)
-#format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection 
-# Load data of 3 other studies 
-data(gtab.3stud)
-names(gtab.3stud)
-#predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies  
-#(take time to run)
-miage<-microbiomeage(l6.relabundtab=gtab.3stud)
-# list of shared genera that are available in the Bangladesh study and other included studies 
-kable(miage$sharedgenera.importance)
-#check performance
-grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
 ```
 
 
@@ -146,4 +106,44 @@ kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",
 metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
 meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
 ```
+### Alpha diversity 
+#### Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups adjusting for covariates using Bangladesh data 
+
+```r
+data(sam.rm)
+patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
+alpha.rm<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
+names(alpha.rm)<-sub(patht,"",names(alpha.rm))
+samfile<-merge(samde, he50[,c("child.id","gender","month.exbf","month.food")],by="child.id")
+samfile$age.sample<-samfile$age.months
+samfile$bf<-factor(samfile$bf,levels=c("ExclusiveBF","Non_exclusiveBF","No_BF"))
+samfile$personid<-samfile$child.id
+samfile$sampleid<-tolower(samfile$fecal.sample.id)
+#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age 
+alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
+kable(alphacom6.rm.sexsg$alphasum[,1:5])
+```
+
+### Microbiome age
+#### Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study
+The *microbiomeage* function get the shared genera list between the Bangladesh study and all other included studies,  get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.   
+
+```r
+#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
+bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
+colnames(bal6)<-tolower(colnames(bal6))
+#View(bal6)
+#format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection 
+# Load data of 3 other studies 
+data(gtab.3stud)
+names(gtab.3stud)
+#predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies  
+#(take time to run)
+miage<-microbiomeage(l6.relabundtab=gtab.3stud)
+# list of shared genera that are available in the Bangladesh study and other included studies 
+kable(miage$sharedgenera.importance)
+#check performance
+grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
+```
+
 

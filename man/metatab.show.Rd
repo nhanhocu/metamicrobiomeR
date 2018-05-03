@@ -6,9 +6,9 @@
 \usage{
 metatab.show(metatab, com.pooled.tab, sumvar = "taxa", tax.lev = "l2",
   showvar, estimate.pattern = "Estimate.", se.pattern = "Std. Error.",
-  readjust.p = FALSE, p.cutoff.type = "p", p.cutoff = 0.05,
-  display = "plot", plot = "heatmap", fill.value = "log(OR)",
-  grid = FALSE, digit = 2, p.digit = 4, ...)
+  p.pattern = "Pr(>|t|)", readjust.p = FALSE, p.cutoff.type = "p",
+  p.cutoff = 0.05, display = "plot", plot = "heatmap",
+  fill.value = "log(OR)", grid = FALSE, digit = 2, p.digit = 4, ...)
 }
 \arguments{
 \item{metatab}{matrice of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.}

@@ -43,6 +43,7 @@
 
 meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col=c("select","rainbow"),leg.key.size=1,leg.text.size=8,heat.text.x.size=8,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=8){
   #require(ggplot2);require(gridExtra);require("gplots");require(reshape2); require(gdata)
+  #heatmap
   test<-metadat$taxsig.all
   test$taxa<-test$id
   test$taxa<-gsub("k__bacteria.p__","",test$taxa)
@@ -83,10 +84,12 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
     test$plotvar<-test$taxas
   }
   test$study[is.na(test$study)]<-"Meta_analysis"
+  test$pdot<-cut(test$p, breaks=c(0, 0.0001,0.05, 1),labels=c("**", "*",""),include.lowest = TRUE)
   nstudy<-length(unique(test$study[!is.na(test$study)]))
   my.lines<-data.frame(x=(nstudy-0.5), y=0.5, xend=(nstudy-0.5), yend=(length(unique(test$taxa))+0.5))
   h<-ggplot2::ggplot(test, ggplot2::aes(pop, plotvar)) +
     ggplot2::geom_tile(ggplot2::aes(fill=esticat)) +
+    ggplot2::geom_text(ggplot2::aes(label = pdot)) +
     ggplot2::scale_fill_manual(breaks=levels(test$esticat),
                       values = levels(test$esticol),
                       labels = levels(test$esticat),
@@ -111,6 +114,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
           axis.text.x =ggplot2::element_text(size=heat.text.x.size, angle=heat.text.x.angle, hjust = 1),
           legend.key.size = ggplot2::unit(leg.key.size, "cm"))+
     ggplot2::guides(fill=ggplot2::guide_legend(ncol=1))
+  #forest plot
   testf<-metadat$taxsig
   testf$taxa<-testf$id
   testf$taxa<-gsub("k__bacteria.p__","",testf$taxa)
