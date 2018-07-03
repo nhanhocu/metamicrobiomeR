@@ -22,7 +22,9 @@
 #' p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005,show.taxname="short")
 #' p.bf.l2$p
 
-taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", comvar, groupvar,mean.filter=0.005, pallete.by.phylum=FALSE, show.taxname="full",legend.position="right",xlab="Chronological age (month)",ylab="Relative abundance"){
+taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", comvar, groupvar,
+                         mean.filter=0.005, pallete.by.phylum=FALSE, show.taxname="full",legend.position="right",
+                         xlab="Chronological age (month)",ylab="Relative abundance"){
   #sapply(c("ggplot2","reshape2","RColorBrewer","plyr"), require, character.only = TRUE)
   taxname1<-c(colnames(tabmean)[grep("mean",colnames(tabmean))])
   tabm<-apply(tabmean[,taxname1],2,mean)
@@ -123,7 +125,7 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
       ggplot2::scale_fill_manual(values=col_vector)+ ggplot2::xlab(xlab)+ggplot2::ylab(ylab)+
       ggplot2::labs(fill='')+
       ggplot2::theme(legend.position = legend.position)+
-      ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 8))+
+      ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 10,face="bold"))+
       ggplot2::scale_x_continuous(breaks=seq(from=0,to=24,by=3),
                          labels=seq(from=0,to=24,by=3))+
       ggplot2::theme(legend.key.size = ggplot2::unit(0.5, "cm"),
@@ -132,7 +134,11 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
             panel.grid.minor = ggplot2::element_blank(),
             panel.border = ggplot2::element_blank(),
             panel.background = ggplot2::element_blank(),
-            strip.background =ggplot2::element_rect(fill="white"))+
+            strip.background =ggplot2::element_rect(fill="white"),
+            axis.text.y =ggplot2::element_text(size=10, colour = "black",face="bold"),
+            axis.text.x =ggplot2::element_text(size=10,face="bold",colour="black"),
+            axis.title=ggplot2::element_text(size=12,face="bold"),
+            strip.text.x = ggplot2::element_text(size=10, face="bold"))+
       ggplot2::guides(fill=ggplot2::guide_legend(ncol=1)) +
       ggplot2::facet_wrap(~get(as.character(comvar)), ncol = 1)
   }
@@ -145,7 +151,7 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
       ggplot2::ylab(ylab)+
       ggplot2::labs(fill='')+
       ggplot2::guides(fill=ggplot2::guide_legend(ncol=1))+
-      ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 8))+
+      ggplot2::theme(legend.text = ggplot2::element_text(colour="black", size = 10,face="bold"))+
       ggplot2::theme(legend.position = legend.position)+
       ggplot2::theme(legend.key.size = ggplot2::unit(0.5, "cm"),
             axis.line = ggplot2::element_line(colour = "black"),
@@ -153,7 +159,11 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
             panel.grid.minor = ggplot2::element_blank(),
             panel.border = ggplot2::element_blank(),
             panel.background = ggplot2::element_blank(),
-            strip.background =ggplot2::element_rect(fill="white"))+
+            strip.background =ggplot2::element_rect(fill="white"),
+            axis.text.y =ggplot2::element_text(size=10, colour = "black",face="bold"),
+            axis.text.x =ggplot2::element_text(size=10,face="bold",colour="black"),
+            axis.title=ggplot2::element_text(size=12,face="bold"),
+            strip.text.x = ggplot2::element_text(size=10, face="bold"))+
       ggplot2::guides(fill=ggplot2::guide_legend(ncol=1)) +
       ggplot2::facet_wrap(~get(as.character(groupvar)), ncol = 1)
   }

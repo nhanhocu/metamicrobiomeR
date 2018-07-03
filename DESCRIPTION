@@ -36,7 +36,11 @@ Imports:
 	magrittr,
 	tools,
 	sas7bdat,
-	foreign
+	foreign,
+	knitr,
+	rmarkdown,
+	zCompositions,
+	compositions
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr

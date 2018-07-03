@@ -3,7 +3,8 @@
 #' This function compares taxa relative abundance summary tables at all levels between groups using GAMLSS with BEZI or Linear/Linear Mixed Effect models (LM/LMEM) after filtering (using prevalence and relative abundance thresholds).
 #' @param taxtab taxa relative abundance table (already merged to mapping file) from phylum to species or any preferred highest taxa level.
 #' @param propmed.rel statistical method for comparing relative abundance. Options are "lm" for LM/LMEM or "gamlss" for GAMLSS with BEZI family.
-#' @param transform transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation. Default is "none"
+#' @param transform transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation, "clr" for centered log ratio transformation. Default is "none".
+#' @param zeroreplace.method Method for zero replacement implemented in R package *zCompositions*. Options are "none" for no replacement, "multKM" for Multiplicative Kaplan-Meier smoothing spline (KMSS) replacement, "multLN" for Multiplicative lognormal replacement, "multRepl" for Multiplicative simple replacement, "lrEM" for Log-ratio EM algorithm, "lrDA" for Log-ratio DA algorithm. Default is "none".
 #' @param comvar main variable for comparison
 #' @param adjustvar variables to be adjusted.
 #' @param personid name of variable for person id (applicable for longitudinal data)
@@ -24,7 +25,9 @@
 #' taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr")
 
 
-taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",comvar,adjustvar,personid="personid",longitudinal="yes",percent.filter=0.05,relabund.filter=0.00005,p.adjust.method="fdr",...){
+taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.method="none",
+                       comvar,adjustvar,personid="personid",longitudinal="yes",
+                       percent.filter=0.05,relabund.filter=0.00005,p.adjust.method="fdr",...){
   #sapply(c("lme4", "gamlss","gdata","reshape2","plyr"), require, character.only = TRUE)
   taxdat<-as.data.frame(taxtab)
   taxdat[,comvar]<-gdata::drop.levels(taxdat[,comvar],reorder=FALSE) #drop missing/unused level and keep level order
@@ -46,6 +49,12 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",comvar,adjus
   if (propmed.rel=="gamlss" &transform!="none"){
     stop("gamlss with beta zero-inflated family should only be used for relative abundance without transformation")
   }
+  if (transform!="clr" &zeroreplace.method!="none"){
+    stop("Zero replacement is only implemented for use with CLR transformation")
+  }
+  if (transform=="clr" &zeroreplace.method=="none"){
+    stop("Zero replacement needs to be done before CLR transformation")
+  }
   if (propmed.rel=="lm" &transform=="asin.sqrt"){
     asintransform <- function(p) { asin(sqrt(p)) }
     taxdat[,taxname]<-apply(taxdat[,taxname],2,asintransform)
@@ -53,6 +62,27 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",comvar,adjus
   if (propmed.rel=="lm" &transform=="logit"){
     logittransform <- function(p) { log(p/(1-p)) }
     taxdat[,taxname]<-apply(taxdat[,taxname],2,logittransform )
+  }
+  if (propmed.rel=="lm" &transform=="clr"){
+    #zero replacement using package zCompositions
+    if (zeroreplace.method=="multLN"){
+      test0<-zCompositions::multLN(taxdat[,taxname],label=0,dl=rep(1,length(taxname)))
+    }
+    if (zeroreplace.method=="multKM"){
+      test0<-zCompositions::multKM(taxdat[,taxname],label=0,dl=rep(1,length(taxname)))
+    }
+    if (zeroreplace.method=="multRepl"){
+      test0<-zCompositions::multRepl(taxdat[,taxname],label=0,dl=rep(1,length(taxname)))
+    }
+    if (zeroreplace.method=="lrEM"){
+      test0<-zCompositions::lrEM(taxdat[,taxname],label=0,dl=rep(1,length(taxname)))
+    }
+    if (zeroreplace.method=="lrDA"){
+      test0<-zCompositions::lrDA(taxdat[,taxname],label=0,dl=rep(1,length(taxname)))
+    }
+    #CLR transformation of imputed data using package compositions
+    clrdat<-as.data.frame(compositions::clr(test0))
+    taxdat[,taxname]<-clrdat
   }
   # begin models
   estisum<-NULL

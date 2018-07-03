@@ -4,17 +4,19 @@
 \alias{taxa.compare}
 \title{Compare taxa relative abundance}
 \usage{
-taxa.compare(taxtab, propmed.rel = "gamlss", transform = "none", comvar,
-  adjustvar, personid = "personid", longitudinal = "yes",
-  percent.filter = 0.05, relabund.filter = 5e-05, p.adjust.method = "fdr",
-  ...)
+taxa.compare(taxtab, propmed.rel = "gamlss", transform = "none",
+  zeroreplace.method = "none", comvar, adjustvar, personid = "personid",
+  longitudinal = "yes", percent.filter = 0.05, relabund.filter = 5e-05,
+  p.adjust.method = "fdr", ...)
 }
 \arguments{
 \item{taxtab}{taxa relative abundance table (already merged to mapping file) from phylum to species or any preferred highest taxa level.}
 
 \item{propmed.rel}{statistical method for comparing relative abundance. Options are "lm" for LM/LMEM or "gamlss" for GAMLSS with BEZI family.}
 
-\item{transform}{transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation. Default is "none"}
+\item{transform}{transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation, "clr" for centered log ratio transformation. Default is "none".}
+
+\item{zeroreplace.method}{Method for zero replacement implemented in R package *zCompositions*. Options are "none" for no replacement, "multKM" for Multiplicative Kaplan-Meier smoothing spline (KMSS) replacement, "multLN" for Multiplicative lognormal replacement, "multRepl" for Multiplicative simple replacement, "lrEM" for Log-ratio EM algorithm, "lrDA" for Log-ratio DA algorithm. Default is "none".}
 
 \item{comvar}{main variable for comparison}
 

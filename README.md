@@ -29,6 +29,7 @@ library(devtools)
 install_github("nhanhocu/metamicrobiomeR")
 library(metamicrobiomeR) 
 #Load other needed packages 
+library(knitr)
 library(plyr)
 library(dplyr)
 library(gdata)
@@ -59,7 +60,7 @@ kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, sho
 ```
 
 
-### Example2: Comparison of bacterial taxa relative abundance in infants < 6 months between gender adjusting for breastfeeding statuses and age of infants at sample collection with GAMLSS 
+### Example 2: Comparison of bacterial taxa relative abundance in infants < 6 months between gender adjusting for breastfeeding statuses and age of infants at sample collection with GAMLSS 
 
 ```r
 # Comparison of bacterial taxa relative abundance up to genus level (take time to run)
@@ -77,9 +78,9 @@ kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none",
 The analysis for other studies was done similarly. 
 
 #### Meta-analysis of four studies (Bangladesh, Haiti, USA(CA_FL), USA(NC))
+##### Load and combine saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection.   
 
 ```r
-# load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection 
 data(taxacom.rm.sex.adjustbfage)
 data(taxacom.ha.sex.adjustbfage)
 data(taxacom6.zi.usbmk.sex.adjustbfage)
@@ -93,18 +94,36 @@ taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
 taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
 taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
 tabsex4<-rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-# meta-analysis (take time to run)
+```
+
+##### Meta-analysis (take time to run)
+```r
 metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-#phylum
+```
+##### Display results as tables and figures. 
+Phylum
+```r
+#table 
 kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
-#nice plot
+#plot
 metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=7)
-# family
+meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",p.adjust="p.adjust",phyla.col="rainbow",forest.col="by.estimate",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=7, point.ratio = c(4,2),line.ratio = c(2,1))
+```
+Family
+```r
+#table 
 kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
-#nice plot
+#Plot with different color palette, heatmap-forest width ratio
 metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
+meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",heat.forest.width.ratio =c(1,1.5), neg.palette = "Greens",pos.palette = "Purples",p.sig.heat="yes",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
+```
+Genus 
+```r
+#table 
+kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l6",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
+# Plot with some different options: pooled estimates in forest plot with the same color scales as heatmap, those with p-values<0.05 in bold, FDR adjusted p-values<0.1 in triangles
+metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l6",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
+meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",p.sig.heat="yes",heat.forest.width.ratio =c(1,1.3),forest.col="by.estimate",leg.key.size=0.8,leg.text.size=10,heat.text.x.size=6,forest.axis.text.y=7,forest.axis.text.x=6, point.ratio = c(4,2),line.ratio = c(2,1))
 ```
 ### Alpha diversity 
 #### Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups adjusting for covariates using Bangladesh data 
