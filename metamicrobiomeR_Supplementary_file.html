@@ -420,7 +420,9 @@ p.bf.l2$p</code></pre>
 </div>
 <div id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-gamlss" class="section level5">
 <h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS</h5>
-<pre class="r"><code># Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take some time to run)
+<pre class="r"><code># Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take some time to run). 
+# Note: running time is not long in regular laptop for both analysis (~10s) and meta-analysis (~5s).  
+# However, to save time making the tutorial, some saved data/results are loaded for downstream analysis/display.  
 #taxacom6.zi.rmg&lt;-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;bf&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #load saved results 
 data(taxacom6.rmg)
@@ -614,7 +616,7 @@ p.sl.l5$p</code></pre>
 </div>
 <div id="comparison-between-infants-with-solid-food-introduction-after-5-months-vs.before-5-months-adjusting-for-age-of-infants-at-sample-collection-using-gamlss" class="section level5">
 <h5>Comparison between infants with solid food introduction after 5 months vs. before 5 months adjusting for age of infants at sample collection using GAMLSS</h5>
-<pre class="r"><code># comparison of bacterial taxa relative abudnance using LMEM or GAMLSS (take time to run)
+<pre class="r"><code># comparison of bacterial taxa relative abudnance using LMEM or GAMLSS (take some time to run)
 #taxacom.6plus.sl5.zi.rmg&lt;-taxa.compare(taxtab=taxtab6plus.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;month.food5&quot;,adjustvar=&quot;age.sample&quot;,longitudinal=&quot;yes&quot;,p.adjust.method=&quot;fdr&quot;)
 #load saved results
 data(taxacom.6plus.sl5.rmg)
@@ -1851,7 +1853,7 @@ kable(studysum)</code></pre>
 <h3>Comparison of bacterial taxa relative abundance between male vs. female infants &lt; 6 months adjusting for breastfeeding statuses and age of infants at sample collection with GAMLSS</h3>
 <div id="analysis-of-bangladesh-data" class="section level4">
 <h4>Analysis of Bangladesh data</h4>
-<pre class="r"><code># Comparison of bacterial taxa relative abundance up to genus level (take time to run)
+<pre class="r"><code># Comparison of bacterial taxa relative abundance up to genus level (take some time to run)
 #taxacom6.zi.rm.sex.adjustbfage&lt;-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel=&quot;gamlss&quot;,comvar=&quot;gender&quot;,adjustvar=c(&quot;bf&quot;,&quot;age.sample&quot;),longitudinal=&quot;yes&quot;)
 # load saved results 
 data(taxacom.rm.sex.adjustbfage)
@@ -2036,7 +2038,7 @@ taxacom6.zi.usbmk.sex.adjustbfage$pop&lt;-&quot;USA(CA_FL)&quot;
 taxacom6.zi.unc.sex.adjustedbfage$study&lt;-&quot;Thompson et al 2015 (USA(NC))&quot;
 taxacom6.zi.unc.sex.adjustedbfage$pop&lt;-&quot;USA(NC)&quot;
 tabsex4&lt;-rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-# meta-analysis (take time to run)
+# meta-analysis (take some time to run)
 #metab.sex&lt;-meta.taxa(taxcomdat=tabsex4,summary.measure=&quot;RR&quot;,pool.var=&quot;id&quot;,studylab=&quot;study&quot;,backtransform=FALSE,percent.meta=0.5,p.adjust.method=&quot;fdr&quot;)
 #load saved results 
 data(metab.sex)
@@ -2477,7 +2479,7 @@ taxacom.zi.l3&lt;-rbind.fill(taxacom.zi.rm$l3,taxacom.zi.ha$l3,taxacom.zi.unc$l3
 #taxacom.zi.l3$pop&lt;-as.factor(taxacom.zi.l3$pop)
 pathcom.zi.sexg&lt;-list(l2=taxacom.zi.l2,l3=taxacom.zi.l3)
 
-# meta-analysis (take time to run)
+# meta-analysis (take some time to run)
 #pathmetatab.zi.sex.l2&lt;-meta.taxa(taxcomdat=pathcom.zi.sexg$l2, sm=&quot;RR&quot;,studylab = &quot;pop&quot;, p.adjust.method=&quot;fdr&quot;,percent.meta=0.5,pool.var=&quot;id&quot;)
 #pathmetatab.zi.sex.l3&lt;-meta.taxa(taxcomdat=pathcom.zi.sexg$l3, sm=&quot;RR&quot;,studylab = &quot;pop&quot;, p.adjust.method=&quot;fdr&quot;,percent.meta=0.5,pool.var=&quot;id&quot;)
 # load saved results 

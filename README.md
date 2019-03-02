@@ -53,7 +53,7 @@ p.bf.l2$p
 #### Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS 
 
 ```r
-# Comparison of bacterial taxa relative abundance using GAMLSS (take time to run)
+# Comparison of bacterial taxa relative abundance using GAMLSS 
 taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm,propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1))
@@ -63,7 +63,7 @@ kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, sho
 ### Example 2: Comparison of bacterial taxa relative abundance in infants < 6 months between gender adjusting for breastfeeding statuses and age of infants at sample collection with GAMLSS 
 
 ```r
-# Comparison of bacterial taxa relative abundance up to genus level (take time to run)
+# Comparison of bacterial taxa relative abundance up to genus level 
 taxacom6.zi.rm.sex.adjustbfage<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="gender",adjustvar=c("bf","age.sample"),longitudinal="yes")
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none", showvar="genderMale", tax.lev="l2",p.adjust.method="fdr"))
@@ -96,7 +96,7 @@ taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
 tabsex4<-rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
 ```
 
-##### Meta-analysis (take time to run)
+##### Meta-analysis 
 ```r
 metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
 ```
