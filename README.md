@@ -54,7 +54,7 @@ p.bf.l2$p
 
 ```r
 # Comparison of bacterial taxa relative abundance using GAMLSS 
-taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm,propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
+taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
 #phylum
 kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1))
 ```
