@@ -5,9 +5,9 @@
 \title{Meta-analysis of taxa/pathway abundance comparison.}
 \usage{
 meta.taxa(taxcomdat, estimate.pattern = "Estimate.",
-  se.pattern = "Std. Error.", summary.measure = "RR", pool.var = "id",
-  studylab = "study", backtransform = FALSE, percent.meta = 0.5,
-  p.adjust.method = "fdr", ...)
+  se.pattern = "Std. Error.", summary.measure = "RR",
+  pool.var = "id", studylab = "study", backtransform = FALSE,
+  percent.meta = 0.5, p.adjust.method = "fdr", ...)
 }
 \arguments{
 \item{taxcomdat}{matrice of estimates and SE of all taxa/pathways combined from all included studies.}

@@ -6,7 +6,8 @@
 \usage{
 taxcomtab.show(taxcomtab, sumvar = "taxa", tax.lev = "l2",
   tax.select = "none", showvar, readjust.p = FALSE,
-  p.adjust.method = "fdr", p.cutoff = 0.05, digit = 2, p.digit = 4, ...)
+  p.adjust.method = "fdr", p.cutoff = 0.05, digit = 2, p.digit = 4,
+  ...)
 }
 \arguments{
 \item{taxcomtab}{table of taxa abundance comparison generated from taxa.compare.}
