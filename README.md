@@ -3,12 +3,13 @@
 
 This is an initial version of the package *metamicrobiomeR*. An R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  
 
-The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188 by Ho NT, Li F, Wang S, Kuhn L <doi:10.1186/s12859-019-2744-2> . 
+The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. <doi:10.1186/s12859-019-2744-2> . 
 
 To start, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
 
 The *metamicrobiomeR* package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
-    with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data (with various         options for data transformation/normalization to address compositional effects) and 
+    with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data (with various         
+    options for data transformation/normalization to address compositional effects) and 
     random effect meta-analysis models for meta-analysis pooling estimates across microbiome studies.
     Random Forest model to predict microbiome age based on relative abundances of  
     shared bacterial genera with the Bangladesh data (Subramanian et al 2014), 
