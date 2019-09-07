@@ -3,7 +3,7 @@
 
 This is an initial version of the package *metamicrobiomeR*. A R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  
 
-The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. <doi:10.1186/s12859-019-2744-2> . 
+The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188  <<doi:10.1186/s12859-019-2744-2>> . 
 
 To start, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
 
