@@ -1,7 +1,9 @@
 
 
 
-This is an initial version of the package *metamicrobiomeR*.   
+This is an initial version of the package *metamicrobiomeR*. A R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  
+
+The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. doi: 10.1186/s12859-019-2744-2. 
 
 To start, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
 
@@ -12,8 +14,6 @@ The *metamicrobiomeR* package implements Generalized Additive Model for Location
     shared bacterial genera with the Bangladesh data (Subramanian et al 2014), 
     comparison of multiple diversity indexes using linear/linear mixed effect models 
     and some data display/visualization are also implemented.
-
-The initial version of the manuscript describing the methods implemented in the *metamicrobiomeR* package as well as simulations, and example analyses/results are now available in preprint at: <https://www.biorxiv.org/content/early/2018/04/04/294678>. 
 
 
 ## Some snapshots
