@@ -1,11 +1,11 @@
 
 
 
-This is an initial version of the package *metamicrobiomeR*. An R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  
+This is an initial version of the package *metamicrobiomeR*. An R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  There are some updates/ minor changes in the R cran version as compared to the Github version.  Users are recommended to use the R cran version. 
 
 The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. <https://doi.org/10.1186/s12859-019-2744-2> . 
 
-To start, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
+For Github version, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
 
 The *metamicrobiomeR* package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
     with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data (with various         
