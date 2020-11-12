@@ -1,7 +1,7 @@
 
 
 
-This is an initial version of the package *metamicrobiomeR*. An R cran version of the package can be found at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  There are some updates/ minor changes in the R cran version as compared to the Github version.  Users are recommended to use the R cran version. 
+The most updated version of the package "metamicrobiomeR" is in R cran at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  There are some updates/ minor changes in the R cran version as compared to this initial version of the package deposited in Github.  Users are recommended to use the R cran version. 
 
 The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. <https://doi.org/10.1186/s12859-019-2744-2> . 
 
