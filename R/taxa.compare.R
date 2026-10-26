@@ -245,9 +245,9 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
   }
   np<-length(colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])
   if(np>1){
-    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
   }else{
-    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-stats::p.adjust(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-stats::p.adjust(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],method = p.adjust.method)
   }
   return(estisum)
 }

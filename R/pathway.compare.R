@@ -181,7 +181,7 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
         }
       }
     }
-    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
     estilist[[j]]<-estisum
   }
   names(estilist)<-pathlev

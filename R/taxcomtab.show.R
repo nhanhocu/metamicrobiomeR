@@ -75,7 +75,7 @@ taxcomtab.show<-function(taxcomtab,sumvar="taxa", tax.lev="l2",tax.select="none"
   }
   datuse<-as.data.frame(mtaba[mtaba$id %in% taxuse,])
   if (readjust.p==TRUE){
-    datuse[,sub('.*\\.', 'pval.adjust.',colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))])]<-stats::p.adjust(datuse[,colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))]],method = p.adjust.method)
+    datuse[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))])]<-stats::p.adjust(datuse[,colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))]],method = p.adjust.method)
   }
   datuse<-as.data.frame(datuse)
   datsig<-datuse[datuse[,colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))]]<p.cutoff,]
