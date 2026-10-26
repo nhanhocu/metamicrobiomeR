@@ -1,9 +1,12 @@
 Package: metamicrobiomeR
 Title: Microbiome Data Analysis & Meta-Analysis with GAMLSS-BEZI &
         Random Effects
-Version: 1.2
-Authors@R: person("Nhan", "Ho", email = "nhanhocumc@gmail.com",
-                  role = c("aut", "cre")) 
+Version: 1.3
+Authors@R: c(
+    person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut"),
+    person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3283-0370"))
+    )
 Description: Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
     with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data 
     (with various options for data transformation/normalization to address compositional effects) and 
@@ -16,21 +19,15 @@ Description: Generalized Additive Model for Location, Scale and Shape (GAMLSS)
     The reference paper is published by 
     Ho NT, Li F, Wang S, Kuhn L (2019) <doi:10.1186/s12859-019-2744-2> . 
 Depends: R (>= 4.0.0), gamlss
-License: GPL-2
+License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
-        lmerTest, matrixStats, zCompositions, compositions
+        matrixStats, zCompositions, compositions
 Suggests: testthat, RCurl, httr, repmis, jsonlite, knitr, rmarkdown,
         grDevices, gplots, magrittr, tools, foreign, mgcv, reshape2,
         caret, randomForest, tsibble, RColorBrewer
 VignetteBuilder: knitr
 URL: https://github.com/nhanhocu/metamicrobiomeR
 BugReports: https://github.com/nhanhocu/metamicrobiomeR/issues
-NeedsCompilation: no
-Packaged: 2020-10-31 01:41:11 UTC; nhanht6
-Author: Nhan Ho [aut, cre]
-Maintainer: Nhan Ho <nhanhocumc@gmail.com>
-Repository: CRAN
-Date/Publication: 2020-11-09 11:20:05 UTC
