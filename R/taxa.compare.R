@@ -168,7 +168,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
         if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))>1){
           fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
           if (longitudinal=="yes"){
-            fitcoef[,"Pr(>|t|)"]<-1.96*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            fitcoef[,"Pr(>|t|)"]<-2*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
           }
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
@@ -180,7 +180,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
           rownames(fitcoef)<-rownames(fitsum$coefficients)[rownames(fitsum$coefficients)!="(Intercept)"]
           colnames(fitcoef)<-colnames(fitsum$coefficients)
           if (longitudinal=="yes"){
-            fitcoef[,"Pr(>|t|)"]<-1.96*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            fitcoef[,"Pr(>|t|)"]<-2*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
           }
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
