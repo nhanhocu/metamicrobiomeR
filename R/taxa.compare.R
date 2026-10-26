@@ -159,12 +159,12 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
       if (longitudinal=="no"){
         fitsum<-try(summary(stats::glm(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
       }
-      if (class(fitsum) == "try-error") {
+      if (inherits(fitsum, "try-error")) {
         warning("Error in model fit, NA introduced.\n")
         fitcoefw<-NULL
         estisum<-plyr::rbind.fill(estisum,fitcoefw)
       }
-      if (class(fitsum) != "try-error") {
+      if (!inherits(fitsum, "try-error")) {
         if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))>1){
           fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
           if (longitudinal=="yes"){
@@ -214,12 +214,12 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
                                     sep = "~")), family = BEZI, data = testdat,
                                     trace = FALSE), save = TRUE))
       }
-      if (class(fitsum) == "try-error") {
+      if (inherits(fitsum, "try-error")) {
         warning("Error in model fit, NA introduced.\n")
         fitcoefw<-NULL
         estisum<-plyr::rbind.fill(estisum,fitcoefw)
       }
-      if (class(fitsum) != "try-error") {
+      if (!inherits(fitsum, "try-error")) {
         if (length(which(rownames(fitsum$coef.table)!="(Intercept)"))>1){
           fitcoef<-as.data.frame(fitsum$coef.table[rownames(fitsum$coef.table)!="(Intercept)",])
           fitcoef[,"varname"]<-rownames(fitcoef)

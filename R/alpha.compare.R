@@ -76,12 +76,12 @@ alpha.compare<-function(datlist,depth,mapfile,mapsampleid,comvar,adjustvar,
     if (longitudinal=="no"){
       fitsum<-try(summary(stats::glm(stats::as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=alphamap,family="gaussian")))
     }
-    if (class(fitsum) == "try-error") {
+    if (inherits(fitsum, "try-error")) {
       warning("Error in model fit, NA introduced.\n")
       fitcoefw<-NULL
       alphasum<-plyr::rbind.fill(alphasum,fitcoefw)
     }
-    if (class(fitsum) != "try-error") {
+    if (!inherits(fitsum, "try-error")) {
       fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
       if (longitudinal=="yes"){
         fitcoef[,"Pr(>|t|)"]<-2*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))

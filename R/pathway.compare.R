@@ -97,12 +97,12 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
         if (longitudinal=="no"){
           fitsum<-try(summary(stats::glm(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=pathdat,family="gaussian")))
         }
-        if (class(fitsum) == "try-error") {
+        if (inherits(fitsum, "try-error")) {
           warning("Error in model fit, NA introduced.\n")
           fitcoefw<-NULL
           estisum<-plyr::rbind.fill(estisum,fitcoefw)
         }
-        if (class(fitsum) != "try-error") {
+        if (!inherits(fitsum, "try-error")) {
           if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))>1){
             fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
             if (longitudinal=="yes"){
@@ -152,12 +152,12 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
           #TO check
           #fitsum<-try(summary(gamlss::gamlss(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), gamlss.family = BEZI, data = testdat, trace = FALSE),save=TRUE))
         }
-        if (class(fitsum) == "try-error") {
+        if (inherits(fitsum, "try-error")) {
           warning("Error in model fit, NA introduced.\n")
           fitcoefw<-NULL
           estisum<-plyr::rbind.fill(estisum,fitcoefw)
         }
-        if (class(fitsum) != "try-error") {
+        if (!inherits(fitsum, "try-error")) {
           if (length(which(rownames(fitsum$coef.table)!="(Intercept)"))>1){
             fitcoef<-as.data.frame(fitsum$coef.table[rownames(fitsum$coef.table)!="(Intercept)",])
             fitcoef[,"varname"]<-rownames(fitcoef)
