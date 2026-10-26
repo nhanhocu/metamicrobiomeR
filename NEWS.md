@@ -35,3 +35,6 @@ redesigned version 2.0 is planned.
 ## Other changes
 
 * Removed the unused `lmerTest` import.
+* Removed ten unused packages from `Suggests` (`RCurl`, `httr`, `repmis`,
+  `jsonlite`, `magrittr`, `foreign`, `mgcv`, `reshape2`, `gplots`, `tsibble`).
+* Added regression tests for the fixes above.
