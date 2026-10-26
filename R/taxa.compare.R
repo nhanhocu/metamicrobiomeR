@@ -98,8 +98,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
 
     if (trace) message('Begin GMPR size factor calculation ...\n')
 
-    comm.no <- numeric(ncol(comm))
-    gmpr <- sapply(1:ncol(comm),  function(i) {
+    gmpr <- vapply(1:ncol(comm),  function(i) {
       if (i %% 50 == 0) {
         message(i, '\n')
       }
@@ -112,16 +111,17 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
       incl.no <- colSums(!is.na(pr))
       # Calculate the median of PR
       pr.median <- matrixStats::colMedians(pr, na.rm=TRUE)
-      # Record the number of samples used for calculating the GMPR
-      #comm.no[i] <<- sum(incl.no >= intersect.no)
+      # Number of samples used for calculating the GMPR
+      n.incl <- sum(incl.no >= intersect.no)
       # Geometric mean of PR median
-      if (comm.no[i] > 1) {
-        return(exp(mean(log(pr.median[incl.no >= intersect.no]))))
+      if (n.incl > 1) {
+        return(c(exp(mean(log(pr.median[incl.no >= intersect.no]))), n.incl))
       } else {
-        return(NA)
+        return(c(NA_real_, n.incl))
       }
-    }
-    )
+    }, numeric(2))
+    comm.no <- gmpr[2, ]
+    gmpr <- gmpr[1, ]
     if (sum(is.na(gmpr))) {
       warning(paste0('The following samples\n ', paste(colnames(comm)[is.na(gmpr)], collapse='\n'),
                      '\ndo not share at least ', intersect.no, ' common taxa with the rest samples! ',
