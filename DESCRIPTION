@@ -25,7 +25,7 @@ LazyData: true
 RoxygenNote: 7.3.1
 Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
         matrixStats, zCompositions, compositions, stats, utils
-Suggests: testthat, knitr, rmarkdown, grDevices, tools, caret,
+Suggests: testthat, gamlss.dist, knitr, rmarkdown, grDevices, tools, caret,
         randomForest, RColorBrewer
 VignetteBuilder: knitr
 URL: https://github.com/nhanhocu/metamicrobiomeR

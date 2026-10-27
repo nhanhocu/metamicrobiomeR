@@ -21,7 +21,12 @@ features in rows and samples in columns, with row and column names.}
 same dimnames as `counts` (if both are given). Optional when `counts` is given.}
 
 \item{taxonomy}{Optional data.frame with one row per feature (row names equal
-to the feature IDs) and rank columns (kingdom to species, any case).}
+to the feature IDs) and rank columns (kingdom to species, any case). An
+optional `rank` column states the level at which each feature is defined
+(a taxonomic rank for agglomerated tables, or e.g. "leaf" for ASVs/OTUs);
+it is never inferred from the taxonomy, because a feature with an
+unassigned genus can still be a genus-level feature. Relative abundances
+must sum to at most 1 within each `rank` group.}
 
 \item{samples}{data.frame with one row per sample; row names are the sample IDs.}
 

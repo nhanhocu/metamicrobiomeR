@@ -63,6 +63,7 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
   if (!is.list(study) || is.null(names(study)) && length(study) > 0) {
     stop("'study' must be a named list.", call. = FALSE)
   }
+  study <- study[!vapply(study, is.null, logical(1))]  # NULL entries would delete the defaults
   for (req in c("id", "feature_type")) {
     if (is.null(study[[req]]) || is.na(study[[req]][1]) || !nzchar(study[[req]][1])) {
       stop("study$", req, " is required.", call. = FALSE)
@@ -156,7 +157,7 @@ check_study <- function(x) {
   if (!identical(rownames(x$features), rownames(ref))) stop("'features' rows must match the assay rows.", call. = FALSE)
   if (!identical(rownames(x$samples), colnames(ref))) stop("'samples' rows must match the assay columns.", call. = FALSE)
   subj <- x$study$subject
-  if (!is.na(subj) && !subj %in% colnames(x$samples)) {
+  if (length(subj) == 1 && !is.na(subj) && !subj %in% colnames(x$samples)) {
     stop("study$subject ('", subj, "') is not a column of 'samples'.", call. = FALSE)
   }
   zero <- if (!is.null(a$counts)) colSums(a$counts) == 0 else colSums(a$relabund) == 0

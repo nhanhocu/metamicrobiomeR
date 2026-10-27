@@ -86,3 +86,11 @@ test_that("zero-depth samples give a warning, not an error", {
   expect_warning(s <- as_study(counts = d$counts, samples = d$samp, study = info), "zero total")
   expect_true(all(is.na(mm_relabund(s)[, 3])))
 })
+
+test_that("NULL study metadata falls back to the defaults instead of breaking the check", {
+  d <- make_toy()
+  s <- as_study(counts = d$counts, samples = d$samp,
+                study = list(id = "toy", feature_type = "asv", subject = NULL, region = NULL))
+  expect_true(is.na(mm_study_info(s)$subject))
+  expect_true(is.na(mm_study_info(s)$region))
+})
