@@ -9,6 +9,11 @@ release with the old interface. See `dev/SPEC.md` for the new data contracts.
   rank columns, optional counts and validated study metadata.
 * New effect table (`new_effect_table()`, `check_effects()`, `bind_effects()`)
   as the interface between models and pooling.
+* `fit_study()` with the 1.x GAMLSS-BEZI engine (`bezi_gamlss`): fits a model to
+  every feature of a study and returns an effect table, with convergence reported
+  for every fit and an `n_cycles` option. It reproduces `taxa.compare()` from 1.x
+  and all GAMLSS-BEZI results in Tables 3 to 5 of Ho et al. (2019); see
+  `dev/VALIDATION.md` for the validation and the findings it produced.
 
 # metamicrobiomeR 1.3
 

@@ -25,13 +25,18 @@
 #'   when `study$subject` is set. The subject is the sample-data column named in
 #'   `study$subject`.
 #' @param min_prevalence,min_mean Feature filters (see Details).
+#' @param n_cycles Maximum number of outer iterations of the GAMLSS fitting
+#'   algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default, 20, is the
+#'   GAMLSS default and what 1.x used; fits that reach the limit are flagged
+#'   `converged = FALSE`.
 #' @return An `mm_effects` object with one row per feature and covariate term,
 #'   `part = "abundance"` and `effect_scale = "logit_mean"`. The attribute
 #'   `fit_info` is a data.frame with one row per fitted feature (samples used,
 #'   convergence, number of warnings, and any error message).
 #' @export
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
-                      longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05) {
+                      longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
+                      n_cycles = 20) {
   if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
   engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
@@ -77,7 +82,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     d$.y <- ra[i, ]
     d$.y[which(d$.y >= 1)] <- 0.9999
     d <- stats::na.omit(d)
-    res <- .fit_bezi_gamlss(f, d)
+    res <- .fit_bezi_gamlss(f, d, n_cycles)
     fid <- rownames(ra)[i]
     log[[k]] <- data.frame(feature = fid, n = nrow(d), converged = res$converged,
                            n_warnings = length(res$warnings), error = res$error,
@@ -103,12 +108,13 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
 }
 
 # One GAMLSS-BEZI fit; returns the mean-part coefficient table without the intercept
-.fit_bezi_gamlss <- function(f, d) {
+.fit_bezi_gamlss <- function(f, d, n_cycles = 20) {
   warns <- character()
   catch <- function(expr) withCallingHandlers(expr, warning = function(w) {
     warns <<- c(warns, conditionMessage(w)); invokeRestart("muffleWarning")
   })
-  fit <- tryCatch(catch(gamlss::gamlss(f, family = "BEZI", data = d, trace = FALSE)),
+  fit <- tryCatch(catch(gamlss::gamlss(f, family = "BEZI", data = d, trace = FALSE,
+                                                 control = gamlss::gamlss.control(n.cyc = n_cycles, trace = FALSE))),
                   error = function(e) e)
   if (inherits(fit, "error")) {
     return(list(table = NULL, converged = FALSE, warnings = warns, error = conditionMessage(fit)))
