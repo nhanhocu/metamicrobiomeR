@@ -12,24 +12,25 @@
 #' @param p.adjust.method method for multiple testing adjustment. Options are those of the p.adjust.methods of stats:: p.adjust function. Default for this function is "fdr".
 #' @param percent.filter prevalence threshold (the percentage of number of samples the taxa/pathway available). Default is 0.05.
 #' @param relabund.filter relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.
-#' @param pooldata whether data is pooled from multiple studies. Default is FALSE.
 #' @return matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
 #' @keywords taxa abundance comparison
+#' @import gamlss
+#' @importFrom matrixStats colMedians
+#' @rawNamespace import(lme4, except = refit)
 #' @export
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-#' data(taxtab.rm7)
-#' #Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take time to run)
-#' taxacom6.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="lm",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-#' taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-#' taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr")
+#' data(taxtab6)
+#' tab6<-as.data.frame(taxtab6)
+#' tl<-colnames(taxtab6)[grep("k__bacteria.p__fusobacteria",colnames(taxtab6))]
+#' taxacom.ex<-taxa.compare(taxtab=tab6[,c("personid","x.sampleid","bf","age.sample",tl)],
+#' propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",
+#' longitudinal="yes",p.adjust.method="fdr")
 
 
 taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.method="none",
                        comvar,adjustvar,personid="personid",longitudinal="yes",
-                       percent.filter=0.05,relabund.filter=0.00005,p.adjust.method="fdr",...){
-  #sapply(c("lme4", "gamlss","gdata","reshape2","plyr","matrixStats","devtools","RCurl","httr","repmis","jsonlite"), require, character.only = TRUE)
-  require(gamlss)
+                       percent.filter=0.05,relabund.filter=0.00005,p.adjust.method="fdr"){
   taxdat<-as.data.frame(taxtab)
   taxdat[,comvar]<-gdata::drop.levels(taxdat[,comvar],reorder=FALSE) #drop missing/unused level and keep level order
   if (longitudinal=="yes"){
@@ -37,8 +38,6 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
   }
   # get assigned taxa only
   taxlist<-colnames(taxdat)[grep("k__",colnames(taxdat))]
-  #taxdat[,taxlist]<-lapply(taxdat[,taxlist],as.character)
-  #taxdat[,taxlist]<-lapply(taxdat[,taxlist],as.numeric)
   #filter using percent.filter
   taxtest<-apply(taxdat[,taxlist],2,function(x){length(x[!is.na(x)&x>0])})
   taxget<-taxtest[taxtest>=percent.filter*(nrow(taxdat))]
@@ -88,13 +87,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
   }
 
   #GMPR normalization
-  #source GMPR from github repo: "https://github.com/jchen1981/GMPR/blob/master/GMPR.R"
-  #url<-"https://github.com/jchen1981/GMPR/blob/master/GMPR.R"
-  #script <- getURL(url, ssl.verifypeer = FALSE)
-  #eval(parse(text = script))
-  #The functions to source R function directly from github sometimes does not work properly.
-  #The GMPR function from the above github repo is copied below for convenience.
-  require(matrixStats)
+  #GMPR script is copied from github repo: "https://github.com/jchen1981/GMPR/blob/master/GMPR.R"
   GMPR <- function (comm, intersect.no = 10, ct.min = 1, trace = TRUE) {
     # mask counts < ct.min
     comm[comm < ct.min] <- 0
@@ -103,12 +96,12 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
       colnames(comm) <- paste0('S', 1:ncol(comm))
     }
 
-    if (trace) cat('Begin GMPR size factor calculation ...\n')
+    if (trace) message('Begin GMPR size factor calculation ...\n')
 
     comm.no <- numeric(ncol(comm))
     gmpr <- sapply(1:ncol(comm),  function(i) {
       if (i %% 50 == 0) {
-        cat(i, '\n')
+        message(i, '\n')
       }
       x <- comm[, i]
       # Compute the pairwise ratio
@@ -120,7 +113,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
       # Calculate the median of PR
       pr.median <- matrixStats::colMedians(pr, na.rm=TRUE)
       # Record the number of samples used for calculating the GMPR
-      comm.no[i] <<- sum(incl.no >= intersect.no)
+      #comm.no[i] <<- sum(incl.no >= intersect.no)
       # Geometric mean of PR median
       if (comm.no[i] > 1) {
         return(exp(mean(log(pr.median[incl.no >= intersect.no]))))
@@ -136,8 +129,8 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
                      'You may consider removing these samples since they are potentially outliers or negative controls!\n',
                      'You may also consider decreasing the minimum number of intersecting taxa and rerun the procedure!\n'))
     }
-    if (trace) cat('Completed!\n')
-    if (trace) cat('Please watch for the samples with limited sharing with other samples based on NSS! They may be outliers! \n')
+    if (trace) message('Completed!\n')
+    if (trace) message('Please watch for the samples with limited sharing with other samples based on NSS! They may be outliers! \n')
     names(gmpr) <- names(comm.no) <- colnames(comm)
     attr(gmpr, 'NSS') <- comm.no
     return(gmpr)
@@ -156,17 +149,18 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
   # begin models for differential abundance testing
   estisum<-NULL
   for (i in 1: length(taxname)){
-    print(i)
+    #print(i)
     #linear/linear mixed effect model
     if (propmed.rel=="lm"){
       if (longitudinal=="yes"){
-        fitsum<-try(summary(lme4::glmer(as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat,family=gaussian(link="identity"))))
+        fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat)))
+        #fitsum<-try(summary(lme4::glmer(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
       }
       if (longitudinal=="no"){
-        fitsum<-try(summary(glm(as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
+        fitsum<-try(summary(stats::glm(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
       }
       if (class(fitsum) == "try-error") {
-        cat("Error in model fit, NA introduced.\n")
+        warning("Error in model fit, NA introduced.\n")
         fitcoefw<-NULL
         estisum<-plyr::rbind.fill(estisum,fitcoefw)
       }
@@ -174,11 +168,11 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
         if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))>1){
           fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
           if (longitudinal=="yes"){
-            fitcoef[,"Pr(>|t|)"]<-1.96*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            fitcoef[,"Pr(>|t|)"]<-1.96*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
           }
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
-          fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          fitcoefw<-stats::reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
         }
         #handling issue when there is one row
         if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))==1){
@@ -186,11 +180,11 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
           rownames(fitcoef)<-rownames(fitsum$coefficients)[rownames(fitsum$coefficients)!="(Intercept)"]
           colnames(fitcoef)<-colnames(fitsum$coefficients)
           if (longitudinal=="yes"){
-            fitcoef[,"Pr(>|t|)"]<-1.96*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+            fitcoef[,"Pr(>|t|)"]<-1.96*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
           }
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
-          fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          fitcoefw<-stats::reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
         }
         # when there is no coef
         if (length(which(rownames(fitsum$coefficients)!="(Intercept)"))==0){
@@ -202,21 +196,26 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
     }
     #Generalized Additive Models for Location Scale and Shape (GAMLSS): Betazeroinflated (BEZI) family, mu link logit
     if (propmed.rel=="gamlss"){
-      testdat<-taxdat[,c(taxname[i],comvar,adjustvar,"personid")]
-      testdat[,taxname[i]][testdat[,taxname[i]]>=1]<-0.9999 # dirty fix for 1 value of relative abundance
-      testdat<-na.omit(testdat)
-      if (longitudinal=="yes"){
-        fitsum<-try(summary(gamlss::gamlss(as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"random(personid)"),collapse="+"),sep="~")), family = BEZI, data = testdat, trace = FALSE),save=TRUE))
-        #To check: gamlss:random(personid) will give different results from random(personid); gamlss.family=BEZI will give different results from family=BEZI
-        #fitsum<-try(summary(gamlss::gamlss(as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"gamlss::random(personid)"),collapse="+"),sep="~")), gamlss.family = BEZI, data = testdat, trace = FALSE),save=TRUE))
+      if (longitudinal == "yes") {
+        testdat <- taxdat[, c(taxname[i], comvar, adjustvar, "personid")]
+        testdat[, taxname[i]][testdat[, taxname[i]] >= 1] <- 0.9999
+        testdat <- stats::na.omit(testdat)
+        fitsum <- try(summary(gamlss::gamlss(stats::as.formula(paste(taxname[i],
+                                  paste(c(comvar, adjustvar, "random(personid)"),
+                                  collapse = "+"), sep = "~")), family = BEZI,
+                                  data = testdat, trace = FALSE), save = TRUE))
       }
-      if (longitudinal=="no"){
-        fitsum<-try(summary(gamlss::gamlss(as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), family = BEZI, data = testdat, trace = FALSE),save=TRUE))
-        #To check: gamlss:random(personid) will give different results from random(personid); gamlss.family=BEZI will give different results from family=BEZI
-        #fitsum<-try(summary(gamlss::gamlss(as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), gamlss.family = BEZI, data = testdat, trace = FALSE),save=TRUE))
+      if (longitudinal == "no") {
+        testdat <- taxdat[, c(taxname[i], comvar, adjustvar)]
+        testdat[, taxname[i]][testdat[, taxname[i]] >= 1] <- 0.9999
+        testdat <- stats::na.omit(testdat)
+        fitsum <- try(summary(gamlss::gamlss(stats::as.formula(paste(taxname[i],
+                                    paste(c(comvar, adjustvar), collapse = "+"),
+                                    sep = "~")), family = BEZI, data = testdat,
+                                    trace = FALSE), save = TRUE))
       }
       if (class(fitsum) == "try-error") {
-        cat("Error in model fit, NA introduced.\n")
+        warning("Error in model fit, NA introduced.\n")
         fitcoefw<-NULL
         estisum<-plyr::rbind.fill(estisum,fitcoefw)
       }
@@ -225,7 +224,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
           fitcoef<-as.data.frame(fitsum$coef.table[rownames(fitsum$coef.table)!="(Intercept)",])
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
-          fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          fitcoefw<-stats::reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
         }
         #handle the issues when there is only one row
         if (length(which(rownames(fitsum$coef.table)!="(Intercept)"))==1){
@@ -234,7 +233,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
           colnames(fitcoef)<-colnames(fitsum$coef.table)
           fitcoef[,"varname"]<-rownames(fitcoef)
           fitcoef[,"id"]<-taxname[i]
-          fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+          fitcoefw<-stats::reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
         }
         # when there is no coef
         if (length(which(rownames(fitsum$coef.table)!="(Intercept)"))==0){
@@ -246,9 +245,10 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
   }
   np<-length(colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])
   if(np>1){
-    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,p.adjust,method = p.adjust.method)
+    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
   }else{
-    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-p.adjust(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],method = p.adjust.method)
+    estisum[,sub('.*\\.', 'pval.adjust.',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-stats::p.adjust(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],method = p.adjust.method)
   }
   return(estisum)
 }
+

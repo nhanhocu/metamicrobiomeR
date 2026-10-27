@@ -36,31 +36,34 @@
 #' @keywords meta-analysis heatmap forest plot.
 #' @export
 #' @examples
-#' #Load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection
-#' data(taxacom.rm.sex.adjustbfage)
-#' data(taxacom.ha.sex.adjustbfage)
-#' data(taxacom6.zi.usbmk.sex.adjustbfage)
-#' data(taxacom6.unc.sex.adjustedbfage)
-#' taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-#' taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-#' taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-#' taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-#' taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-#' taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-#' taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-#' taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-#' tabsex4<-plyr::rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-#' #Meta-analysis (take time to run)
-#' metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-#' #nice plot phylum level
-#' metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-#' meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=7)
-#' #nice plot family level
-#' metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-#' meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
+#' # load saved GAMLSS-BEZI results of four studies
+#' # for the comparison of bacterial taxa relative abundance
+#' # between genders adjusted for breastfeeding and
+#' # infant age at sample collection
+#' data(tabsex4)
+#' #select only taxonomies of a small phylum for meta-analysis example
+#' # (to save running time)
+#' tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+#' # meta-analysis
+#' metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id %in% tlm,],
+#' summary.measure="RR", pool.var="id", studylab="study", backtransform=FALSE,
+#' percent.meta=0.5, p.adjust.method="fdr")
+#' #show results by table and plot
+#' #phylum
+#' #table
+#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id %in% tlm,],
+#' tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
+#' #plot
+#' metadat<-metatab.show(metatab=metab.sex$random, com.pooled.tab=tabsex4[tabsex4$id %in% tlm,],
+#' tax.lev="l2", showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
+#' meta.niceplot(metadat=metadat,sumtype="taxa",level="main",
+#' p="p",p.adjust="p.adjust", phyla.col="rainbow", p.sig.heat="yes",
+#' heat.forest.width.ratio =c(1.5,1), leg.key.size=0.8, leg.text.size=10,
+#' heat.text.x.size=10, heat.text.x.angle=0, forest.axis.text.y=8,
+#' forest.axis.text.x=10, point.ratio = c(4,2),line.ratio = c(2,1))
 
 
-meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col=c("rainbow","select"),
+meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col="rainbow",
                         phyla.select=c("actinobacteria","bacteroidetes","cyanobacteria","firmicutes","fusobacteria","proteobacteria","verrucomicrobia",".thermi."),
                         col.select=c("#dd1c77","#31a354","#91003f","#d95f0e","#636363","#2ef0e7","#862ef0","#000"),
                         est.break=c(-Inf, -1,-0.5,-0.1,0,0.1,0.5,1, Inf), est.break.label=c("<-1", "[-1,-0.5)","[-0.5,-0.1)","[-0.1,0)", "[0,0.1)", "[0.1,0.5)", "[0.5,1)", ">=1"),
@@ -68,10 +71,9 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
                         p.sig.heat="no",p.break=c(0,0.0001,0.05,1),p.break.label=c("**","*",""),
                         p.pool.break=c(0,0.05,1), p.pool.break.label=c("[0,0.05)","[0.05,1]"),
                         padjust.pool.break=c(0,0.1,1), padjust.pool.break.label=c("[0,0.1)","[0.1,1]"),
-                        forest.est.shape=c("17","16"), forest.est.col=c("red", "black"),forest.col=c("by.pvalue","by.estimate"),
+                        forest.est.shape=c("17","16"), forest.est.col=c("red", "black"),forest.col="by.pvalue",
                         leg.key.size=1,leg.text.size=8,heat.text.x.size=8,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=8,
                         heat.forest.width.ratio = c(1,1),point.ratio=c(3,1),line.ratio=c(2,1)){
-  #require(ggplot2);require(gridExtra);require("gplots");require(reshape2); require(gdata); require(RColorBrewer)
   #heatmap
   test<-metadat$taxsig.all
   test$taxa<-test$id
@@ -159,7 +161,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
         testf$colp<-as.character(testf$colp)
       }
       if (phyla.col=="rainbow"){
-        testf$colp<-plyr::mapvalues(testf$taxa,from=levels(testf$taxa),to=rainbow(nlevels(testf$taxa)))
+        testf$colp<-plyr::mapvalues(testf$taxa,from=levels(testf$taxa),to=grDevices::rainbow(nlevels(testf$taxa)))
         testf$colp<-as.character(testf$colp)
       }
       testf$plotvar<-testf$taxa2
@@ -181,7 +183,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
         testf$colp<-as.character(testf$colp)
       }
       if (phyla.col=="rainbow"){
-        testf$colp<-plyr::mapvalues(testf$phylum,from=levels(testf$phylum),to=rainbow(nlevels(testf$phylum)))
+        testf$colp<-plyr::mapvalues(testf$phylum,from=levels(testf$phylum),to=grDevices::rainbow(nlevels(testf$phylum)))
         testf$colp<-as.character(testf$colp)
       }
       testf$plotvar<-testf$taxas
@@ -196,8 +198,8 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
   testf$pcut<-testf[,p]
   testf$p.adjustcut<-testf[,p.adjust]
   testf$psig<-cut(testf$pcut, breaks=p.pool.break,labels=p.pool.break.label ,include.lowest = TRUE, right = FALSE)
-  testf$psigsize<-mapvalues(testf$psig,from=p.pool.break.label, to=point.ratio)
-  testf$psigsize2<-mapvalues(testf$psig,from=p.pool.break.label, to=line.ratio)
+  testf$psigsize<-plyr::mapvalues(testf$psig,from=p.pool.break.label, to=point.ratio)
+  testf$psigsize2<-plyr::mapvalues(testf$psig,from=p.pool.break.label, to=line.ratio)
   testf$psigcol<-plyr::mapvalues(testf$psig,from=p.pool.break.label,to=forest.est.col)
   testf$psigcol<-gdata::drop.levels(testf$psigcol,reorder=FALSE)
   testf$padjustsig<-cut(testf$p.adjustcut, breaks=padjust.pool.break,labels=padjust.pool.break.label,include.lowest = TRUE, right = FALSE)
@@ -207,10 +209,10 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
   #assign color to estimates
   testf$esticat<-cut(testf$estimate, breaks=est.break,
                        labels=est.break.label)
-  testf$esticol<-mapvalues(testf$esticat,from=est.break.label,
+  testf$esticol<-plyr::mapvalues(testf$esticat,from=est.break.label,
                              to=c(rev(RColorBrewer::brewer.pal(((length(est.break)-1)/2)+1, neg.palette)[-1]),RColorBrewer::brewer.pal(((length(est.break)-1)/2)+1, pos.palette)[-1]))
-  testf$esticat<-drop.levels(testf$esticat, reorder=FALSE)
-  testf$esticol<-drop.levels(testf$esticol, reorder=FALSE)
+  testf$esticat<-gdata::drop.levels(testf$esticat, reorder=FALSE)
+  testf$esticol<-gdata::drop.levels(testf$esticol, reorder=FALSE)
   # dirty truncate large estimate, LL and UL for better plot view
   testf[,c("estimate","ll","ul")]<-apply(testf[,c("estimate","ll","ul")],2,function(x){x[x>=5]=5;x[x<=-5]=-5;x})
   if (forest.col=="by.pvalue"){
@@ -229,10 +231,10 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
                      axis.text.x =ggplot2::element_text(size=forest.axis.text.x,colour="black",face="bold"))
   }
   if (forest.col=="by.estimate"){
-    f<-ggplot2::ggplot(data=testf,aes(x=estimate,y=plotvar,colour=esticol))+
+    f<-ggplot2::ggplot(data=testf,ggplot2::aes(x=estimate,y=plotvar,colour=esticol))+
       ggplot2::geom_point(shape=as.numeric(as.character(testf$padjustsign)),size=as.numeric(as.character(testf$psigsize)))+
       ggplot2::scale_y_discrete(position = "right")+ #,limits = rev(levels(testf$taxa2))
-      ggplot2::geom_errorbarh(aes(xmin=ll,xmax=ul,colour=esticol),height=0.0, size=as.numeric(as.character(testf$psigsize2)))+
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin=ll,xmax=ul,colour=esticol),height=0.0, size=as.numeric(as.character(testf$psigsize2)))+
       ggplot2::geom_vline(xintercept=0,linetype="dashed")+
       ggplot2::scale_colour_manual(breaks=testf$esticol,values = levels(testf$esticol))+
       ggplot2::theme(legend.position="none",

@@ -4,11 +4,20 @@
 \alias{taxa.mean.plot}
 \title{Plot mean taxa abundance}
 \usage{
-taxa.mean.plot(tabmean, sumvar = "taxa", tax.select = "none",
-  tax.lev = "l2", comvar, groupvar, mean.filter = 0.005,
-  pallete.by.phylum = FALSE, show.taxname = "full",
-  legend.position = "right", xlab = "Chronological age (month)",
-  ylab = "Relative abundance")
+taxa.mean.plot(
+  tabmean,
+  sumvar = "taxa",
+  tax.select = "none",
+  tax.lev = "l2",
+  comvar,
+  groupvar,
+  mean.filter = 0.005,
+  pallete.by.phylum = FALSE,
+  show.taxname = "full",
+  legend.position = "right",
+  xlab = "",
+  ylab = "Relative abundance"
+)
 }
 \arguments{
 \item{tabmean}{table of mean abundance generated from taxa.meansdn.}
@@ -30,6 +39,10 @@ taxa.mean.plot(tabmean, sumvar = "taxa", tax.select = "none",
 \item{show.taxname}{whether show "full" taxa name or "short" name. Default is "full".}
 
 \item{legend.position}{position of legend. Options are c("right", "left","bottom","top","none") as in ggplot2. Default is "right".}
+
+\item{xlab}{label for x-axis. Default is "Chronological age (month)".}
+
+\item{ylab}{label for y-axis. Default is "Relative abundance".}
 }
 \value{
 a list of ggplot2 object and list of taxa/pathways plotted (those with mean abundance >mean.filter).
@@ -39,10 +52,14 @@ This function visualize mean relative abundance by group as stacked plots.
 }
 \examples{
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-data(taxtab.rm7)
-library(magrittr)
-taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
-p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005,show.taxname="short")
+data(taxtab6)
+taxlist.rm<-taxa.filter(taxtab=taxtab6, percent.filter = 0.05, relabund.filter = 0.00005)
+taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab6,sumvar="bf",groupvar="age.sample")
+taxa.meansdn.rm<-taxa.meansdn.rm[taxa.meansdn.rm$bf!="No_BF",]
+taxa.meansdn.rm$bf<-gdata::drop.levels(taxa.meansdn.rm$bf,reorder=FALSE)
+#phylum
+p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm, tax.lev="l2",
+comvar="bf", groupvar="age.sample",mean.filter=0.005, show.taxname="short")
 p.bf.l2$p
 }
 \keyword{abundance}

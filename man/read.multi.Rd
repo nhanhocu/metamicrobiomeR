@@ -4,13 +4,18 @@
 \alias{read.multi}
 \title{Read multiple files}
 \usage{
-read.multi(patht, patternt = ".txt", assignt = "no", study = NULL,
-  tolower.colnames = TRUE)
+read.multi(
+  patht,
+  patternt = ".txt",
+  assignt = "no",
+  study = NULL,
+  tolower.colnames = TRUE
+)
 }
 \arguments{
 \item{patht}{path to files.}
 
-\item{patternt}{pattern of files. Options are ".txt" or ".csv" or ".sav" or ".sas7bdat".}
+\item{patternt}{pattern of files. Options are ".txt" or ".csv".}
 
 \item{assignt}{assign files. Default is "no".}
 
@@ -25,8 +30,19 @@ list of all data files in the path
 This function reads multiple files of the same pattern in a directory into R.
 }
 \examples{
-patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
-alpha.ba<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
+\donttest{
+# The data used for this example are available
+# in the "metamicrobiomeR" package version in Github.
+# Download example data from the package github repo
+#setwd("your directory") #put your working directory inside the quotation marks
+download.file(url = "https://github.com/nhanhocu/metamicrobiomeR/archive/master.zip",
+destfile = "metamicrobiomeR-master.zip")
+# unzip the .zip file
+unzip(zipfile = "metamicrobiomeR-master.zip")
+patht<-paste(getwd(),
+"metamicrobiomeR-master/inst/extdata/QIIME_outputs/Bangladesh/alpha_div_collated", sep="/")
+alpha.ba<-read.multi(patht=patht,patternt=".txt", assignt="no",study="Bangladesh")
+}
 }
 \keyword{files}
 \keyword{multiple}

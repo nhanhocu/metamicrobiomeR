@@ -6,33 +6,46 @@
 #' fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies,
 #' check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.
 #' @param l6.relabundtab list of taxa summary table from phylum up to genus level merged to mapping file outputed from QIIME of all included studies.
+#' @param bal6 reference data for model training (taxa summary table from phylum up to genus level merged to mapping file outputed from QIIME of the Bangladesh study).
 #' @return list of training and test sets of Bangladesh data, shared genera list, relative abundance data of shared genera, randomforest fit, RF model performance plot,predicted microbiome age of Bangladesh data and data of other included studies.
 #' @keywords microbiome age Random Forest.
 #' @export
 #' @examples
+#' \donttest{
+#' # The data used for this example are available
+#' # in the "metamicrobiomeR" package version in Github.
+#' # Download example data from the package github repo
+#' #setwd("your directory") #put your working directory inside the quotation marks
+#' download.file(url = "https://github.com/nhanhocu/metamicrobiomeR/archive/master.zip",
+#' destfile = "metamicrobiomeR-master.zip")
+#' # unzip the .zip file
+#' unzip(zipfile = "metamicrobiomeR-master.zip")
 #' #Load data from each study and put in a list
-#' #load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
-#' bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
+#' #Load Bangladesh train data
+#' patht<-paste(getwd(),
+#' "metamicrobiomeR-master/inst/extdata/QIIME_outputs/Bangladesh/tax_mapping7", sep="/")
+#' bal6 <- utils::read.delim(paste(patht, "Subramanian_et_al_mapping_file_L6.txt", sep="/"))
 #' colnames(bal6)<-tolower(colnames(bal6))
-#' #View(bal6)
-#' #format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection
 #' # Load data of 3 other studies
+#' #format for data of other studies should be similar to Bangladesh data,
+#' # must have 'age.sample' variable as age of infant at stool sample collection
 #' data(gtab.3stud)
 #' names(gtab.3stud)
-#' #predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies
-#' #(take time to run)
-#' miage<-microbiomeage(l6.relabundtab=gtab.3stud)
-#' #list of shared genera that are available in the Bangladesh study and other included studies
+#' #predict microbiome age on Bangladesh data and
+#' # data of other three studies based on shared genera across 4 studies
+#' #Predict microbiome age on train and test data (take time to run)
+#' miage<-microbiomeage(l6.relabundtab=gtab.3stud, bal6=bal6)
+#' #list of shared genera that are available in the Bangladesh study
+#' # and other included studies
 #' miage$sharedgenera.importance
 #' #check performance
 #' gridExtra::grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
 #' #replicate the findings of Subramanian et al paper
-#' ggplot2::ggplot() +geom_point(data=miage$microbiomeage.bangladesh$all,aes(x=age.sample, y=age.predicted, colour=health_analysis_groups))
+#' ggplot2::ggplot() +geom_point(data=miage$microbiomeage.bangladesh$all,
+#' aes(x=age.sample, y=age.predicted, colour=health_analysis_groups))
+#' }
 
-microbiomeage<-function(l6.relabundtab){
-  #require(caret); require(randomForest); require(ggplot2)
-  bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-  colnames(bal6)<-tolower(colnames(bal6))
+microbiomeage<-function(l6.relabundtab, bal6){
   gba<-colnames(bal6)[grep("g__",colnames(bal6))]
   #get shared genera list of Bangladesh and other studies
   glist<-list()
@@ -50,7 +63,7 @@ microbiomeage<-function(l6.relabundtab){
   traindat<-SdataMatrix[train,]
   testdat<-SdataMatrix[test,]
   #randomForest
-  set.seed(123)
+  #set.seed(123)
   rffit<- caret::train(age.sample ~ ., data = traindat, method = "rf",preProc = "center", proximity = TRUE)
   #predict on the Bangladesh data
   testage <- predict(rffit, newdata = testdat)

@@ -4,8 +4,14 @@
 \alias{taxa.meansdn}
 \title{Summarize abundance by group}
 \usage{
-taxa.meansdn(taxtab, sumvar, groupvar, percent.filter = 0.05,
-  relabund.filter = 5e-05, othervar = "none")
+taxa.meansdn(
+  taxtab,
+  sumvar,
+  groupvar,
+  percent.filter = 0.05,
+  relabund.filter = 5e-05,
+  othervar = "none"
+)
 }
 \arguments{
 \item{taxtab}{taxa/pathway  abundance table from phylum to species or any preferred highest taxa level.}
@@ -18,7 +24,7 @@ taxa.meansdn(taxtab, sumvar, groupvar, percent.filter = 0.05,
 
 \item{relabund.filter}{relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.}
 
-\item{othervar}{list of variables that are not abundance variables to be summarized. Default is "none".}
+\item{othervar}{vector of variables that are not abundance variables to be summarized. Default is "none".}
 }
 \value{
 table of mean, sd, count by group.
@@ -28,9 +34,8 @@ This function summarizes taxa/pathway abundance tables to provide mean, sd, coun
 }
 \examples{
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-data(taxtab.rm7)
-library(magrittr)
-taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
+data(taxtab6)
+taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab6,sumvar="bf",groupvar="age.sample")
 }
 \keyword{abundance}
 \keyword{summary}

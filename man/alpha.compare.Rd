@@ -4,9 +4,18 @@
 \alias{alpha.compare}
 \title{Compare multiple alpha diversity indexes between groups}
 \usage{
-alpha.compare(datlist, depth, mapfile, mapsampleid, comvar, adjustvar,
-  personid = "personid", longitudinal = "yes", age.limit = 1e+06,
-  standardize = FALSE, ...)
+alpha.compare(
+  datlist,
+  depth,
+  mapfile,
+  mapsampleid,
+  comvar,
+  adjustvar,
+  personid = "personid",
+  longitudinal = "yes",
+  age.limit = 1e+06,
+  standardize = FALSE
+)
 }
 \arguments{
 \item{datlist}{the list of your dataframe.}
@@ -37,19 +46,15 @@ This function calculates average of alpha diversity indexes for a specific raref
 using linear/linear mixed effect model and adjust for covariates.
 }
 \examples{
-#Read in outputs from "alpha_rarefaction.py" in QIIME
-patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
-alpha.rm<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
-#Bangladesh extra metadata
-data(sam.rm)
-samfile<-merge(samde, he50[,c("child.id","gender","month.exbf","month.food")],by="child.id")
-samfile$age.sample<-samfile$age.months
-samfile$bf<-factor(samfile$bf,levels=c("ExclusiveBF","Non_exclusiveBF","No_BF"))
-samfile$personid<-samfile$child.id
-samfile$sampleid<-tolower(samfile$fecal.sample.id)
-#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age
-alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
-alphacom6.rm.sexsg$alphasum[,1:5]
+data(alphadat)
+data(covar.rm)
+covar.rm$sampleid<-tolower(covar.rm$sampleid)
+#comparison of standardized alpha diversity indexes between genders adjusting for
+#breastfeeding and infant age at sample collection in infants <=6 months of age
+alphacom<-alpha.compare(datlist=alphadat,depth=3,mapfile=covar.rm,
+mapsampleid="sampleid", comvar="gender",adjustvar=c("age.sample","bf"),
+longitudinal="yes", age.limit=6,standardize=TRUE)
+alphacom$alphasum[,1:5]
 }
 \keyword{alpha}
 \keyword{comparison}

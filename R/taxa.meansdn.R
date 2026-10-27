@@ -6,18 +6,19 @@
 #' @param groupvar variable to be stratified.
 #' @param percent.filter prevalence threshold (the percentage of number of samples the taxa/pathway available). Default is 0.05.
 #' @param relabund.filter relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.
-#' @param othervar list of variables that are not abundance variables to be summarized. Default is "none".
+#' @param othervar vector of variables that are not abundance variables to be summarized. Default is "none".
 #' @return table of mean, sd, count by group.
 #' @keywords abundance summary
+#' @import dplyr
+#' @importFrom stats sd
 #' @export
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-#' data(taxtab.rm7)
-#' library(magrittr)
-#' taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
+#' data(taxtab6)
+#' taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab6,sumvar="bf",groupvar="age.sample")
+
 
 taxa.meansdn<-function(taxtab, sumvar, groupvar,percent.filter=0.05,relabund.filter=0.00005,othervar="none"){
-  #require(dplyr)
   taxdat<-as.data.frame(taxtab)
   taxdat$sumvar<-taxdat[,sumvar]
   taxdat$groupvar<-taxdat[,groupvar]
@@ -43,16 +44,16 @@ taxa.meansdn<-function(taxtab, sumvar, groupvar,percent.filter=0.05,relabund.fil
     estisum<-sumdat %>%
       dplyr::mutate(groupvar=as.factor(as.character(round(as.numeric(as.character(groupvar)),0)))) %>%
       dplyr::group_by(sumvar, groupvar) %>%
-      dplyr::summarise_all(dplyr::funs(mean(.), sd(.), n()))
+      dplyr::summarise_all(list(~mean(.), ~sd(.), ~n()))
     estisum<-estisum%>%
       dplyr::mutate(groupvar=as.numeric(as.character(groupvar))) %>%
       dplyr::arrange(sumvar,groupvar)
-    estisum<-na.omit(estisum)
+    estisum<-stats::na.omit(estisum)
   }
   else {
     estisum<-sumdat %>%
       dplyr::group_by(sumvar, groupvar) %>%
-      dplyr::summarise_all(dplyr::funs(mean(.), sd(.), n()))
+      dplyr::summarise_all(list(~mean(.), ~sd(.), ~n()))
   }
   colnames(estisum)[colnames(estisum) %in% c("sumvar","groupvar")]<-c(sumvar,groupvar)
   return(estisum)

@@ -4,10 +4,17 @@
 \alias{meta.taxa}
 \title{Meta-analysis of taxa/pathway abundance comparison.}
 \usage{
-meta.taxa(taxcomdat, estimate.pattern = "Estimate.",
-  se.pattern = "Std. Error.", summary.measure = "RR",
-  pool.var = "id", studylab = "study", backtransform = FALSE,
-  percent.meta = 0.5, p.adjust.method = "fdr", ...)
+meta.taxa(
+  taxcomdat,
+  estimate.pattern = "Estimate.",
+  se.pattern = "Std. Error.",
+  summary.measure = "RR",
+  pool.var = "id",
+  studylab = "study",
+  backtransform = FALSE,
+  percent.meta = 0.5,
+  p.adjust.method = "fdr"
+)
 }
 \arguments{
 \item{taxcomdat}{matrice of estimates and SE of all taxa/pathways combined from all included studies.}
@@ -35,23 +42,22 @@ a list of matrices of results for all variables in the comparison models.
 This function does meta-analysis based on estimates and standard errors from taxa/pathway abundance comparison using random effect and fixed effect meta-analysis models.
 }
 \examples{
-#Load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection
-data(taxacom.rm.sex.adjustbfage)
-data(taxacom.ha.sex.adjustbfage)
-data(taxacom6.zi.usbmk.sex.adjustbfage.)
-data(taxacom6.unc.sex.adjustedbfage)
-taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-tabsex4<-plyr::rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-#Meta-analysis (take time to run)
-metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.2,display="table")
+# load saved GAMLSS-BEZI results of four studies
+# for the comparison of bacterial taxa relative abundance between
+# genders adjusted for breastfeeding and infant age at sample collection
+data(tabsex4)
+#select only taxonomies of a small phylum for meta-analysis example
+# (to save running time)
+tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+# meta-analysis
+metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id \%in\% tlm,],
+summary.measure="RR", pool.var="id", studylab="study",
+backtransform=FALSE, percent.meta=0.5, p.adjust.method="fdr")
+#show results by table and plot
+#phylum
+#table
+metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id \%in\% tlm,],
+tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
 }
 \keyword{abundance}
 \keyword{meta-analysis.}

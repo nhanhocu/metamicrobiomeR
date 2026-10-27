@@ -14,27 +14,27 @@
 #' @keywords abundance meta-analysis.
 #' @export
 #' @examples
-#' #Load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection
-#' data(taxacom.rm.sex.adjustbfage)
-#' data(taxacom.ha.sex.adjustbfage)
-#' data(taxacom6.zi.usbmk.sex.adjustbfage.)
-#' data(taxacom6.unc.sex.adjustedbfage)
-#' taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-#' taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-#' taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-#' taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-#' taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-#' taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-#' taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-#' taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-#' tabsex4<-plyr::rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-#' #Meta-analysis (take time to run)
-#' metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.2,display="table")
+#' # load saved GAMLSS-BEZI results of four studies
+#' # for the comparison of bacterial taxa relative abundance between
+#' # genders adjusted for breastfeeding and infant age at sample collection
+#' data(tabsex4)
+#' #select only taxonomies of a small phylum for meta-analysis example
+#' # (to save running time)
+#' tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+#' # meta-analysis
+#' metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id %in% tlm,],
+#' summary.measure="RR", pool.var="id", studylab="study",
+#' backtransform=FALSE, percent.meta=0.5, p.adjust.method="fdr")
+#' #show results by table and plot
+#' #phylum
+#' #table
+#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id %in% tlm,],
+#' tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
 
 
-meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Error.", summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr",...){
-  #require(meta)
+meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Error.",
+                    summary.measure="RR",pool.var="id",studylab="study",
+                    backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr"){
   taxcomdat$studylab<-taxcomdat[,studylab]
   es<-colnames(taxcomdat)[grep(estimate.pattern,colnames(taxcomdat))]
   ses<-colnames(taxcomdat)[grep(se.pattern,colnames(taxcomdat))]
@@ -42,13 +42,13 @@ meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Erro
   meta.f<-list()
   meta.r<-list()
   for (i in 1:length(es)){
-    print(i)
+    #print(i)
     metatab.f<-NULL
     metatab.r<-NULL
     taxcomdat$estimate<-taxcomdat[,es[i]]
     taxcomdat$se<-taxcomdat[,ses[i]]
     for (j in 1:length(taxname)){
-      print(j)
+      #print(j)
       testdat<-taxcomdat[taxcomdat[,pool.var] %in% taxname[j],]
       # do metanalysis only for taxa exist in >=percent.meta of studies
       if (nrow(testdat)<percent.meta*(length(unique(taxcomdat$studylab)))){
@@ -60,21 +60,21 @@ meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Erro
       if (nrow(testdat)>=percent.meta*(length(unique(taxcomdat$studylab)))){
         fit.meta<-meta::metagen(estimate, se, studlab=studylab,data=testdat,sm=summary.measure, backtransf=backtransform)
         #fixed effect
-        fitsum.f<-as.data.frame(matrix(c(summary(fit.meta)$fixed$TE,summary(fit.meta)$fixed$seTE,summary(fit.meta)$fixed$lower,summary(fit.meta)$fixed$upper,summary(fit.meta)$fixed$z,summary(fit.meta)$fixed$p),nrow=1))
-        colnames(fitsum.f)<-c("estimate",'se','ll','ul','z','p')
+        fitsum.f<-as.data.frame(matrix(c(summary(fit.meta)$fixed$TE,summary(fit.meta)$fixed$seTE,summary(fit.meta)$fixed$lower,summary(fit.meta)$fixed$upper,summary(fit.meta)$fixed$statistic,summary(fit.meta)$fixed$p),nrow=1))
+        colnames(fitsum.f)<-c("estimate",'se','ll','ul','statistic','p')
         fitsum.f[,pool.var]<-taxname[j]
         metatab.f<-plyr::rbind.fill(metatab.f,fitsum.f)
         #random effect
-        fitsum.r<-as.data.frame(matrix(c(summary(fit.meta)$random$TE,summary(fit.meta)$random$seTE,summary(fit.meta)$random$lower,summary(fit.meta)$random$upper,summary(fit.meta)$random$z,summary(fit.meta)$random$p),nrow=1))
-        colnames(fitsum.r)<-c("estimate",'se','ll','ul','z','p')
+        fitsum.r<-as.data.frame(matrix(c(summary(fit.meta)$random$TE,summary(fit.meta)$random$seTE,summary(fit.meta)$random$lower,summary(fit.meta)$random$upper,summary(fit.meta)$random$statistic,summary(fit.meta)$random$p),nrow=1))
+        colnames(fitsum.r)<-c("estimate",'se','ll','ul','statistic','p')
         fitsum.r[,pool.var]<-taxname[j]
         metatab.r<-plyr::rbind.fill(metatab.r,fitsum.r)
       }
     }
-    metatab.f[,"p.adjust"]<-p.adjust(metatab.f[,"p"],method=p.adjust.method)
+    metatab.f[,"p.adjust"]<-stats::p.adjust(metatab.f[,"p"],method=p.adjust.method)
     metatab.f<-metatab.f[order(metatab.f[,"p"]),]
     meta.f[[i]]<-metatab.f
-    metatab.r[,"p.adjust"]<-p.adjust(metatab.r[,"p"],method=p.adjust.method)
+    metatab.r[,"p.adjust"]<-stats::p.adjust(metatab.r[,"p"],method=p.adjust.method)
     metatab.r<-metatab.r[order(metatab.r[,"p"]),]
     meta.r[[i]]<-metatab.r
   }

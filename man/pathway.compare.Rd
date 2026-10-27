@@ -4,12 +4,22 @@
 \alias{pathway.compare}
 \title{Compare (kegg) pathway abundance}
 \usage{
-pathway.compare(pathtab, mapfile, sampleid = "sampleid",
-  pathsum = "rel", stat.med = "gamlss", transform = "none", comvar,
-  adjustvar, personid = "personid", longitudinal = "yes",
-  p.adjust.method = "fdr", percent.filter = 0.05,
-  relabund.filter = 5e-05, pooldata = FALSE, age.limit = 1e+06,
-  age.lowerlimit = 0, ...)
+pathway.compare(
+  pathtab,
+  mapfile,
+  sampleid = "sampleid",
+  pathsum = "rel",
+  stat.med = "gamlss",
+  transform = "none",
+  comvar,
+  adjustvar,
+  personid = "personid",
+  longitudinal = "yes",
+  p.adjust.method = "fdr",
+  percent.filter = 0.05,
+  relabund.filter = 5e-05,
+  pooldata = FALSE
+)
 }
 \arguments{
 \item{pathtab}{list of pathway abundance table of all levels.}
@@ -21,6 +31,8 @@ pathway.compare(pathtab, mapfile, sampleid = "sampleid",
 \item{pathsum}{type of abundance to be compared. Options are "rel" for relative abundance or "log" for log of absolute abundance. Default is "rel".}
 
 \item{stat.med}{statistical method for comparison. stat.med can be "lm" for LM/LMEM (usable for both pathsum="rel" or "log") or "gamlss" for GAMLSS with BEZI family (gamlss only make sense if pathsum="rel" ).}
+
+\item{transform}{transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation. Default is "none".}
 
 \item{comvar}{main variable for comparison.}
 
@@ -37,10 +49,6 @@ pathway.compare(pathtab, mapfile, sampleid = "sampleid",
 \item{relabund.filter}{relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.}
 
 \item{pooldata}{whether the data is pooled from multiple studies. Default is FALSE.}
-
-\item{age.limit}{upper age limit for data to be included. Default is 1000000 months (~no upper age limit).}
-
-\item{age.lowerlimit}{lower age limit for data to be included. Default is 0 month.}
 }
 \value{
 matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
@@ -51,25 +59,17 @@ It compares pathway abundance generated from PICRUSt analysis between groups usi
 Specifically, it compares relative abundances of bacterial functional pathways at all levels using GAMLSS or LM/LMEM and compares of log(absolute abundances) of bacterial functional pathways at all levels using LM/LMEM.
 }
 \examples{
-#Load Bangladesh extra metadata
-data(sam.rm)
-#Read in PICRUSt output for KEGG pathways level 1-3
-patht<-system.file("extdata/QIIME_outputs/Bangladesh/picrust", package = "metamicrobiomeR", mustWork = TRUE)
-kegg<-read.multi(patht=patht,patternt=".txt",assignt="no")
-kegg.rm<-list()
-for (i in 1:length(kegg)){
-  rownames(kegg[[i]])<-kegg[[i]][,"kegg_pathways"]
-  kegg[[i]]<-kegg[[i]][,colnames(kegg[[i]])[!colnames(kegg[[i]]) \%in\% c("otu.id","kegg_pathways")]]
-  kegg.rm[[i]]<-as.data.frame(t(kegg[[i]]))
-}
-covar.rm<-merge(samde, he50[,c("child.id","gender","zygosity","day.firstsample","day.lastsample","n.sample","sampling.interval.msd","month.exbf","month.food",
-                               "n.diarrhea.yr","percent.time.diarrhea","fraction.antibiotic","subject.allocation")], by="child.id")
-covar.rm<-dplyr::rename(covar.rm,sampleid=fecal.sample.id, personid=child.id ,age.sample=age.months)
-covar.rm$bf<-factor(covar.rm$bf, levels=c('ExclusiveBF','Non_exclusiveBF','No_BF'))
-covar.rm$personid<-as.factor(covar.rm$personid)
-#Comparison of pathway relative abundances (take time to run)
-pathcom.rm6.rel.gamlss.sexg<-pathway.compare(pathtab=kegg.rm,mapfile=covar.rm,sampleid="sampleid",pathsum="rel",stat.med="gamlss",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005,age.limit=6)
-taxcomtab.show(taxcomtab=pathcom.rm6.rel.gamlss.sexg$l3, sumvar="path",tax.lev="l3",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=0.05,digit=4)
+#Load Bangladesh pathway and metadata
+data(kegg.12)
+data(covar.rm)
+# Comparison of pathway relative abundances for some first pathways of level 1 only
+# and assuming crosssectional data (to save running time)
+path1<-pathway.compare(pathtab=list(kegg.12[[1]][, 1:2]),
+mapfile=covar.rm,sampleid="sampleid",pathsum="rel", stat.med="gamlss",
+comvar="gender",adjustvar=c("age.sample","bf"), longitudinal="no",
+p.adjust.method="fdr", percent.filter=0.05,relabund.filter=0.00005)
+taxcomtab.show(taxcomtab=path1$l1, sumvar="path",tax.lev="l2",
+tax.select="none", showvar="genderMale", p.adjust.method="fdr",p.cutoff=1)
 }
 \keyword{abundance}
 \keyword{comparison.}

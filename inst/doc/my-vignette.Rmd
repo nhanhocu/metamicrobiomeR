@@ -1,0 +1,171 @@
+---
+title: "metamicrobiomeR"
+author: "Ho Thi Nhan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{metamicrobiomeR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,cache=FALSE,message=FALSE,warning=FALSE,echo = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction 
+This is a short, simplified version of the package tutorial. Only illustration and examples for the analysis of differential relative abundance using GAMLSS-BEZI and meta-analysis across studies using random effects models are shown. 
+The *metamicrobiomeR* package includes the functions below. Full illustration, examples of all implemented functions, workflows and data are available at [the package github repo](https://github.com/nhanhocu/metamicrobiomeR). 
+
+Functions  | Description
+------------- | -------------
+*taxa.filter*        | Filter relative abundances of bacterial taxa or pathways using prevalence and abundance thresholds 
+*taxa.meansdn*    | Summarize mean, standard deviation of abundances and number of subjects by groups for all bacterial taxa or pathways 
+*taxa.mean.plot*    | Plot mean abundance by groups (from *taxa.meansdn* output)
+*taxa.compare*    | Compare relative abundances of bacterial taxa at all levels using GAMLSS or linear/linear mixed effect models (LM) or linear/linear mixed effect models with arcsin squareroot transformation (LMAS)  
+*pathway.compare*        | Compare relative abundances of bacterial functional pathways at all levels using GAMLSS or LM or LMAS. Compare of log(absolute abundances) of bacterial functional pathways at all levels using LM
+*taxcomtab.show*        | Display the results of relative abundance comparison (from *taxa.compare* or *pathway.compare* outputs)
+*meta.taxa*        | Perform meta-analysis of relative abundance estimates of bacterial taxa or pathways (either from GAMLSS or LM or LMAS) across studies (from combined taxa.compare/pathway.compare outputs of all included studies) using random effect and fixed effect meta-analysis models  
+*metatab.show*    | Display meta-analysis results of bacterial taxa or pathway relative abundances (from *meta.taxa* output)
+*meta.niceplot*        | Produce nice combined heatmap and forest plot for meta-analysis results of bacterial taxa and pathway relative abundances (from *metatab.show* output)
+*read.multi*    | Read multiple files in a path to R 
+*alpha.compare*        | Calculate average alpha diversity indexes for a specific rarefaction depth, standardize and compare alpha diversity indexes between groups
+*microbiomeage*    | Predict microbiome age using Random Forest model based on relative abundances of bacterial genera shared with the Bangladesh study 
+
+#### Install 'metamicrobiomeR' and other required packages 
+```{r pack, message=FALSE, comment=FALSE,results='hide'}
+library(metamicrobiomeR) 
+```
+
+# Results 
+
+#### Example 1: Comparison between breastfeeding statuses in infants < 6 months of age
+##### Plot of mean relative abundance by breastfeeding statuses and age at phylum level  
+
+```{r bacrelmeanba, message=FALSE, comment=FALSE, fig.width=10, fig.height=8}
+data(taxtab6)
+taxlist.rm<-taxa.filter(taxtab=taxtab6,percent.filter = 0.05, relabund.filter = 0.00005)
+taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab6,sumvar="bf",groupvar="age.sample")
+taxa.meansdn.rm<-taxa.meansdn.rm[taxa.meansdn.rm$bf!="No_BF",] #&taxa.meansdn.rm$age.sample<=6,
+taxa.meansdn.rm$bf<-gdata::drop.levels(taxa.meansdn.rm$bf,reorder=FALSE)
+#phylum
+p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005, show.taxname="short")
+p.bf.l2$p
+```
+
+##### Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS-BEZI 
+```{r bacrelcomgamlss, results="hide"}
+# Note: running time is not long in regular laptop for both GAMLSS-BEZI analysis (~10s) and meta-analysis (~5s).  
+# However, to save running time, only taxonomies of one small phylum are selected for differential analysis example. 
+tab6<-as.data.frame(taxtab6)
+tl<-colnames(taxtab6)[grep("k__bacteria.p__fusobacteria",colnames(taxtab6))]
+taxacom.ex<-taxa.compare(taxtab=tab6[,c("personid","x.sampleid","bf","age.sample",tl)],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",
+longitudinal="yes",p.adjust.method="fdr")
+```
+
+Show results: 
+```{r bacrelcomgamlssshow}
+#phylum
+taxcomtab.show(taxcomtab=taxacom.ex,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1)
+#genus
+taxcomtab.show(taxcomtab=taxacom.ex,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l6", readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1)
+```
+
+
+##### Comparison between breastfeeding statuses adjusting for age of infants at sample collection using LM with arcsin squareroot transformation (LMAS)
+```{r bacrellmeas}
+taxacom.lmas<-taxa.compare(taxtab=tab6[,c("personid","x.sampleid","bf","age.sample",tl)], propmed.rel="lm",transform="asin.sqrt",comvar="bf",adjustvar="age.sample", longitudinal="yes",p.adjust.method="fdr")
+#phylum
+taxcomtab.show(taxcomtab=taxacom.lmas,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1, digit=5,p.digit=5) 
+#family
+taxcomtab.show(taxcomtab=taxacom.lmas,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l5",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1, digit=5,p.digit=5)
+```
+
+### Comparison of relative abundance of bacterial functional (KEGG) pathways between male vs. female infants < 6 months adjusting for breastfeeding statuses and age of infants at sample collection
+```{r keggba, results="hide"}
+data(kegg.12)
+data(covar.rm)
+# Comparison of pathway relative abundances for level 1 only (to save running time)
+path1<-pathway.compare(pathtab=list(kegg.12[[1]]),mapfile=covar.rm,sampleid="sampleid", pathsum="rel",stat.med="gamlss",comvar="gender",adjustvar=c("age.sample","bf"), longitudinal="yes",p.adjust.method="fdr",percent.filter=0.05,relabund.filter=0.00005)
+```
+
+Show results:  
+```{r keggbar}
+taxcomtab.show(taxcomtab=path1$l1, sumvar="path", tax.lev="l2",tax.select="none",showvar="genderMale", p.adjust.method="fdr",p.cutoff=1)
+```
+
+## Illustration of meta-analysis
+GAMLSS-BEZI results from four studies (Bangladesh, Haiti, USA(CA_FL), USA(NC)) were used for analysis. 
+Heatmap of log(odds ratio) (log(OR)) of relative abundances of gut bacterial taxa at different taxonomic levels between male vs. female infants for each study and pooled estimates (meta-analysis) across all studies with 95% confidence intervals (95% CI) (forest plot). All log(OR) estimates of each bacterial taxa from each study were from Generalized Additive Models for Location Scale and Shape (GAMLSS) with beta zero inflated family (BEZI) and were adjusted for feeding status and age of infants at sample collection. Pooled log(OR) estimates and 95% CI (forest plot) were from random effect meta-analysis models with inverse variance weighting and DerSimonian-Laird estimator for between-study variance based on the adjusted log(OR) estimates and corresponding standard errors of all included studies. 
+Bacterial taxa with p-values for differential relative abundances <0.05 were denoted with \* and those with p-values <0.0001 were denoted with \**. Pooled log(OR) estimates with pooled p-values<0.05 are in red and those with false discovery rate (FDR) adjusted pooled p-values <0.1 are in triangle shape.
+Missing (unavailable) values are in white. 
+USA: United States of America; CA: California; FL: Florida; NC: North Carolina. 
+
+
+```{r bacrelmeta, fig.width=10, fig.height=8}
+# load saved GAMLSS-BEZI results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection 
+data(tabsex4)
+
+#select only taxonomies of a small phylum for meta-analysis example (to save running time)
+tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+# meta-analysis 
+metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id %in% tlm,], summary.measure="RR", pool.var="id", studylab="study", backtransform=FALSE, percent.meta=0.5, p.adjust.method="fdr")
+#show results by table and plot
+#phylum
+#table
+metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id %in% tlm,], tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
+#plot
+metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4, tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
+meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p", p.adjust="p.adjust",phyla.col="rainbow",p.sig.heat="yes", heat.forest.width.ratio =c(1.5,1), leg.key.size=0.8, leg.text.size=10, heat.text.x.size=10, heat.text.x.angle=0, forest.axis.text.y=8,forest.axis.text.x=10, point.ratio = c(4,2),line.ratio = c(2,1))
+```
+
+
+### Meta-analysis of other microbiome measures 
+
+Random effects meta-analysis models can also be generally applied to other microbiome measures such as microbial alpha diversity and microbiome age. To make the estimates for these positive continuous microbiome measures comparable across studies, these measures should be standardized to have a mean of 0 and standard deviation of 1 before between-group-comparison within each study. Random effects meta-analysis models can then be applied to pool the "comparable" estimates and their standard errors across studies. Meta-analysis results of these measures can be displayed as standard meta-analysis forest plots.  
+
+#### Alpha diversity 
+##### Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups (male vs. female infants <=6 months of age) adjusting for covariates (feeding status and infant age at sample collection) using Bangladesh data 
+
+For each study, the *alpha.compare* function imports the outputs from "alpha_rarefaction.py" QIIME1 script and calculates mean alpha diversity for different indices for each sample based on a user defined rarefaction depth. Mean alpha diversity indexes are standardized to have a mean of 0 and standard deviation of 1 to make these measures comparable across studies. Standardized alpha diversity indexes are compared between groups adjusting for covariates using LM. Meta-analysis across studies is then done and the results are displayed as a standard meta-analysis forest plot. 
+
+```{r alpharm, fig.width=10, fig.height=8}
+data(alphadat)
+data(covar.rm)
+covar.rm$sampleid<-tolower(covar.rm$sampleid)
+
+#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age 
+alphacom<-alpha.compare(datlist=alphadat,depth=3,mapfile=covar.rm, mapsampleid="sampleid",comvar="gender",adjustvar=c("age.sample","bf"), longitudinal="yes",age.limit=6,standardize=TRUE)
+alphacom$alphasum[,1:5] 
+```
+
+#### Meta-analysis of four studies 
+The results showed that alpha diversity (four commonly used indexes Shannon, Phylogenetic diversity whole tree, Observed species, Chao1) was not different between male and female infants <=6 months of age in the meta-analysis of the four included studies. 
+
+```{r shameta, fig.width=10, fig.height=5}
+# load saved results of 4 studies 
+data(asum4)
+asum4[,c(colnames(asum4)[1:5],"pop")]
+#Shannon index 
+shannon.sex <- meta::metagen(Estimate.genderMale, `Std. Error.genderMale`, studlab=pop,data=subset(asum4,id=="shannon"),sm="RD", backtransf=FALSE)
+meta::forest(shannon.sex,smlab="Standardized \n diversity difference",sortvar=subset(asum4,id=="shannon")$pop,lwd=2)
+shannon.sex
+cbind(study=shannon.sex$studlab,pval=shannon.sex$pval)
+```
+
+
+### Microbiome age
+#### Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study
+Random Forest (RF) modeling of gut microbiota maturity has been used to characterize development of the microbiome over chronological time. Adapting from the original approach of Subramanian et al, in the *microbiomeage* function, relative abundances of bacterial genera that were detected in the Bangladesh data and in the data of other studies to be included were regressed against infant chronological age using a RF model on a predefined training dataset of the Bangladesh study. This predefined training set includes 249 samples collected monthly from birth to 2 years of age from 11 Bangladeshi healthy singleton infants. The RF training model fit based on relative abundances of these shared bacterial genera was then used to predict infant age on the test data of the Bangladesh study and the data of each other study to be included. The predicted infant age based on relative abundances of these shared bacterial genera in each study is referred to as gut microbiota age.  
+
+In brief, the *microbiomeage* function get the shared genera list between the Bangladesh study and all other included studies,  get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.
+
+As the data is large and the model takes time to run, please go to [the package github repo](https://github.com/nhanhocu/metamicrobiomeR) for example codes and data. 
+
+# Availability
+All more detailed source code, example data, documentation and the manuscript describing the *metamicrobiomeR* package are available at [https://github.com/nhanhocu/metamicrobiomeR]. 
+
+

@@ -18,23 +18,19 @@
 #' @keywords alpha diversity comparison
 #' @export
 #' @examples
-#' #Read in outputs from "alpha_rarefaction.py" in QIIME
-#' patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
-#' alpha.rm<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
-#' #Bangladesh extra metadata
-#' data(sam.rm)
-#' samfile<-merge(samde, he50[,c("child.id","gender","month.exbf","month.food")],by="child.id")
-#' samfile$age.sample<-samfile$age.months
-#' samfile$bf<-factor(samfile$bf,levels=c("ExclusiveBF","Non_exclusiveBF","No_BF"))
-#' samfile$personid<-samfile$child.id
-#' samfile$sampleid<-tolower(samfile$fecal.sample.id)
-#' #comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age
-#' alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
-#' alphacom6.rm.sexsg$alphasum[,1:5]
+#' data(alphadat)
+#' data(covar.rm)
+#' covar.rm$sampleid<-tolower(covar.rm$sampleid)
+#' #comparison of standardized alpha diversity indexes between genders adjusting for
+#' #breastfeeding and infant age at sample collection in infants <=6 months of age
+#' alphacom<-alpha.compare(datlist=alphadat,depth=3,mapfile=covar.rm,
+#' mapsampleid="sampleid", comvar="gender",adjustvar=c("age.sample","bf"),
+#' longitudinal="yes", age.limit=6,standardize=TRUE)
+#' alphacom$alphasum[,1:5]
 
 
-alpha.compare<-function(datlist,depth,mapfile,mapsampleid,comvar,adjustvar,personid="personid", longitudinal="yes",age.limit=1000000,standardize=FALSE,...){
-  #sapply(c("lme4","lmerTest","plyr","dplyr",'reshape2'), require, character.only = TRUE)
+alpha.compare<-function(datlist,depth,mapfile,mapsampleid,comvar,adjustvar,
+                        personid="personid", longitudinal="yes",age.limit=1000000,standardize=FALSE){
   alphamean<-matrix(NA, nrow=length(names(datlist)),ncol=(ncol(datlist[[1]])-3))
   rownames(alphamean)<-names(datlist)
   colnames(alphamean)<-colnames(datlist[[1]])[-c(1:3)]
@@ -73,25 +69,26 @@ alpha.compare<-function(datlist,depth,mapfile,mapsampleid,comvar,adjustvar,perso
   for (j in 1: length(names(datlist))){
     #mixed model
     if (longitudinal=="yes"){
-      fitsum<-try(summary(lme4::glmer(as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=alphamap,family=gaussian(link="identity"))))
+      fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=alphamap)))
+      #fitsum<-try(summary(lme4::glmer(stats::as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=alphamap,family="gaussian")))
     }
     #linear model
     if (longitudinal=="no"){
-      fitsum<-try(summary(glm(as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=alphamap,family="gaussian")))
+      fitsum<-try(summary(stats::glm(stats::as.formula(paste(names(datlist)[j],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=alphamap,family="gaussian")))
     }
     if (class(fitsum) == "try-error") {
-      cat("Error in model fit, NA introduced.\n")
+      warning("Error in model fit, NA introduced.\n")
       fitcoefw<-NULL
       alphasum<-plyr::rbind.fill(alphasum,fitcoefw)
     }
     if (class(fitsum) != "try-error") {
       fitcoef<-as.data.frame(fitsum$coefficients[rownames(fitsum$coefficients)!="(Intercept)",]) #remove intercept
       if (longitudinal=="yes"){
-        fitcoef[,"Pr(>|t|)"]<-2*pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
+        fitcoef[,"Pr(>|t|)"]<-2*stats::pnorm(-abs(fitcoef[,"Estimate"]/fitcoef[,"Std. Error"]))
       }
       fitcoef[,"varname"]<-rownames(fitcoef)
       fitcoef[,"id"]<-names(datlist)[j]
-      fitcoefw<-reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
+      fitcoefw<-stats::reshape(fitcoef, idvar="id", timevar="varname", direction="wide")
       alphasum<-plyr::rbind.fill(alphasum,fitcoefw)
     }
   }

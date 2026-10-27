@@ -10,8 +10,10 @@
 #' @export
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-#' data(taxtab.rm7)
-#' taxlist.rm<-taxa.filter(taxtab=taxtab.rm[[5]],percent.filter = 0.05, relabund.filter = 0.00005)
+#' data(taxtab6)
+#' taxlist.rm<-taxa.filter(taxtab=taxtab6,percent.filter = 0.05,
+#' relabund.filter = 0.00005)
+
 
 taxa.filter<-function(taxtab, percent.filter=0.05, relabund.filter=0.00005){
   # filter (remove) taxa with relative abundance <relabund.filter and available in <percent.filter of number of samples

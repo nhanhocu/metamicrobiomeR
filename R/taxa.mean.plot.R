@@ -11,21 +11,27 @@
 #' @param pallete.by.phylum whether each pallete of color for each phylum. Default is FALSE (plot distinc colors).
 #' @param show.taxname whether show "full" taxa name or "short" name. Default is "full".
 #' @param legend.position position of legend. Options are c("right", "left","bottom","top","none") as in ggplot2. Default is "right".
+#' @param xlab label for x-axis. Default is "Chronological age (month)".
+#' @param ylab label for y-axis. Default is "Relative abundance".
 #' @return a list of ggplot2 object and list of taxa/pathways plotted (those with mean abundance >mean.filter).
 #' @keywords mean taxa abundance plot.
 #' @export
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-#' data(taxtab.rm7)
-#' library(magrittr)
-#' taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
-#' p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005,show.taxname="short")
+#' data(taxtab6)
+#' taxlist.rm<-taxa.filter(taxtab=taxtab6, percent.filter = 0.05, relabund.filter = 0.00005)
+#' taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab6,sumvar="bf",groupvar="age.sample")
+#' taxa.meansdn.rm<-taxa.meansdn.rm[taxa.meansdn.rm$bf!="No_BF",]
+#' taxa.meansdn.rm$bf<-gdata::drop.levels(taxa.meansdn.rm$bf,reorder=FALSE)
+#' #phylum
+#' p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm, tax.lev="l2",
+#' comvar="bf", groupvar="age.sample",mean.filter=0.005, show.taxname="short")
 #' p.bf.l2$p
+
 
 taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", comvar, groupvar,
                          mean.filter=0.005, pallete.by.phylum=FALSE, show.taxname="full",legend.position="right",
-                         xlab="Chronological age (month)",ylab="Relative abundance"){
-  #sapply(c("ggplot2","reshape2","RColorBrewer","plyr"), require, character.only = TRUE)
+                         xlab="",ylab="Relative abundance"){
   taxname1<-c(colnames(tabmean)[grep("mean",colnames(tabmean))])
   tabm<-apply(tabmean[,taxname1],2,mean)
   tabm<-tabm[tabm>=mean.filter]
@@ -34,14 +40,18 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
     l3<-taxname1[-grep("o__",taxname1)]
     l4<-taxname1[-grep("f__",taxname1)]
     l5<-taxname1[-grep("g__",taxname1)]
+    #For species
+    if (tax.lev=="l7"){
+      l6<-taxname1[-grep("s__",taxname1)]
+      l7<-taxname1
+      taxnamel<-list(l2=l2,l3=l3,l4=l4,l5=l5,l6=l6,l7=l7)
+      tabmeanl<-list(l2=tabmean[,colnames(tabmean) %in% c(comvar, groupvar, l2)],l3=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l3)],l4=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l4)],l5=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l5)],l6=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l6)],l7=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l7)])
+    }
     l6<-taxname1
     taxnamel<-list(l2=l2,l3=l3,l4=l4,l5=l5,l6=l6)
     tabmeanl<-list(l2=tabmean[,colnames(tabmean) %in% c(comvar, groupvar, l2)],l3=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l3)],l4=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l4)],l5=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l5)],l6=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l6)])
     tab<-tabmeanl[[tax.lev]]
     taxuse<-taxnamel[[tax.lev]]
-    if (tax.lev=="l2"){
-      taxuse<-taxuse
-    }
     if (tax.lev=="l7"){
       stringt<-"s__"
       taxuse<-taxuse[grep(".s__",taxuse)]
@@ -62,6 +72,15 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
       taxs<-sub(".*o__", "",taxuse)
       taxuse<-taxuse[!taxs %in% "_mean"]
     }
+    if (tax.lev=="l3"){
+      stringt<-"c__"
+      taxuse<-taxuse[grep(".c__",taxuse)]
+      taxs<-sub(".*c__", "",taxuse)
+      taxuse<-taxuse[!taxs %in% "_mean"]
+    }
+    if (tax.lev=="l2"){
+      taxuse<-taxuse
+    }
   }
   if (sumvar=="path"){
     taxuse=taxname1
@@ -74,13 +93,12 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
   }
   taxuse.rm<-gsub("_mean","",taxuse)
   tab[,"others_mean"]<-1-apply(tab[,taxuse],1,sum)
-  tab.l <- reshape(tab,
-                   varying = c("others_mean",taxuse),
-                   v.names = "rel_abund",
-                   timevar = "taxa",
-                   times = c("others_mean",taxuse),
-                   new.row.names = 1:(nrow(tab)*length(c("others_mean",taxuse))),
-                   direction = "long")
+  #all taxa not in taxuse is already sum up in "others_mean" => remove those taxa name
+  taxnouse<-taxnamel[[tax.lev]][!taxnamel[[tax.lev]] %in% taxuse]
+  tab<-tab[,colnames(tab)[!colnames(tab) %in% taxnouse]]
+  # to long format
+  gathercols <- c("control", "cond1", "cond2")
+  tab.l <- tidyr::gather(tab, key="taxa", value="rel_abund", c("others_mean",taxuse), factor_key=TRUE)
   tab.l<-as.data.frame(tab.l)
   tab.l$taxa<-gsub("_mean","",tab.l$taxa)
   tab.l<-tab.l[,c(comvar,groupvar,"taxa","rel_abund")]

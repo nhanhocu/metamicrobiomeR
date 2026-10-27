@@ -4,10 +4,19 @@
 \alias{taxa.compare}
 \title{Compare taxa relative abundance}
 \usage{
-taxa.compare(taxtab, propmed.rel = "gamlss", transform = "none",
-  zeroreplace.method = "none", comvar, adjustvar,
-  personid = "personid", longitudinal = "yes", percent.filter = 0.05,
-  relabund.filter = 5e-05, p.adjust.method = "fdr", ...)
+taxa.compare(
+  taxtab,
+  propmed.rel = "gamlss",
+  transform = "none",
+  zeroreplace.method = "none",
+  comvar,
+  adjustvar,
+  personid = "personid",
+  longitudinal = "yes",
+  percent.filter = 0.05,
+  relabund.filter = 5e-05,
+  p.adjust.method = "fdr"
+)
 }
 \arguments{
 \item{taxtab}{taxa relative abundance table (already merged to mapping file) from phylum to species or any preferred highest taxa level.}
@@ -31,8 +40,6 @@ taxa.compare(taxtab, propmed.rel = "gamlss", transform = "none",
 \item{relabund.filter}{relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.}
 
 \item{p.adjust.method}{method for multiple testing adjustment. Options are those of the p.adjust.methods of stats:: p.adjust function. Default for this function is "fdr".}
-
-\item{pooldata}{whether data is pooled from multiple studies. Default is FALSE.}
 }
 \value{
 matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
@@ -42,11 +49,12 @@ This function compares taxa relative abundance summary tables at all levels betw
 }
 \examples{
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-data(taxtab.rm7)
-#Comparison of bacterial taxa relative abundance using LMEM or GAMLSS (take time to run)
-taxacom6.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="lm",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select="none", showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr")
+data(taxtab6)
+tab6<-as.data.frame(taxtab6)
+tl<-colnames(taxtab6)[grep("k__bacteria.p__fusobacteria",colnames(taxtab6))]
+taxacom.ex<-taxa.compare(taxtab=tab6[,c("personid","x.sampleid","bf","age.sample",tl)],
+propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",
+longitudinal="yes",p.adjust.method="fdr")
 }
 \keyword{abundance}
 \keyword{comparison}

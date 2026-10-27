@@ -22,8 +22,9 @@ It will remove taxa/pathway with relative abundance <relabund.filter and availab
 }
 \examples{
 #Load summary tables of bacterial taxa relative abundance from Bangladesh data
-data(taxtab.rm7)
-taxlist.rm<-taxa.filter(taxtab=taxtab.rm[[5]],percent.filter = 0.05, relabund.filter = 0.00005)
+data(taxtab6)
+taxlist.rm<-taxa.filter(taxtab=taxtab6,percent.filter = 0.05,
+relabund.filter = 0.00005)
 }
 \keyword{abundance}
 \keyword{filter}

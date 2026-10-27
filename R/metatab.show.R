@@ -4,10 +4,12 @@
 #' @param metatab matrice of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.
 #' @param com.pooled.tab matrice of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.
 #' @param sumvar Either "taxa" for taxa and "path" for pathway.
+#' @param highest.lev Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shortgun data).
 #' @param tax.lev taxa level to be displayed. Options are from "l2" (phylum) to "l7" (species). Default is "l2".
 #' @param showvar variable (string pattern) in the model to be displayed.
 #' @param estimate.pattern string pattern for estimates. Default is "Estimate.".
-#' @param se.pattern string pattern for standard error. Default is "Std. Error.".
+#' @param se.pattern string pattern for standard error variable. Default is "Std. Error.".
+#' @param p.pattern string pattern for p-value variable. Default is "Pr(>|t|)".
 #' @param readjust.p multiple testing re-adjustment for only the level to be displayed (TRUE) or keep original multiple testing adjustment for all taxa of all levels (FALSE).Default is FALSE.
 #' @param p.cutoff.type type of p-value for cutoff. Options are "p" for p-value or "p.adjust" for multiple testing adjusted p-value. Default is "p".
 #' @param p.cutoff cutoff p-value to be displayed. Default is 0.05.
@@ -21,28 +23,38 @@
 #' @keywords abundance meta-analysis display.
 #' @export
 #' @examples
-#' #Load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection
-#' data(taxacom.rm.sex.adjustbfage)
-#' data(taxacom.ha.sex.adjustbfage)
-#' data(taxacom6.zi.usbmk.sex.adjustbfage.)
-#' data(taxacom6.unc.sex.adjustedbfage)
-#' taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-#' taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-#' taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-#' taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-#' taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-#' taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-#' taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-#' taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-#' tabsex4<-plyr::rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-#' #Meta-analysis (take time to run)
-#' metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.2,display="table")
-#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="plot",plot="heatmap")
+#' # Load saved GAMLSS-BEZI results of four studies for the comparison of
+#' # bacterial taxa relative abundance between genders adjusted for
+#' # breastfeeding and infant age at sample collection
+#' data(tabsex4)
+#' #select only taxonomies of a small phylum for meta-analysis example
+#' # (to save running time)
+#' tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+#' # meta-analysis
+#' metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id %in% tlm,],
+#' summary.measure="RR", pool.var="id", studylab="study",
+#' backtransform=FALSE, percent.meta=0.5, p.adjust.method="fdr")
+#' #show results by table and plot
+#' #phylum
+#' #table
+#' metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id %in% tlm,],
+#' tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
+#' #plot
+#' metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id %in% tlm,],
+#' tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
+#' meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",
+#' p.adjust="p.adjust",phyla.col="rainbow",p.sig.heat="yes",
+#' heat.forest.width.ratio =c(1.5,1), leg.key.size=0.8,
+#' leg.text.size=10, heat.text.x.size=10, heat.text.x.angle=0,
+#' forest.axis.text.y=8,forest.axis.text.x=10,
+#' point.ratio = c(4,2),line.ratio = c(2,1))
 
 
-metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar,estimate.pattern="Estimate.",se.pattern="Std. Error.",p.pattern="Pr(>|t|)",readjust.p=FALSE,p.cutoff.type="p", p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",grid=FALSE,digit=2,p.digit=4,...){
-  #require(ggplot2);require(plyr)
+metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",highest.lev="g",tax.lev="l2",
+                       showvar,estimate.pattern="Estimate.",se.pattern="Std. Error.",
+                       p.pattern="Pr(>|t|)",readjust.p=FALSE,p.cutoff.type="p",
+                       p.cutoff=0.05,display="plot",plot="heatmap",fill.value="log(OR)",
+                       grid=FALSE,digit=2,p.digit=4){
   mtaba1<-as.data.frame(metatab[[showvar]])
   #remove row with NA values (no meta-analysis)
   mtaba1<-mtaba1[!is.na(mtaba1[,"estimate"]),]
@@ -51,58 +63,63 @@ metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",tax.lev="l2",showvar
     al3<-mtaba1$id[-grep("o__",mtaba1$id)]
     al4<-mtaba1$id[-grep("f__",mtaba1$id)]
     al5<-mtaba1$id[-grep("g__",mtaba1$id)]
-    #al6<-mtaba1$id[-grep("s__",mtaba1$id)]
-    mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1)
+    if (highest.lev=="g"){
+      mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1)
+    }
+    if (highest.lev=="s"){
+      al6<-mtaba1$id[-grep("s__",mtaba1$id)]
+      mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1[mtaba1$id %in% al6,],l7=mtaba1)
+    }
     mtaba<-mtabal[[tax.lev]]
     if (tax.lev=="l2"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("p__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
     if (tax.lev=="l3"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("c__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[(mtab$id %in% mtab$id[grep("c__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[(mtab$id %in% mtab$id[grep("c__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
     if (tax.lev=="l4"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("o__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[(mtab$id %in% mtab$id[grep("o__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[(mtab$id %in% mtab$id[grep("o__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
     if (tax.lev=="l5"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("f__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[(mtab$id %in% mtab$id[grep("f__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[(mtab$id %in% mtab$id[grep("f__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
     if (tax.lev=="l6"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("g__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[(mtab$id %in% mtab$id[grep("g__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[(mtab$id %in% mtab$id[grep("g__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
     if (tax.lev=="l7"){
       mtab<-mtaba[(mtaba$id %in% mtaba$id[grep("s__",mtaba$id)]),]
       if (readjust.p==TRUE){
-        mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+        mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
       }
-      taxsig<-mtab[(mtab$id %in% mtab$id[grep("s__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+      taxsig<-mtab[(mtab$id %in% mtab$id[grep("s__",mtab$id)]) &mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
     }
   }
   if (sumvar=="path"){
     mtab<-mtaba1[!is.na(mtaba1$estimate),]
     if (readjust.p==TRUE){
-      mtab[,"p.adjust"]<-p.adjust(mtab[,"p"],method="fdr")
+      mtab[,"p.adjust"]<-stats::p.adjust(mtab[,"p"],method="fdr")
     }
-    taxsig<-mtab[mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','z','p','p.adjust','id')]
+    taxsig<-mtab[mtab[,p.cutoff.type]<=p.cutoff& !is.na(mtab[,p.cutoff.type]),c("estimate",'se','ll','ul','statistic','p','p.adjust','id')]
   }
   if (nrow(taxsig)>0){
     taxsig$study<-"Meta_analysis"

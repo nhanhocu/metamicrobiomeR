@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Ho Thi Nhan" />
+
+<meta name="date" content="2020-10-31" />
+
+<title>metamicrobiomeR</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+          color: #aaaaaa;
+        }
+      pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+      code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+      code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+      code span.at { color: #7d9029; } /* Attribute */
+      code span.bn { color: #40a070; } /* BaseN */
+      code span.bu { } /* BuiltIn */
+      code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+      code span.ch { color: #4070a0; } /* Char */
+      code span.cn { color: #880000; } /* Constant */
+      code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+      code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+      code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+      code span.dt { color: #902000; } /* DataType */
+      code span.dv { color: #40a070; } /* DecVal */
+      code span.er { color: #ff0000; font-weight: bold; } /* Error */
+      code span.ex { } /* Extension */
+      code span.fl { color: #40a070; } /* Float */
+      code span.fu { color: #06287e; } /* Function */
+      code span.im { } /* Import */
+      code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+      code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+      code span.op { color: #666666; } /* Operator */
+      code span.ot { color: #007020; } /* Other */
+      code span.pp { color: #bc7a00; } /* Preprocessor */
+      code span.sc { color: #4070a0; } /* SpecialChar */
+      code span.ss { color: #bb6688; } /* SpecialString */
+      code span.st { color: #4070a0; } /* String */
+      code span.va { color: #19177c; } /* Variable */
+      code span.vs { color: #4070a0; } /* VerbatimString */
+      code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    </style>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">metamicrobiomeR</h1>
+<h4 class="author">Ho Thi Nhan</h4>
+<h4 class="date">2020-10-31</h4>
+
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>This is a short, simplified version of the package tutorial. Only illustration and examples for the analysis of differential relative abundance using GAMLSS-BEZI and meta-analysis across studies using random effects models are shown. The <em>metamicrobiomeR</em> package includes the functions below. Full illustration, examples of all implemented functions, workflows and data are available at <a href="https://github.com/nhanhocu/metamicrobiomeR">the package github repo</a>.</p>
+<table>
+<colgroup>
+<col width="50%"></col>
+<col width="50%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>Functions</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>taxa.filter</em></td>
+<td>Filter relative abundances of bacterial taxa or pathways using prevalence and abundance thresholds</td>
+</tr>
+<tr class="even">
+<td><em>taxa.meansdn</em></td>
+<td>Summarize mean, standard deviation of abundances and number of subjects by groups for all bacterial taxa or pathways</td>
+</tr>
+<tr class="odd">
+<td><em>taxa.mean.plot</em></td>
+<td>Plot mean abundance by groups (from <em>taxa.meansdn</em> output)</td>
+</tr>
+<tr class="even">
+<td><em>taxa.compare</em></td>
+<td>Compare relative abundances of bacterial taxa at all levels using GAMLSS or linear/linear mixed effect models (LM) or linear/linear mixed effect models with arcsin squareroot transformation (LMAS)</td>
+</tr>
+<tr class="odd">
+<td><em>pathway.compare</em></td>
+<td>Compare relative abundances of bacterial functional pathways at all levels using GAMLSS or LM or LMAS. Compare of log(absolute abundances) of bacterial functional pathways at all levels using LM</td>
+</tr>
+<tr class="even">
+<td><em>taxcomtab.show</em></td>
+<td>Display the results of relative abundance comparison (from <em>taxa.compare</em> or <em>pathway.compare</em> outputs)</td>
+</tr>
+<tr class="odd">
+<td><em>meta.taxa</em></td>
+<td>Perform meta-analysis of relative abundance estimates of bacterial taxa or pathways (either from GAMLSS or LM or LMAS) across studies (from combined taxa.compare/pathway.compare outputs of all included studies) using random effect and fixed effect meta-analysis models</td>
+</tr>
+<tr class="even">
+<td><em>metatab.show</em></td>
+<td>Display meta-analysis results of bacterial taxa or pathway relative abundances (from <em>meta.taxa</em> output)</td>
+</tr>
+<tr class="odd">
+<td><em>meta.niceplot</em></td>
+<td>Produce nice combined heatmap and forest plot for meta-analysis results of bacterial taxa and pathway relative abundances (from <em>metatab.show</em> output)</td>
+</tr>
+<tr class="even">
+<td><em>read.multi</em></td>
+<td>Read multiple files in a path to R</td>
+</tr>
+<tr class="odd">
+<td><em>alpha.compare</em></td>
+<td>Calculate average alpha diversity indexes for a specific rarefaction depth, standardize and compare alpha diversity indexes between groups</td>
+</tr>
+<tr class="even">
+<td><em>microbiomeage</em></td>
+<td>Predict microbiome age using Random Forest model based on relative abundances of bacterial genera shared with the Bangladesh study</td>
+</tr>
+</tbody>
+</table>
+<div id="install-metamicrobiomer-and-other-required-packages" class="section level4">
+<h4>Install ‘metamicrobiomeR’ and other required packages</h4>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(metamicrobiomeR) </span></code></pre></div>
+</div>
+</div>
+<div id="results" class="section level1">
+<h1>Results</h1>
+<div id="example-1-comparison-between-breastfeeding-statuses-in-infants-6-months-of-age" class="section level4">
+<h4>Example 1: Comparison between breastfeeding statuses in infants &lt; 6 months of age</h4>
+<div id="plot-of-mean-relative-abundance-by-breastfeeding-statuses-and-age-at-phylum-level" class="section level5">
+<h5>Plot of mean relative abundance by breastfeeding statuses and age at phylum level</h5>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">data</span>(taxtab6)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>taxlist.rm&lt;-<span class="kw">taxa.filter</span>(<span class="dt">taxtab=</span>taxtab6,<span class="dt">percent.filter =</span> <span class="fl">0.05</span>, <span class="dt">relabund.filter =</span> <span class="fl">0.00005</span>)</span>
+<span id="cb2-3"><a href="#cb2-3"></a>taxa.meansdn.rm&lt;-<span class="kw">taxa.meansdn</span>(<span class="dt">taxtab=</span>taxtab6,<span class="dt">sumvar=</span><span class="st">&quot;bf&quot;</span>,<span class="dt">groupvar=</span><span class="st">&quot;age.sample&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4"></a>taxa.meansdn.rm&lt;-taxa.meansdn.rm[taxa.meansdn.rm<span class="op">$</span>bf<span class="op">!=</span><span class="st">&quot;No_BF&quot;</span>,] <span class="co">#&amp;taxa.meansdn.rm$age.sample&lt;=6,</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a>taxa.meansdn.rm<span class="op">$</span>bf&lt;-gdata<span class="op">::</span><span class="kw">drop.levels</span>(taxa.meansdn.rm<span class="op">$</span>bf,<span class="dt">reorder=</span><span class="ot">FALSE</span>)</span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="co">#phylum</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>p.bf.l2&lt;-<span class="kw">taxa.mean.plot</span>(<span class="dt">tabmean=</span>taxa.meansdn.rm,<span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>, <span class="dt">comvar=</span><span class="st">&quot;bf&quot;</span>, <span class="dt">groupvar=</span><span class="st">&quot;age.sample&quot;</span>,<span class="dt">mean.filter=</span><span class="fl">0.005</span>, <span class="dt">show.taxname=</span><span class="st">&quot;short&quot;</span>)</span>
+<span id="cb2-8"><a href="#cb2-8"></a>p.bf.l2<span class="op">$</span>p</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-gamlss-bezi" class="section level5">
+<h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS-BEZI</h5>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># Note: running time is not long in regular laptop for both GAMLSS-BEZI analysis (~10s) and meta-analysis (~5s).  </span></span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co"># However, to save running time, only taxonomies of one small phylum are selected for differential analysis example. </span></span>
+<span id="cb3-3"><a href="#cb3-3"></a>tab6&lt;-<span class="kw">as.data.frame</span>(taxtab6)</span>
+<span id="cb3-4"><a href="#cb3-4"></a>tl&lt;-<span class="kw">colnames</span>(taxtab6)[<span class="kw">grep</span>(<span class="st">&quot;k__bacteria.p__fusobacteria&quot;</span>,<span class="kw">colnames</span>(taxtab6))]</span>
+<span id="cb3-5"><a href="#cb3-5"></a>taxacom.ex&lt;-<span class="kw">taxa.compare</span>(<span class="dt">taxtab=</span>tab6[,<span class="kw">c</span>(<span class="st">&quot;personid&quot;</span>,<span class="st">&quot;x.sampleid&quot;</span>,<span class="st">&quot;bf&quot;</span>,<span class="st">&quot;age.sample&quot;</span>,tl)],<span class="dt">propmed.rel=</span><span class="st">&quot;gamlss&quot;</span>,<span class="dt">comvar=</span><span class="st">&quot;bf&quot;</span>,<span class="dt">adjustvar=</span><span class="st">&quot;age.sample&quot;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="dt">longitudinal=</span><span class="st">&quot;yes&quot;</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>)</span></code></pre></div>
+<p>Show results:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#phylum</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">taxcomtab.show</span>(<span class="dt">taxcomtab=</span>taxacom.ex,<span class="dt">tax.select=</span><span class="st">&quot;none&quot;</span>, <span class="dt">showvar=</span><span class="st">&quot;bfNon_exclusiveBF&quot;</span>, <span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>,<span class="dt">readjust.p=</span><span class="ot">TRUE</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">p.cutoff =</span> <span class="dv">1</span>)</span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt;                            id Estimate.bfNon_exclusiveBF    ll   ul</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; 1 k__bacteria.p__fusobacteria                      -0.06 -0.77 0.65</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt;   Pr(&gt;|t|).bfNon_exclusiveBF pval.adjust.bfNon_exclusiveBF</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt; 1                     0.8696                        0.8696</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#genus</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="kw">taxcomtab.show</span>(<span class="dt">taxcomtab=</span>taxacom.ex,<span class="dt">tax.select=</span><span class="st">&quot;none&quot;</span>, <span class="dt">showvar=</span><span class="st">&quot;bfNon_exclusiveBF&quot;</span>, <span class="dt">tax.lev=</span><span class="st">&quot;l6&quot;</span>, <span class="dt">readjust.p=</span><span class="ot">TRUE</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">p.cutoff =</span> <span class="dv">1</span>)</span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="co">#&gt;                                                                                                     id</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="co">#&gt; 5 k__bacteria.p__fusobacteria.c__fusobacteriia.o__fusobacteriales.f__fusobacteriaceae.g__fusobacterium</span></span>
+<span id="cb4-11"><a href="#cb4-11"></a><span class="co">#&gt;   Estimate.bfNon_exclusiveBF    ll   ul Pr(&gt;|t|).bfNon_exclusiveBF</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a><span class="co">#&gt; 5                      -0.12 -0.95 0.72                     0.7846</span></span>
+<span id="cb4-13"><a href="#cb4-13"></a><span class="co">#&gt;   pval.adjust.bfNon_exclusiveBF</span></span>
+<span id="cb4-14"><a href="#cb4-14"></a><span class="co">#&gt; 5                        0.7846</span></span></code></pre></div>
+</div>
+<div id="comparison-between-breastfeeding-statuses-adjusting-for-age-of-infants-at-sample-collection-using-lm-with-arcsin-squareroot-transformation-lmas" class="section level5">
+<h5>Comparison between breastfeeding statuses adjusting for age of infants at sample collection using LM with arcsin squareroot transformation (LMAS)</h5>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>taxacom.lmas&lt;-<span class="kw">taxa.compare</span>(<span class="dt">taxtab=</span>tab6[,<span class="kw">c</span>(<span class="st">&quot;personid&quot;</span>,<span class="st">&quot;x.sampleid&quot;</span>,<span class="st">&quot;bf&quot;</span>,<span class="st">&quot;age.sample&quot;</span>,tl)], <span class="dt">propmed.rel=</span><span class="st">&quot;lm&quot;</span>,<span class="dt">transform=</span><span class="st">&quot;asin.sqrt&quot;</span>,<span class="dt">comvar=</span><span class="st">&quot;bf&quot;</span>,<span class="dt">adjustvar=</span><span class="st">&quot;age.sample&quot;</span>, <span class="dt">longitudinal=</span><span class="st">&quot;yes&quot;</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#phylum</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="kw">taxcomtab.show</span>(<span class="dt">taxcomtab=</span>taxacom.lmas,<span class="dt">tax.select=</span><span class="st">&quot;none&quot;</span>, <span class="dt">showvar=</span><span class="st">&quot;bfNon_exclusiveBF&quot;</span>, <span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>,<span class="dt">readjust.p=</span><span class="ot">TRUE</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">p.cutoff =</span> <span class="dv">1</span>, <span class="dt">digit=</span><span class="dv">5</span>,<span class="dt">p.digit=</span><span class="dv">5</span>) </span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt;                            id Estimate.bfNon_exclusiveBF       ll      ul</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; 1 k__bacteria.p__fusobacteria                    0.00134 -0.00134 0.00402</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt;   Pr(&gt;|t|).bfNon_exclusiveBF pval.adjust.bfNon_exclusiveBF</span></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; 1                    0.32081                       0.32081</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#family</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="kw">taxcomtab.show</span>(<span class="dt">taxcomtab=</span>taxacom.lmas,<span class="dt">tax.select=</span><span class="st">&quot;none&quot;</span>, <span class="dt">showvar=</span><span class="st">&quot;bfNon_exclusiveBF&quot;</span>, <span class="dt">tax.lev=</span><span class="st">&quot;l5&quot;</span>,<span class="dt">readjust.p=</span><span class="ot">TRUE</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">p.cutoff =</span> <span class="dv">1</span>, <span class="dt">digit=</span><span class="dv">5</span>,<span class="dt">p.digit=</span><span class="dv">5</span>)</span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt;                                                                                    id</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 4 k__bacteria.p__fusobacteria.c__fusobacteriia.o__fusobacteriales.f__fusobacteriaceae</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt;   Estimate.bfNon_exclusiveBF       ll      ul Pr(&gt;|t|).bfNon_exclusiveBF</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; 4                    0.00137 -0.00131 0.00405                    0.31016</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt;   pval.adjust.bfNon_exclusiveBF</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt; 4                       0.31016</span></span></code></pre></div>
+</div>
+</div>
+<div id="comparison-of-relative-abundance-of-bacterial-functional-kegg-pathways-between-male-vs.-female-infants-6-months-adjusting-for-breastfeeding-statuses-and-age-of-infants-at-sample-collection" class="section level3">
+<h3>Comparison of relative abundance of bacterial functional (KEGG) pathways between male vs. female infants &lt; 6 months adjusting for breastfeeding statuses and age of infants at sample collection</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">data</span>(kegg<span class="fl">.12</span>)</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">data</span>(covar.rm)</span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co"># Comparison of pathway relative abundances for level 1 only (to save running time)</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>path1&lt;-<span class="kw">pathway.compare</span>(<span class="dt">pathtab=</span><span class="kw">list</span>(kegg<span class="fl">.12</span>[[<span class="dv">1</span>]]),<span class="dt">mapfile=</span>covar.rm,<span class="dt">sampleid=</span><span class="st">&quot;sampleid&quot;</span>, <span class="dt">pathsum=</span><span class="st">&quot;rel&quot;</span>,<span class="dt">stat.med=</span><span class="st">&quot;gamlss&quot;</span>,<span class="dt">comvar=</span><span class="st">&quot;gender&quot;</span>,<span class="dt">adjustvar=</span><span class="kw">c</span>(<span class="st">&quot;age.sample&quot;</span>,<span class="st">&quot;bf&quot;</span>), <span class="dt">longitudinal=</span><span class="st">&quot;yes&quot;</span>,<span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">percent.filter=</span><span class="fl">0.05</span>,<span class="dt">relabund.filter=</span><span class="fl">0.00005</span>)</span></code></pre></div>
+<p>Show results:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">taxcomtab.show</span>(<span class="dt">taxcomtab=</span>path1<span class="op">$</span>l1, <span class="dt">sumvar=</span><span class="st">&quot;path&quot;</span>, <span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>,<span class="dt">tax.select=</span><span class="st">&quot;none&quot;</span>,<span class="dt">showvar=</span><span class="st">&quot;genderMale&quot;</span>, <span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>,<span class="dt">p.cutoff=</span><span class="dv">1</span>)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt;                                     id Estimate.genderMale    ll   ul</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="co">#&gt; 7                   Organismal.Systems                0.04  0.02 0.06</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; 5                           Metabolism                0.01  0.00 0.01</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="co">#&gt; 4                       Human.Diseases               -0.02 -0.03 0.00</span></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="co">#&gt; 8                         Unclassified               -0.01 -0.02 0.00</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="co">#&gt; 2 Environmental.Information.Processing               -0.01 -0.02 0.00</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="co">#&gt; 3       Genetic.Information.Processing                0.01  0.00 0.01</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a><span class="co">#&gt; 6                                 None               -0.06 -0.16 0.05</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="co">#&gt; 1                   Cellular.Processes                0.00 -0.03 0.02</span></span>
+<span id="cb7-11"><a href="#cb7-11"></a><span class="co">#&gt;   Pr(&gt;|t|).genderMale pval.adjust.genderMale</span></span>
+<span id="cb7-12"><a href="#cb7-12"></a><span class="co">#&gt; 7              0.0000                 0.0001</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a><span class="co">#&gt; 5              0.0155                 0.0619</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="co">#&gt; 4              0.0273                 0.0727</span></span>
+<span id="cb7-15"><a href="#cb7-15"></a><span class="co">#&gt; 8              0.0521                 0.1043</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a><span class="co">#&gt; 2              0.1705                 0.2728</span></span>
+<span id="cb7-17"><a href="#cb7-17"></a><span class="co">#&gt; 3              0.2454                 0.3271</span></span>
+<span id="cb7-18"><a href="#cb7-18"></a><span class="co">#&gt; 6              0.2877                 0.3288</span></span>
+<span id="cb7-19"><a href="#cb7-19"></a><span class="co">#&gt; 1              0.8100                 0.8100</span></span></code></pre></div>
+</div>
+<div id="illustration-of-meta-analysis" class="section level2">
+<h2>Illustration of meta-analysis</h2>
+<p>GAMLSS-BEZI results from four studies (Bangladesh, Haiti, USA(CA_FL), USA(NC)) were used for analysis. Heatmap of log(odds ratio) (log(OR)) of relative abundances of gut bacterial taxa at different taxonomic levels between male vs. female infants for each study and pooled estimates (meta-analysis) across all studies with 95% confidence intervals (95% CI) (forest plot). All log(OR) estimates of each bacterial taxa from each study were from Generalized Additive Models for Location Scale and Shape (GAMLSS) with beta zero inflated family (BEZI) and were adjusted for feeding status and age of infants at sample collection. Pooled log(OR) estimates and 95% CI (forest plot) were from random effect meta-analysis models with inverse variance weighting and DerSimonian-Laird estimator for between-study variance based on the adjusted log(OR) estimates and corresponding standard errors of all included studies. Bacterial taxa with p-values for differential relative abundances &lt;0.05 were denoted with * and those with p-values &lt;0.0001 were denoted with **. Pooled log(OR) estimates with pooled p-values&lt;0.05 are in red and those with false discovery rate (FDR) adjusted pooled p-values &lt;0.1 are in triangle shape. Missing (unavailable) values are in white. USA: United States of America; CA: California; FL: Florida; NC: North Carolina.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co"># load saved GAMLSS-BEZI results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection </span></span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">data</span>(tabsex4)</span>
+<span id="cb8-3"><a href="#cb8-3"></a></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#select only taxonomies of a small phylum for meta-analysis example (to save running time)</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a>tlm&lt;-tabsex4<span class="op">$</span>id[<span class="kw">grep</span>(<span class="st">&quot;k__bacteria.p__fusobacteria&quot;</span>,tabsex4<span class="op">$</span>id)]</span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="co"># meta-analysis </span></span>
+<span id="cb8-7"><a href="#cb8-7"></a>metab.sex&lt;-<span class="kw">meta.taxa</span>(<span class="dt">taxcomdat=</span>tabsex4[tabsex4<span class="op">$</span>id <span class="op">%in%</span><span class="st"> </span>tlm,], <span class="dt">summary.measure=</span><span class="st">&quot;RR&quot;</span>, <span class="dt">pool.var=</span><span class="st">&quot;id&quot;</span>, <span class="dt">studylab=</span><span class="st">&quot;study&quot;</span>, <span class="dt">backtransform=</span><span class="ot">FALSE</span>, <span class="dt">percent.meta=</span><span class="fl">0.5</span>, <span class="dt">p.adjust.method=</span><span class="st">&quot;fdr&quot;</span>)</span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="co">#show results by table and plot</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="co">#phylum</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="co">#table</span></span>
+<span id="cb8-11"><a href="#cb8-11"></a><span class="kw">metatab.show</span>(<span class="dt">metatab=</span>metab.sex<span class="op">$</span>random,<span class="dt">com.pooled.tab=</span>tabsex4[tabsex4<span class="op">$</span>id <span class="op">%in%</span><span class="st"> </span>tlm,], <span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>,<span class="dt">showvar=</span><span class="st">&quot;genderMale&quot;</span>,<span class="dt">p.cutoff.type=</span><span class="st">&quot;p&quot;</span>, <span class="dt">p.cutoff=</span><span class="dv">1</span>,<span class="dt">display=</span><span class="st">&quot;table&quot;</span>)</span>
+<span id="cb8-12"><a href="#cb8-12"></a><span class="co">#&gt;                            id estimate    ll   ul      p p.adjust</span></span>
+<span id="cb8-13"><a href="#cb8-13"></a><span class="co">#&gt; 1 k__bacteria.p__fusobacteria     0.04 -0.28 0.35 0.8231   0.9242</span></span>
+<span id="cb8-14"><a href="#cb8-14"></a><span class="co">#plot</span></span>
+<span id="cb8-15"><a href="#cb8-15"></a>metadat&lt;-<span class="kw">metatab.show</span>(<span class="dt">metatab=</span>metab.sex<span class="op">$</span>random,<span class="dt">com.pooled.tab=</span>tabsex4, <span class="dt">tax.lev=</span><span class="st">&quot;l2&quot;</span>,<span class="dt">showvar=</span><span class="st">&quot;genderMale&quot;</span>,<span class="dt">p.cutoff.type=</span><span class="st">&quot;p&quot;</span>, <span class="dt">p.cutoff=</span><span class="dv">1</span>,<span class="dt">display=</span><span class="st">&quot;data&quot;</span>)</span>
+<span id="cb8-16"><a href="#cb8-16"></a><span class="kw">meta.niceplot</span>(<span class="dt">metadat=</span>metadat,<span class="dt">sumtype=</span><span class="st">&quot;taxa&quot;</span>,<span class="dt">level=</span><span class="st">&quot;main&quot;</span>,<span class="dt">p=</span><span class="st">&quot;p&quot;</span>, <span class="dt">p.adjust=</span><span class="st">&quot;p.adjust&quot;</span>,<span class="dt">phyla.col=</span><span class="st">&quot;rainbow&quot;</span>,<span class="dt">p.sig.heat=</span><span class="st">&quot;yes&quot;</span>, <span class="dt">heat.forest.width.ratio =</span><span class="kw">c</span>(<span class="fl">1.5</span>,<span class="dv">1</span>), <span class="dt">leg.key.size=</span><span class="fl">0.8</span>, <span class="dt">leg.text.size=</span><span class="dv">10</span>, <span class="dt">heat.text.x.size=</span><span class="dv">10</span>, <span class="dt">heat.text.x.angle=</span><span class="dv">0</span>, <span class="dt">forest.axis.text.y=</span><span class="dv">8</span>,<span class="dt">forest.axis.text.x=</span><span class="dv">10</span>, <span class="dt">point.ratio =</span> <span class="kw">c</span>(<span class="dv">4</span>,<span class="dv">2</span>),<span class="dt">line.ratio =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">1</span>))</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div id="meta-analysis-of-other-microbiome-measures" class="section level3">
+<h3>Meta-analysis of other microbiome measures</h3>
+<p>Random effects meta-analysis models can also be generally applied to other microbiome measures such as microbial alpha diversity and microbiome age. To make the estimates for these positive continuous microbiome measures comparable across studies, these measures should be standardized to have a mean of 0 and standard deviation of 1 before between-group-comparison within each study. Random effects meta-analysis models can then be applied to pool the “comparable” estimates and their standard errors across studies. Meta-analysis results of these measures can be displayed as standard meta-analysis forest plots.</p>
+<div id="alpha-diversity" class="section level4">
+<h4>Alpha diversity</h4>
+<div id="calculate-mean-alpha-diversity-indexes-for-a-selected-rarefaction-depth-standardize-and-compare-standardized-alpha-diversity-indexes-between-groups-male-vs.-female-infants-6-months-of-age-adjusting-for-covariates-feeding-status-and-infant-age-at-sample-collection-using-bangladesh-data" class="section level5">
+<h5>Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups (male vs. female infants &lt;=6 months of age) adjusting for covariates (feeding status and infant age at sample collection) using Bangladesh data</h5>
+<p>For each study, the <em>alpha.compare</em> function imports the outputs from “alpha_rarefaction.py” QIIME1 script and calculates mean alpha diversity for different indices for each sample based on a user defined rarefaction depth. Mean alpha diversity indexes are standardized to have a mean of 0 and standard deviation of 1 to make these measures comparable across studies. Standardized alpha diversity indexes are compared between groups adjusting for covariates using LM. Meta-analysis across studies is then done and the results are displayed as a standard meta-analysis forest plot.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw">data</span>(alphadat)</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="kw">data</span>(covar.rm)</span>
+<span id="cb9-3"><a href="#cb9-3"></a>covar.rm<span class="op">$</span>sampleid&lt;-<span class="kw">tolower</span>(covar.rm<span class="op">$</span>sampleid)</span>
+<span id="cb9-4"><a href="#cb9-4"></a></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants &lt;=6 months of age </span></span>
+<span id="cb9-6"><a href="#cb9-6"></a>alphacom&lt;-<span class="kw">alpha.compare</span>(<span class="dt">datlist=</span>alphadat,<span class="dt">depth=</span><span class="dv">3</span>,<span class="dt">mapfile=</span>covar.rm, <span class="dt">mapsampleid=</span><span class="st">&quot;sampleid&quot;</span>,<span class="dt">comvar=</span><span class="st">&quot;gender&quot;</span>,<span class="dt">adjustvar=</span><span class="kw">c</span>(<span class="st">&quot;age.sample&quot;</span>,<span class="st">&quot;bf&quot;</span>), <span class="dt">longitudinal=</span><span class="st">&quot;yes&quot;</span>,<span class="dt">age.limit=</span><span class="dv">6</span>,<span class="dt">standardize=</span><span class="ot">TRUE</span>)</span>
+<span id="cb9-7"><a href="#cb9-7"></a>alphacom<span class="op">$</span>alphasum[,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>] </span>
+<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt;                 id Estimate.genderMale Std. Error.genderMale t value.genderMale</span></span>
+<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt; 1            chao1         -0.06535198             0.1502276         -0.4350197</span></span>
+<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; 2 observed_species         -0.14283545             0.1363228         -1.0477741</span></span>
+<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt; 3    pd_whole_tree         -0.13246866             0.1452980         -0.9117031</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a><span class="co">#&gt; 4          shannon         -0.44008064             0.1993104         -2.2080165</span></span>
+<span id="cb9-13"><a href="#cb9-13"></a><span class="co">#&gt;   Pr(&gt;|t|).genderMale</span></span>
+<span id="cb9-14"><a href="#cb9-14"></a><span class="co">#&gt; 1          0.66354814</span></span>
+<span id="cb9-15"><a href="#cb9-15"></a><span class="co">#&gt; 2          0.29474270</span></span>
+<span id="cb9-16"><a href="#cb9-16"></a><span class="co">#&gt; 3          0.36192504</span></span>
+<span id="cb9-17"><a href="#cb9-17"></a><span class="co">#&gt; 4          0.02724312</span></span></code></pre></div>
+</div>
+</div>
+<div id="meta-analysis-of-four-studies" class="section level4">
+<h4>Meta-analysis of four studies</h4>
+<p>The results showed that alpha diversity (four commonly used indexes Shannon, Phylogenetic diversity whole tree, Observed species, Chao1) was not different between male and female infants &lt;=6 months of age in the meta-analysis of the four included studies.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="co"># load saved results of 4 studies </span></span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="kw">data</span>(asum4)</span>
+<span id="cb10-3"><a href="#cb10-3"></a>asum4[,<span class="kw">c</span>(<span class="kw">colnames</span>(asum4)[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>],<span class="st">&quot;pop&quot;</span>)]</span>
+<span id="cb10-4"><a href="#cb10-4"></a><span class="co">#&gt;                  id Estimate.genderMale Std. Error.genderMale</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a><span class="co">#&gt; 1             chao1         0.065272209            0.07218733</span></span>
+<span id="cb10-6"><a href="#cb10-6"></a><span class="co">#&gt; 2  observed_species         0.065294129            0.06212808</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a><span class="co">#&gt; 3     pd_whole_tree         0.031315730            0.05024410</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a><span class="co">#&gt; 4           shannon        -0.001275711            0.08208238</span></span>
+<span id="cb10-9"><a href="#cb10-9"></a><span class="co">#&gt; 5             chao1        -0.088622253            0.35281030</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a><span class="co">#&gt; 6  observed_species        -0.091470047            0.34530046</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a><span class="co">#&gt; 7     pd_whole_tree         0.042568336            0.29523720</span></span>
+<span id="cb10-12"><a href="#cb10-12"></a><span class="co">#&gt; 8           shannon        -0.009111759            0.29356564</span></span>
+<span id="cb10-13"><a href="#cb10-13"></a><span class="co">#&gt; 9             chao1        -0.045032383            0.13370075</span></span>
+<span id="cb10-14"><a href="#cb10-14"></a><span class="co">#&gt; 10 observed_species        -0.065381830            0.11449459</span></span>
+<span id="cb10-15"><a href="#cb10-15"></a><span class="co">#&gt; 11    pd_whole_tree        -0.159019660            0.10759336</span></span>
+<span id="cb10-16"><a href="#cb10-16"></a><span class="co">#&gt; 12          shannon        -0.070534615            0.14337124</span></span>
+<span id="cb10-17"><a href="#cb10-17"></a><span class="co">#&gt; 13            chao1         0.496575022            0.59246819</span></span>
+<span id="cb10-18"><a href="#cb10-18"></a><span class="co">#&gt; 14 observed_species         0.233671733            0.52941632</span></span>
+<span id="cb10-19"><a href="#cb10-19"></a><span class="co">#&gt; 15    pd_whole_tree        -0.010762231            0.73314245</span></span>
+<span id="cb10-20"><a href="#cb10-20"></a><span class="co">#&gt; 16          shannon         0.178306026            0.55527792</span></span>
+<span id="cb10-21"><a href="#cb10-21"></a><span class="co">#&gt;    t value.genderMale Pr(&gt;|t|).genderMale        pop</span></span>
+<span id="cb10-22"><a href="#cb10-22"></a><span class="co">#&gt; 1          0.90420590           0.3658862 Bangladesh</span></span>
+<span id="cb10-23"><a href="#cb10-23"></a><span class="co">#&gt; 2          1.05095998           0.2932770 Bangladesh</span></span>
+<span id="cb10-24"><a href="#cb10-24"></a><span class="co">#&gt; 3          0.62327174           0.5331060 Bangladesh</span></span>
+<span id="cb10-25"><a href="#cb10-25"></a><span class="co">#&gt; 4         -0.01554184           0.9875999 Bangladesh</span></span>
+<span id="cb10-26"><a href="#cb10-26"></a><span class="co">#&gt; 5         -0.25118953           0.8029223      Haiti</span></span>
+<span id="cb10-27"><a href="#cb10-27"></a><span class="co">#&gt; 6         -0.26489987           0.7924139      Haiti</span></span>
+<span id="cb10-28"><a href="#cb10-28"></a><span class="co">#&gt; 7          0.14418351           0.8860620      Haiti</span></span>
+<span id="cb10-29"><a href="#cb10-29"></a><span class="co">#&gt; 8         -0.03103823           0.9753897      Haiti</span></span>
+<span id="cb10-30"><a href="#cb10-30"></a><span class="co">#&gt; 9         -0.33681473           0.7362566 USA(CA_FL)</span></span>
+<span id="cb10-31"><a href="#cb10-31"></a><span class="co">#&gt; 10        -0.57104735           0.5679675 USA(CA_FL)</span></span>
+<span id="cb10-32"><a href="#cb10-32"></a><span class="co">#&gt; 11        -1.47796914           0.1394160 USA(CA_FL)</span></span>
+<span id="cb10-33"><a href="#cb10-33"></a><span class="co">#&gt; 12        -0.49197185           0.6227392 USA(CA_FL)</span></span>
+<span id="cb10-34"><a href="#cb10-34"></a><span class="co">#&gt; 13         0.83814630           0.4019485   USA(UNC)</span></span>
+<span id="cb10-35"><a href="#cb10-35"></a><span class="co">#&gt; 14         0.44137615           0.6589407   USA(UNC)</span></span>
+<span id="cb10-36"><a href="#cb10-36"></a><span class="co">#&gt; 15        -0.01467959           0.9882878   USA(UNC)</span></span>
+<span id="cb10-37"><a href="#cb10-37"></a><span class="co">#&gt; 16         0.32111132           0.7481260   USA(UNC)</span></span>
+<span id="cb10-38"><a href="#cb10-38"></a><span class="co">#Shannon index </span></span>
+<span id="cb10-39"><a href="#cb10-39"></a>shannon.sex &lt;-<span class="st"> </span>meta<span class="op">::</span><span class="kw">metagen</span>(Estimate.genderMale, <span class="st">`</span><span class="dt">Std. Error.genderMale</span><span class="st">`</span>, <span class="dt">studlab=</span>pop,<span class="dt">data=</span><span class="kw">subset</span>(asum4,id<span class="op">==</span><span class="st">&quot;shannon&quot;</span>),<span class="dt">sm=</span><span class="st">&quot;RD&quot;</span>, <span class="dt">backtransf=</span><span class="ot">FALSE</span>)</span>
+<span id="cb10-40"><a href="#cb10-40"></a>meta<span class="op">::</span><span class="kw">forest</span>(shannon.sex,<span class="dt">smlab=</span><span class="st">&quot;Standardized </span><span class="ch">\n</span><span class="st"> diversity difference&quot;</span>,<span class="dt">sortvar=</span><span class="kw">subset</span>(asum4,id<span class="op">==</span><span class="st">&quot;shannon&quot;</span>)<span class="op">$</span>pop,<span class="dt">lwd=</span><span class="dv">2</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>shannon.sex</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="co">#&gt;                 RD            95%-CI %W(fixed) %W(random)</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="co">#&gt; Bangladesh -0.0013 [-0.1622; 0.1596]      70.0       70.0</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="co">#&gt; Haiti      -0.0091 [-0.5845; 0.5663]       5.5        5.5</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="co">#&gt; USA(CA_FL) -0.0705 [-0.3515; 0.2105]      23.0       23.0</span></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="co">#&gt; USA(UNC)    0.1783 [-0.9100; 1.2666]       1.5        1.5</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="co">#&gt; </span></span>
+<span id="cb11-8"><a href="#cb11-8"></a><span class="co">#&gt; Number of studies combined: k = 4</span></span>
+<span id="cb11-9"><a href="#cb11-9"></a><span class="co">#&gt; </span></span>
+<span id="cb11-10"><a href="#cb11-10"></a><span class="co">#&gt;                           RD            95%-CI     z p-value</span></span>
+<span id="cb11-11"><a href="#cb11-11"></a><span class="co">#&gt; Fixed effect model   -0.0149 [-0.1495; 0.1198] -0.22  0.8288</span></span>
+<span id="cb11-12"><a href="#cb11-12"></a><span class="co">#&gt; Random effects model -0.0149 [-0.1495; 0.1198] -0.22  0.8288</span></span>
+<span id="cb11-13"><a href="#cb11-13"></a><span class="co">#&gt; </span></span>
+<span id="cb11-14"><a href="#cb11-14"></a><span class="co">#&gt; Quantifying heterogeneity:</span></span>
+<span id="cb11-15"><a href="#cb11-15"></a><span class="co">#&gt;  tau^2 = 0 [0.0000; 0.0244]; tau = 0 [0.0000; 0.1561];</span></span>
+<span id="cb11-16"><a href="#cb11-16"></a><span class="co">#&gt;  I^2 = 0.0% [0.0%; 0.0%]; H = 1.00 [1.00; 1.00]</span></span>
+<span id="cb11-17"><a href="#cb11-17"></a><span class="co">#&gt; </span></span>
+<span id="cb11-18"><a href="#cb11-18"></a><span class="co">#&gt; Test of heterogeneity:</span></span>
+<span id="cb11-19"><a href="#cb11-19"></a><span class="co">#&gt;     Q d.f. p-value</span></span>
+<span id="cb11-20"><a href="#cb11-20"></a><span class="co">#&gt;  0.30    3  0.9601</span></span>
+<span id="cb11-21"><a href="#cb11-21"></a><span class="co">#&gt; </span></span>
+<span id="cb11-22"><a href="#cb11-22"></a><span class="co">#&gt; Details on meta-analytical method:</span></span>
+<span id="cb11-23"><a href="#cb11-23"></a><span class="co">#&gt; - Inverse variance method</span></span>
+<span id="cb11-24"><a href="#cb11-24"></a><span class="co">#&gt; - DerSimonian-Laird estimator for tau^2</span></span>
+<span id="cb11-25"><a href="#cb11-25"></a><span class="co">#&gt; - Jackson method for confidence interval of tau^2 and tau</span></span>
+<span id="cb11-26"><a href="#cb11-26"></a><span class="kw">cbind</span>(<span class="dt">study=</span>shannon.sex<span class="op">$</span>studlab,<span class="dt">pval=</span>shannon.sex<span class="op">$</span>pval)</span>
+<span id="cb11-27"><a href="#cb11-27"></a><span class="co">#&gt;      study        pval               </span></span>
+<span id="cb11-28"><a href="#cb11-28"></a><span class="co">#&gt; [1,] &quot;Bangladesh&quot; &quot;0.987599902164408&quot;</span></span>
+<span id="cb11-29"><a href="#cb11-29"></a><span class="co">#&gt; [2,] &quot;Haiti&quot;      &quot;0.9752390484969&quot;  </span></span>
+<span id="cb11-30"><a href="#cb11-30"></a><span class="co">#&gt; [3,] &quot;USA(CA_FL)&quot; &quot;0.622739246734807&quot;</span></span>
+<span id="cb11-31"><a href="#cb11-31"></a><span class="co">#&gt; [4,] &quot;USA(UNC)&quot;   &quot;0.748126030769876&quot;</span></span></code></pre></div>
+</div>
+</div>
+<div id="microbiome-age" class="section level3">
+<h3>Microbiome age</h3>
+<div id="predicting-microbiome-age-checking-model-performance-and-replicate-the-results-of-the-bangladesh-study" class="section level4">
+<h4>Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study</h4>
+<p>Random Forest (RF) modeling of gut microbiota maturity has been used to characterize development of the microbiome over chronological time. Adapting from the original approach of Subramanian et al, in the <em>microbiomeage</em> function, relative abundances of bacterial genera that were detected in the Bangladesh data and in the data of other studies to be included were regressed against infant chronological age using a RF model on a predefined training dataset of the Bangladesh study. This predefined training set includes 249 samples collected monthly from birth to 2 years of age from 11 Bangladeshi healthy singleton infants. The RF training model fit based on relative abundances of these shared bacterial genera was then used to predict infant age on the test data of the Bangladesh study and the data of each other study to be included. The predicted infant age based on relative abundances of these shared bacterial genera in each study is referred to as gut microbiota age.</p>
+<p>In brief, the <em>microbiomeage</em> function get the shared genera list between the Bangladesh study and all other included studies, get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.</p>
+<p>As the data is large and the model takes time to run, please go to <a href="https://github.com/nhanhocu/metamicrobiomeR">the package github repo</a> for example codes and data.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="availability" class="section level1">
+<h1>Availability</h1>
+<p>All more detailed source code, example data, documentation and the manuscript describing the <em>metamicrobiomeR</em> package are available at [<a href="https://github.com/nhanhocu/metamicrobiomeR" class="uri">https://github.com/nhanhocu/metamicrobiomeR</a>].</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

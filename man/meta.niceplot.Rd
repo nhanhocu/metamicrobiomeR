@@ -4,25 +4,42 @@
 \alias{meta.niceplot}
 \title{Nice meta-analysis plots.}
 \usage{
-meta.niceplot(metadat, sumtype = "taxa", level = "main", p, p.adjust,
-  phyla.col = c("rainbow", "select"),
-  phyla.select = c("actinobacteria", "bacteroidetes", "cyanobacteria",
-  "firmicutes", "fusobacteria", "proteobacteria", "verrucomicrobia",
-  ".thermi."), col.select = c("#dd1c77", "#31a354", "#91003f", "#d95f0e",
-  "#636363", "#2ef0e7", "#862ef0", "#000"), est.break = c(-Inf, -1, -0.5,
-  -0.1, 0, 0.1, 0.5, 1, Inf), est.break.label = c("<-1", "[-1,-0.5)",
-  "[-0.5,-0.1)", "[-0.1,0)", "[0,0.1)", "[0.1,0.5)", "[0.5,1)", ">=1"),
-  neg.palette = "PuBu", pos.palette = "YlOrRd", p.sig.heat = "no",
-  p.break = c(0, 1e-04, 0.05, 1), p.break.label = c("**", "*", ""),
-  p.pool.break = c(0, 0.05, 1), p.pool.break.label = c("[0,0.05)",
-  "[0.05,1]"), padjust.pool.break = c(0, 0.1, 1),
+meta.niceplot(
+  metadat,
+  sumtype = "taxa",
+  level = "main",
+  p,
+  p.adjust,
+  phyla.col = "rainbow",
+  phyla.select = c("actinobacteria", "bacteroidetes", "cyanobacteria", "firmicutes",
+    "fusobacteria", "proteobacteria", "verrucomicrobia", ".thermi."),
+  col.select = c("#dd1c77", "#31a354", "#91003f", "#d95f0e", "#636363", "#2ef0e7",
+    "#862ef0", "#000"),
+  est.break = c(-Inf, -1, -0.5, -0.1, 0, 0.1, 0.5, 1, Inf),
+  est.break.label = c("<-1", "[-1,-0.5)", "[-0.5,-0.1)", "[-0.1,0)", "[0,0.1)",
+    "[0.1,0.5)", "[0.5,1)", ">=1"),
+  neg.palette = "PuBu",
+  pos.palette = "YlOrRd",
+  p.sig.heat = "no",
+  p.break = c(0, 1e-04, 0.05, 1),
+  p.break.label = c("**", "*", ""),
+  p.pool.break = c(0, 0.05, 1),
+  p.pool.break.label = c("[0,0.05)", "[0.05,1]"),
+  padjust.pool.break = c(0, 0.1, 1),
   padjust.pool.break.label = c("[0,0.1)", "[0.1,1]"),
-  forest.est.shape = c("17", "16"), forest.est.col = c("red", "black"),
-  forest.col = c("by.pvalue", "by.estimate"), leg.key.size = 1,
-  leg.text.size = 8, heat.text.x.size = 8, heat.text.x.angle = 0,
-  forest.axis.text.y = 8, forest.axis.text.x = 8,
-  heat.forest.width.ratio = c(1, 1), point.ratio = c(3, 1),
-  line.ratio = c(2, 1))
+  forest.est.shape = c("17", "16"),
+  forest.est.col = c("red", "black"),
+  forest.col = "by.pvalue",
+  leg.key.size = 1,
+  leg.text.size = 8,
+  heat.text.x.size = 8,
+  heat.text.x.angle = 0,
+  forest.axis.text.y = 8,
+  forest.axis.text.x = 8,
+  heat.forest.width.ratio = c(1, 1),
+  point.ratio = c(3, 1),
+  line.ratio = c(2, 1)
+)
 }
 \arguments{
 \item{metadat}{output data from metatab.show.}
@@ -94,28 +111,31 @@ combined heatmap forest plot.
 This function displays meta-analysis results of relative abundance as a nice combined heatmap and forest plot. More flexibility/options for plot will be added.
 }
 \examples{
-#Load saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection
-data(taxacom.rm.sex.adjustbfage)
-data(taxacom.ha.sex.adjustbfage)
-data(taxacom6.zi.usbmk.sex.adjustbfage)
-data(taxacom6.unc.sex.adjustedbfage)
-taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-tabsex4<-plyr::rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
-#Meta-analysis (take time to run)
-metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-#nice plot phylum level
-metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=7)
-#nice plot family level
-metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
+# load saved GAMLSS-BEZI results of four studies
+# for the comparison of bacterial taxa relative abundance
+# between genders adjusted for breastfeeding and
+# infant age at sample collection
+data(tabsex4)
+#select only taxonomies of a small phylum for meta-analysis example
+# (to save running time)
+tlm<-tabsex4$id[grep("k__bacteria.p__fusobacteria",tabsex4$id)]
+# meta-analysis
+metab.sex<-meta.taxa(taxcomdat=tabsex4[tabsex4$id \%in\% tlm,],
+summary.measure="RR", pool.var="id", studylab="study", backtransform=FALSE,
+percent.meta=0.5, p.adjust.method="fdr")
+#show results by table and plot
+#phylum
+#table
+metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4[tabsex4$id \%in\% tlm,],
+tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="table")
+#plot
+metadat<-metatab.show(metatab=metab.sex$random, com.pooled.tab=tabsex4[tabsex4$id \%in\% tlm,],
+tax.lev="l2", showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
+meta.niceplot(metadat=metadat,sumtype="taxa",level="main",
+p="p",p.adjust="p.adjust", phyla.col="rainbow", p.sig.heat="yes",
+heat.forest.width.ratio =c(1.5,1), leg.key.size=0.8, leg.text.size=10,
+heat.text.x.size=10, heat.text.x.angle=0, forest.axis.text.y=8,
+forest.axis.text.x=10, point.ratio = c(4,2),line.ratio = c(2,1))
 }
 \keyword{forest}
 \keyword{heatmap}
