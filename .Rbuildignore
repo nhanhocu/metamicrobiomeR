@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 ^\.github$
 ^cran-comments\.md$
+^data-raw$
