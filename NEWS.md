@@ -1,3 +1,15 @@
+# metamicrobiomeR (development version)
+
+Version 2.0 is a redesign and a **clean break from 1.x**: the 1.x wide-table
+input layout and the dot-case functions (`taxa.compare()`, `meta.taxa()` and
+so on) will not be supported. Version 1.3 (branch `legacy-1.x`) is the last
+release with the old interface. See `dev/SPEC.md` for the new data contracts.
+
+* New study object (`as_study()`, `check_study()`, accessors) with taxonomy in
+  rank columns, optional counts and validated study metadata.
+* New effect table (`new_effect_table()`, `check_effects()`, `bind_effects()`)
+  as the interface between models and pooling.
+
 # metamicrobiomeR 1.3
 
 This is a maintenance release. It restores the package to a working state on

@@ -1,7 +1,7 @@
 Package: metamicrobiomeR
 Title: Microbiome Data Analysis & Meta-Analysis with GAMLSS-BEZI &
         Random Effects
-Version: 1.3
+Version: 2.0.0.9000
 Authors@R: c(
     person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut"),
     person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
@@ -22,9 +22,9 @@ Depends: R (>= 4.0.0), gamlss
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.1
 Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
-        matrixStats, zCompositions, compositions
+        matrixStats, zCompositions, compositions, stats, utils
 Suggests: testthat, knitr, rmarkdown, grDevices, tools, caret,
         randomForest, RColorBrewer
 VignetteBuilder: knitr
