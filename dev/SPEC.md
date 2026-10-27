@@ -14,7 +14,7 @@ A study is one cohort or dataset, processed with one pipeline. Orientation is
 |---|---|---|
 | `assays$counts` | numeric matrix, features x samples | Non-negative integers. Optional if `relabund` is given. |
 | `assays$relabund` | numeric matrix, same dimnames | Proportions in [0, 1]. Optional if `counts` is given. Percent input is converted on entry. |
-| `features` | data.frame, one row per feature | Row names are unique feature IDs (ASV/OTU ID, taxon string, pathway ID). Optional rank columns: kingdom, phylum, class, order, family, genus, species. `rank` = the feature's own (deepest) rank. |
+| `features` | data.frame, one row per feature | Row names are unique feature IDs (ASV/OTU ID, taxon string, pathway ID). Optional rank columns: kingdom, phylum, class, order, family, genus, species. Optional `rank`: the level at which the feature is defined (a taxonomic rank for agglomerated tables such as QIIME1 L2 to L7; `leaf` for ASV/OTU features). It is never inferred from the taxonomy: a genus-level feature with an unassigned genus is still genus-level. |
 | `samples` | data.frame, one row per sample | Row names are sample IDs matching the assay columns. |
 | `study` | named list | Required: `id`, `feature_type`. Recommended: `region`, `platform`, `database`, `db_version`, `pipeline`, `measured` (functions only), `subject` (name of the repeated-measures ID column in `samples`). |
 
@@ -24,12 +24,14 @@ Rules enforced by `check_study()`:
 
 * Feature IDs and sample IDs are unique, non-missing, and identical across assays.
 * No missing values in assays; counts are non-negative integers.
-* Relative abundances are in [0, 1]; sums within each rank may not exceed 1
+* Relative abundances are in [0, 1]; sums within each `rank` group may not exceed 1 (all features form one group if `rank` is absent)
   (sums below 1 are allowed: filtering and unassigned reads are normal).
 * `samples` has one row per assay column; `study$subject` exists in `samples` if given.
 * Warnings (not errors) for samples with zero depth.
 
-Taxonomy lives in rank columns, never in feature names. Ranks are analysed
+Taxonomy lives in rank columns, never in feature names. Placeholders for
+unassigned or padded lineages (`other`, empty tokens such as `g__`, `Unassigned`)
+are stored as `NA` in the rank columns; importers are responsible for this. Ranks are analysed
 separately (rank-aware agglomeration comes in a later release); features at
 different ranks are nested, not independent.
 

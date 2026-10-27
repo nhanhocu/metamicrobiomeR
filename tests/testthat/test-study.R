@@ -21,13 +21,24 @@ test_that("as_study builds a valid object from counts", {
   expect_output(print(s), "<mm_study> toy")
 })
 
-test_that("taxonomy ranks are normalised and the feature rank is the deepest assigned", {
+test_that("taxonomy rank columns are normalised and rank is never inferred", {
   d <- make_toy()
   s <- as_study(counts = d$counts, taxonomy = d$tax, samples = d$samp, study = info)
   f <- mm_features(s)
-  expect_true(all(c("phylum", "genus", "rank") %in% colnames(f)))
-  expect_equal(f$rank, c("genus", "genus", "genus", "genus", "phylum", "phylum"))
+  expect_true(all(c("phylum", "genus") %in% colnames(f)))
+  expect_false("rank" %in% colnames(f))
   expect_true(is.na(f$genus[6]))  # empty string becomes NA
+})
+
+test_that("a user-supplied rank groups features for the closure check", {
+  # phylum-level and genus-level features, each level closed separately
+  rel <- rbind(P1 = c(0.6, 0.5), P2 = c(0.4, 0.5), G1 = c(0.3, 0.2), G2 = c(0.7, 0.8))
+  colnames(rel) <- c("s1", "s2")
+  smp <- data.frame(g = 1:2, row.names = colnames(rel))
+  tx <- data.frame(rank = c("phylum", "phylum", "genus", "genus"), row.names = rownames(rel))
+  inf <- list(id = "ml", feature_type = "taxon")
+  expect_s3_class(as_study(relabund = rel, taxonomy = tx, samples = smp, study = inf), "mm_study")
+  expect_error(as_study(relabund = rel, samples = smp, study = inf), "sums <= 1")
 })
 
 test_that("samples and taxonomy are aligned to the assay order", {

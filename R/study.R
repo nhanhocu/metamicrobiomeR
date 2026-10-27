@@ -36,7 +36,12 @@
 #' @param relabund Numeric matrix or data.frame of relative abundances with the
 #'   same dimnames as `counts` (if both are given). Optional when `counts` is given.
 #' @param taxonomy Optional data.frame with one row per feature (row names equal
-#'   to the feature IDs) and rank columns (kingdom to species, any case).
+#'   to the feature IDs) and rank columns (kingdom to species, any case). An
+#'   optional `rank` column states the level at which each feature is defined
+#'   (a taxonomic rank for agglomerated tables, or e.g. "leaf" for ASVs/OTUs);
+#'   it is never inferred from the taxonomy, because a feature with an
+#'   unassigned genus can still be a genus-level feature. Relative abundances
+#'   must sum to at most 1 within each `rank` group.
 #' @param samples data.frame with one row per sample; row names are the sample IDs.
 #' @param study Named list of study-level metadata. `id` and `feature_type`
 #'   (one of "otu", "asv", "taxon", "function") are required; `region`,
@@ -104,12 +109,6 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
     for (rk in present) {
       v <- as.character(features[[rk]]); v[!nzchar(v)] <- NA_character_
       features[[rk]] <- v
-    }
-    if (!"rank" %in% colnames(features) && length(present)) {
-      deepest <- apply(features[, present, drop = FALSE], 1, function(r) {
-        k <- which(!is.na(r)); if (length(k)) present[max(k)] else NA_character_
-      })
-      features$rank <- unname(deepest)
     }
   }
 
