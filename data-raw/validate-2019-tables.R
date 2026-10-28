@@ -1,3 +1,4 @@
+# (n_cycles = 20, the 1.x default, is used throughout to reproduce 1.x.)
 # Reproduce the GAMLSS-BEZI results of Ho et al. (2019), Tables 3 to 5, with the 2.0 engine.
 # Compares (a) the new engine with the stored 1.x results objects and (b) with the
 # numbers printed in the paper. Run from the repository root:
@@ -35,7 +36,7 @@ run <- function(ex, rank = "phylum") {
   e <- examples[[ex]]
   tab <- as.data.frame(get(e$tab, env)[[5]])
   lt <- legacy_to_study(tab, list(id = paste0("bangladesh_ex", ex), feature_type = "otu", subject = "personid"))
-  fit <- fit_study(lt$study, e$formula, rank = rank, longitudinal = e$long)
+  fit <- fit_study(lt$study, e$formula, rank = rank, longitudinal = e$long, n_cycles = 20)
   fit <- fit[fit$term == e$term, ]
   fit$lo <- fit$estimate - 1.96 * fit$se; fit$hi <- fit$estimate + 1.96 * fit$se
   list(fit = fit, stored = get(e$stored, env), info = attr(fit, "fit_info"))
@@ -86,7 +87,7 @@ if (Sys.getenv("FULL") == "1") {
   e <- examples[["1"]]
   tab <- as.data.frame(get(e$tab, env)[[5]])
   s <- legacy_to_study(tab, list(id = "bangladesh_ex1", feature_type = "otu", subject = "personid"))$study
-  fit <- fit_study(s, e$formula, longitudinal = e$long)
+  fit <- fit_study(s, e$formula, longitudinal = e$long, n_cycles = 20)
   st <- get(e$stored, env)
   cat(sprintf("\n== Example 1, all taxa: %d fitted by 2.0, %d in the stored 1.x result (%.0f s) ==\n",
               length(unique(fit$feature)), nrow(st), as.numeric(difftime(Sys.time(), t0, units = "secs"))))

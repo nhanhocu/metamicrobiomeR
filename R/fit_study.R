@@ -26,9 +26,11 @@
 #'   `study$subject`.
 #' @param min_prevalence,min_mean Feature filters (see Details).
 #' @param n_cycles Maximum number of outer iterations of the GAMLSS fitting
-#'   algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default, 20, is the
-#'   GAMLSS default and what 1.x used; fits that reach the limit are flagged
-#'   `converged = FALSE`.
+#'   algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
+#'   Version 1.x used the GAMLSS default of 20, at which most fits on real data
+#'   did not converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce
+#'   1.x results. Fits that reach the limit are flagged `converged = FALSE` and a
+#'   warning reports how many.
 #' @return An `mm_effects` object with one row per feature and covariate term,
 #'   `part = "abundance"` and `effect_scale = "logit_mean"`. The attribute
 #'   `fit_info` is a data.frame with one row per fitted feature (samples used,
@@ -36,7 +38,7 @@
 #' @export
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
-                      n_cycles = 20) {
+                      n_cycles = 100) {
   if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
   engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
@@ -103,12 +105,17 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                           estimate = tab$estimate, se = tab$se, rank = tab$rank,
                           part = "abundance", p_value = tab$p_value, n = tab$n,
                           engine = engine, effect_scale = "logit_mean", converged = tab$converged)
-  attr(out, "fit_info") <- do.call(rbind, log)
+  fit_info <- do.call(rbind, log)
+  attr(out, "fit_info") <- fit_info
+  if (!is.null(fit_info) && any(!fit_info$converged)) {
+    warning(sum(!fit_info$converged), " of ", nrow(fit_info), " fits did not converge within ", n_cycles,
+            " iterations (see attr(, \"fit_info\")); consider a larger 'n_cycles'.", call. = FALSE)
+  }
   out
 }
 
 # One GAMLSS-BEZI fit; returns the mean-part coefficient table without the intercept
-.fit_bezi_gamlss <- function(f, d, n_cycles = 20) {
+.fit_bezi_gamlss <- function(f, d, n_cycles = 100) {
   warns <- character()
   catch <- function(expr) withCallingHandlers(expr, warning = function(w) {
     warns <<- c(warns, conditionMessage(w)); invokeRestart("muffleWarning")

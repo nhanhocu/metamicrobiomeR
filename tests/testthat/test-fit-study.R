@@ -18,7 +18,7 @@ make_bezi_study <- function(n = 90, seed = 11, subject = NULL) {
 test_that("fit_study returns an effect table with the documented content", {
   skip_if_not_installed("gamlss")
   s <- make_bezi_study()
-  e <- fit_study(s, ~ group + age)
+  e <- suppressWarnings(fit_study(s, ~ group + age))
   expect_s3_class(e, "mm_effects")
   expect_setequal(unique(e$term), c("groupb", "age"))
   expect_true(all(e$part == "abundance" & e$engine == "bezi_gamlss" & e$effect_scale == "logit_mean"))
@@ -34,16 +34,16 @@ test_that("fit_study returns an effect table with the documented content", {
 
 test_that("features failing the prevalence filter are not fitted", {
   skip_if_not_installed("gamlss")
-  e <- fit_study(make_bezi_study(), ~ group)
+  e <- suppressWarnings(fit_study(make_bezi_study(), ~ group))
   expect_false("Rare" %in% e$feature)
-  e2 <- fit_study(make_bezi_study(), ~ group, min_prevalence = 0.01)
+  e2 <- suppressWarnings(fit_study(make_bezi_study(), ~ group, min_prevalence = 0.01))
   expect_true("Rare" %in% attr(e2, "fit_info")$feature)
 })
 
 test_that("a longitudinal model adds a subject random intercept", {
   skip_if_not_installed("gamlss")
   s <- make_bezi_study(subject = "person")
-  e <- fit_study(s, ~ group)
+  e <- suppressWarnings(fit_study(s, ~ group))
   expect_type(e$converged, "logical")
   # the feature with a real group effect converges; convergence of the null
   # feature is not guaranteed with this engine (see dev/VALIDATION.md)
@@ -71,7 +71,7 @@ test_that("fit_study reproduces taxa.compare() from 1.x on the Bangladesh data",
   smp <- tab[, c("bf", "age.sample", "personid")]; rownames(smp) <- colnames(rel)
   s <- as_study(relabund = rel, samples = smp,
                 study = list(id = "bangladesh", feature_type = "otu", subject = "personid"))
-  new <- fit_study(s, ~ bf + age.sample)
+  new <- suppressWarnings(fit_study(s, ~ bf + age.sample, n_cycles = 20))
   old <- suppressMessages(suppressWarnings(
     taxa.compare(taxtab = tab[, c("personid", "bf", "age.sample", phyla)], propmed.rel = "gamlss",
                  comvar = "bf", adjustvar = "age.sample", longitudinal = "yes")))
@@ -81,4 +81,10 @@ test_that("fit_study reproduces taxa.compare() from 1.x on the Bangladesh data",
     expect_equal(n$se, old[[paste0("Std. Error.", term)]], tolerance = 1e-8)
     expect_equal(n$p_value, old[[paste0("Pr(>|t|).", term)]], tolerance = 1e-8)
   }
+})
+
+test_that("a warning reports fits that did not converge", {
+  skip_if_not_installed("gamlss")
+  s <- make_bezi_study()
+  expect_warning(fit_study(s, ~ group, n_cycles = 2), "did not converge")
 })

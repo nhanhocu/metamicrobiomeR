@@ -12,7 +12,7 @@ fit_study(
   longitudinal = NULL,
   min_prevalence = 0.05,
   min_mean = 5e-05,
-  n_cycles = 20
+  n_cycles = 100
 )
 }
 \arguments{
@@ -33,9 +33,11 @@ when `study$subject` is set. The subject is the sample-data column named in
 \item{min_prevalence, min_mean}{Feature filters (see Details).}
 
 \item{n_cycles}{Maximum number of outer iterations of the GAMLSS fitting
-algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default, 20, is the
-GAMLSS default and what 1.x used; fits that reach the limit are flagged
-`converged = FALSE`.}
+algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
+Version 1.x used the GAMLSS default of 20, at which most fits on real data
+did not converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce
+1.x results. Fits that reach the limit are flagged `converged = FALSE` and a
+warning reports how many.}
 }
 \value{
 An `mm_effects` object with one row per feature and covariate term,

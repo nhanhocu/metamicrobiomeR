@@ -24,7 +24,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
 Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
-        matrixStats, zCompositions, compositions, stats, utils
+        matrixStats, zCompositions, compositions, stats, utils, metafor
 Suggests: testthat, gamlss.dist, knitr, rmarkdown, grDevices, tools, caret,
         randomForest, RColorBrewer
 VignetteBuilder: knitr

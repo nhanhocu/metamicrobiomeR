@@ -1,0 +1,90 @@
+# Meta-analysis of per-study effects (see dev/SPEC.md)
+
+#' Pool effects across studies
+#'
+#' Random-effects meta-analysis of the per-study estimates in an effect table,
+#' separately for every feature, model part and term, using `metafor::rma.uni()`.
+#'
+#' A feature is pooled only if it was estimated in at least `min_studies` studies
+#' and in at least `min_prop` of all studies that report that part and term.
+#' Studies with a missing estimate or a non-positive standard error are dropped.
+#' Pooling is only meaningful when the studies report the same effect scale;
+#' [bind_effects()] enforces this.
+#'
+#' @param effects An `mm_effects` object with several studies (see [bind_effects()]).
+#' @param term,part Optional character vectors restricting the terms and model parts.
+#' @param method Estimator of the between-study variance, passed to
+#'   `metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird, as in 1.x),
+#'   "PM", "EB", "ML", "HE" or "SJ".
+#' @param hk Use the Hartung-Knapp adjustment (t-based test and confidence
+#'   interval)? Default `TRUE`, which is recommended when there are few studies.
+#'   Use `method = "DL", hk = FALSE` to reproduce 1.x.
+#' @param min_studies,min_prop Minimum number of studies, and minimum proportion
+#'   of the studies reporting the part and term (1.x used 0.5).
+#' @param p_adjust Method for [stats::p.adjust()], or `"none"`.
+#' @param adjust_by Columns defining the family of tests adjusted together: any of
+#'   `"part"`, `"term"`, `"rank"`. The default adjusts within each rank, part and
+#'   term; `c("part", "term")` mixes all ranks, as 1.x did.
+#' @return An object of class `mm_pooled` (a data.frame), one row per feature,
+#'   part and term, with the number of studies `k`, the pooled `estimate`, `se`,
+#'   confidence limits, test `statistic` and `p_value`, the heterogeneity measures
+#'   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
+#'   unless there are at least 3 studies) and the adjusted p-value `p_adjust`.
+#' @export
+pool_effects <- function(effects, term = NULL, part = NULL,
+                         method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"), hk = TRUE,
+                         min_studies = 2, min_prop = 0.5, p_adjust = "fdr",
+                         adjust_by = c("part", "term", "rank")) {
+  method <- match.arg(method)
+  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  check_effects(effects)
+  if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
+  if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]
+  if (!nrow(effects)) stop("No effects left after selecting term and part.", call. = FALSE)
+  adjust_by <- match.arg(adjust_by, c("part", "term", "rank"), several.ok = TRUE)
+  effects <- as.data.frame(effects)
+  bad <- is.na(effects$estimate) | is.na(effects$se) | effects$se <= 0
+  if (any(bad)) {
+    warning(sum(bad), " estimate(s) with a missing value or non-positive standard error were dropped.", call. = FALSE)
+    effects <- effects[!bad, , drop = FALSE]
+  }
+  if (!nrow(effects)) stop("No usable estimates to pool.", call. = FALSE)
+
+  effects$.group <- paste(effects$part, effects$term, sep = "\r")
+  n_studies <- tapply(effects$study, effects$.group, function(s) length(unique(s)))
+  effects$.key <- paste(effects$.group, effects$feature, sep = "\r")
+  keys <- unique(effects$.key)
+  test <- if (hk) "knha" else "z"
+
+  rows <- lapply(keys, function(key) {
+    d <- effects[effects$.key == key, , drop = FALSE]
+    k <- nrow(d)
+    if (k < min_studies || k < min_prop * n_studies[[d$.group[1]]]) return(NULL)
+    fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = d$estimate, sei = d$se, method = method, test = test)),
+                    error = function(e) NULL)
+    if (is.null(fit)) return(NULL)
+    pi <- tryCatch(suppressWarnings(stats::predict(fit)), error = function(e) NULL)
+    rk <- d$rank[!is.na(d$rank)]
+    data.frame(feature = d$feature[1], rank = if (length(rk)) rk[1] else NA_character_,
+               part = d$part[1], term = d$term[1], k = k,
+               estimate = as.numeric(fit$beta), se = fit$se, ci_lo = fit$ci.lb, ci_hi = fit$ci.ub,
+               statistic = fit$zval, p_value = fit$pval, tau2 = fit$tau2, I2 = fit$I2,
+               Q = fit$QE, Q_p = fit$QEp,
+               pi_lo = if (k >= 3 && !is.null(pi)) pi$pi.lb else NA_real_,
+               pi_hi = if (k >= 3 && !is.null(pi)) pi$pi.ub else NA_real_,
+               stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  if (is.null(out)) stop("No feature met the requirements for pooling (min_studies, min_prop).", call. = FALSE)
+  fam <- do.call(paste, c(lapply(adjust_by, function(a) out[[a]]), sep = "\r"))
+  out$p_adjust <- NA_real_
+  if (p_adjust == "none") out$p_adjust <- out$p_value else {
+    for (g in unique(fam)) out$p_adjust[fam == g] <- stats::p.adjust(out$p_value[fam == g], method = p_adjust)
+  }
+  out <- out[order(out$part, out$term, out$p_value), ]
+  rownames(out) <- NULL
+  attr(out, "settings") <- list(method = method, hk = hk, min_studies = min_studies, min_prop = min_prop,
+                                p_adjust = p_adjust, adjust_by = adjust_by)
+  class(out) <- c("mm_pooled", "data.frame")
+  out
+}
