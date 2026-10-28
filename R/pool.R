@@ -16,9 +16,13 @@
 #' @param method Estimator of the between-study variance, passed to
 #'   `metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird, as in 1.x),
 #'   "PM", "EB", "ML", "HE" or "SJ".
-#' @param hk Use the Hartung-Knapp adjustment (t-based test and confidence
-#'   interval)? Default `TRUE`, which is recommended when there are few studies.
-#'   Use `method = "DL", hk = FALSE` to reproduce 1.x.
+#' @param test Test and confidence interval for the pooled effect, passed to
+#'   `metafor::rma.uni()`: `"adhoc"` (default) is the Hartung-Knapp adjustment
+#'   with the ad hoc correction that keeps the interval from becoming narrower than
+#'   the normal-theory one; `"knha"` is plain Hartung-Knapp, which can give
+#'   spuriously small p-values when only a few studies agree closely (see
+#'   `dev/VALIDATION.md`); `"z"` is the normal-theory test of 1.x. Use
+#'   `method = "DL", test = "z"` to reproduce 1.x.
 #' @param min_studies,min_prop Minimum number of studies, and minimum proportion
 #'   of the studies reporting the part and term (1.x used 0.5).
 #' @param p_adjust Method for [stats::p.adjust()], or `"none"`.
@@ -32,10 +36,12 @@
 #'   unless there are at least 3 studies) and the adjusted p-value `p_adjust`.
 #' @export
 pool_effects <- function(effects, term = NULL, part = NULL,
-                         method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"), hk = TRUE,
+                         method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),
+                         test = c("adhoc", "knha", "z"),
                          min_studies = 2, min_prop = 0.5, p_adjust = "fdr",
                          adjust_by = c("part", "term", "rank")) {
   method <- match.arg(method)
+  test <- match.arg(test)
   if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
   check_effects(effects)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
@@ -54,7 +60,6 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   n_studies <- tapply(effects$study, effects$.group, function(s) length(unique(s)))
   effects$.key <- paste(effects$.group, effects$feature, sep = "\r")
   keys <- unique(effects$.key)
-  test <- if (hk) "knha" else "z"
 
   rows <- lapply(keys, function(key) {
     d <- effects[effects$.key == key, , drop = FALSE]
@@ -83,7 +88,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   }
   out <- out[order(out$part, out$term, out$p_value), ]
   rownames(out) <- NULL
-  attr(out, "settings") <- list(method = method, hk = hk, min_studies = min_studies, min_prop = min_prop,
+  attr(out, "settings") <- list(method = method, test = test, min_studies = min_studies, min_prop = min_prop,
                                 p_adjust = p_adjust, adjust_by = adjust_by)
   class(out) <- c("mm_pooled", "data.frame")
   out

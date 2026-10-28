@@ -9,7 +9,7 @@ pool_effects(
   term = NULL,
   part = NULL,
   method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),
-  hk = TRUE,
+  test = c("adhoc", "knha", "z"),
   min_studies = 2,
   min_prop = 0.5,
   p_adjust = "fdr",
@@ -25,9 +25,13 @@ pool_effects(
 `metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird, as in 1.x),
 "PM", "EB", "ML", "HE" or "SJ".}
 
-\item{hk}{Use the Hartung-Knapp adjustment (t-based test and confidence
-interval)? Default `TRUE`, which is recommended when there are few studies.
-Use `method = "DL", hk = FALSE` to reproduce 1.x.}
+\item{test}{Test and confidence interval for the pooled effect, passed to
+`metafor::rma.uni()`: `"adhoc"` (default) is the Hartung-Knapp adjustment
+with the ad hoc correction that keeps the interval from becoming narrower than
+the normal-theory one; `"knha"` is plain Hartung-Knapp, which can give
+spuriously small p-values when only a few studies agree closely (see
+`dev/VALIDATION.md`); `"z"` is the normal-theory test of 1.x. Use
+`method = "DL", test = "z"` to reproduce 1.x.}
 
 \item{min_studies, min_prop}{Minimum number of studies, and minimum proportion
 of the studies reporting the part and term (1.x used 0.5).}

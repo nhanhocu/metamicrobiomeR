@@ -12,7 +12,8 @@ fit_study(
   longitudinal = NULL,
   min_prevalence = 0.05,
   min_mean = 5e-05,
-  n_cycles = 100
+  n_cycles = 100,
+  exclude_unassigned = TRUE
 )
 }
 \arguments{
@@ -38,6 +39,11 @@ Version 1.x used the GAMLSS default of 20, at which most fits on real data
 did not converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce
 1.x results. Fits that reach the limit are flagged `converged = FALSE` and a
 warning reports how many.}
+
+\item{exclude_unassigned}{Drop features that are unassigned at their own rank
+(for example a genus-level feature with no genus, such as the 1.x
+`...f__lachnospiraceae.other`)? Such features lump together unrelated
+organisms. Default `TRUE`; use `FALSE` to reproduce 1.x.}
 }
 \value{
 An `mm_effects` object with one row per feature and covariate term,

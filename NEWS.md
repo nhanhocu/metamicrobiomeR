@@ -14,6 +14,13 @@ release with the old interface. See `dev/SPEC.md` for the new data contracts.
   for every fit and an `n_cycles` option. It reproduces `taxa.compare()` from 1.x
   and all GAMLSS-BEZI results in Tables 3 to 5 of Ho et al. (2019); see
   `dev/VALIDATION.md` for the validation and the findings it produced.
+* `pool_effects()`: random-effects meta-analysis of an effect table (REML by
+  default, Hartung-Knapp with the ad hoc correction, heterogeneity, prediction
+  intervals, FDR within rank). It reproduces the 1.x pooled sex-difference result
+  with `method = "DL", test = "z"`. 1.x also "pooled" taxa seen in only one study
+  for terms missing from some studies; 2.0 requires estimates from at least two.
+* `fit_study()` defaults to `n_cycles = 100` and drops features unassigned at
+  their own rank (`exclude_unassigned = TRUE`); both can be set to the 1.x behaviour.
 
 # metamicrobiomeR 1.3
 

@@ -1,9 +1,9 @@
 # Validation of the 2.0 engine against Ho et al. (2019)
 
-Status: first gate of the 2.0 plan. The 2.0 `fit_study()` engine `bezi_gamlss`
+Status: first gate of the 2.0 plan, extended to the pooling step (section 4). The 2.0 `fit_study()` engine `bezi_gamlss`
 (the 1.x GAMLSS-BEZI model) is compared with (a) the result objects stored in
 the original GitHub repository (`data-raw/legacy-1.1/results/`) and (b) the numbers
-printed in Tables 3 to 5 of the paper. Scripts: `data-raw/validate-2019-tables.R`,
+printed in Tables 3 to 5 of the paper. Scripts: `data-raw/validate-2019-tables.R`, `data-raw/validate-2019-meta.R`,
 `data-raw/convergence-sensitivity.R`, `data-raw/convergence-all-taxa.R`.
 Environment: R 4.3.3, gamlss 5.5-5 (the paper used gamlss 5.0-5).
 
@@ -17,7 +17,8 @@ Environment: R 4.3.3, gamlss 5.5-5 (the paper used gamlss 5.0-5).
 | New engine vs 1.x `taxa.compare()`, same data (unit test) | equal to 1e-8 |
 
 Not yet reproduced: the LMAS (arcsin-sqrt linear model) columns, the simulation
-studies, and the four-study meta-analysis (Fig. 5).
+studies, and an end-to-end rerun of the four-study meta-analysis from the raw
+tables (section 4 pools the stored per-study results).
 
 ## 2. Findings that matter for the paper and for 2.0
 
@@ -59,11 +60,50 @@ of `taxa.compare()` adjust across all taxa of all ranks (e.g. Actinobacteria, Ex
 different LMAS numbers for Example 1 (Actinobacteria -0.11, p 0.0066) from the paper's
 Table 3 (-0.13, p 0.0088); to be resolved when LMAS is reproduced.
 
-## 3. How to rerun
+## 3. Decisions taken from these findings (2.0 defaults)
+
+* `fit_study(n_cycles = 100)`, with a warning for any fit that still does not converge.
+  In a test, none of 3 fits converged at 20 iterations and all converged at 100, with
+  results identical to 300 (earlier: 25 of 25 converged at 300). `n_cycles = 20` reproduces 1.x.
+* `fit_study(exclude_unassigned = TRUE)`: features unassigned at their own rank (e.g. the
+  1.x `...f__lachnospiraceae.other`) lump unrelated organisms and are dropped.
+* `pool_effects(method = "REML", test = "adhoc")`, FDR within rank, part and term
+  (see F7). `method = "DL", test = "z", adjust_by = c("part", "term")` reproduces 1.x.
+
+## 4. Meta-analysis (sex difference, four studies)
+
+Pooling the stored per-study results of the four studies (Bangladesh, Haiti, USA CA/FL,
+USA NC) with `pool_effects(method = "DL", test = "z")` reproduces the stored 1.x pooled
+result (`metab.sex$random`) for the sex term: same 185 taxa; estimate, se, confidence
+limits, p and adjusted p agree to about 1e-12. The paper's conclusions reproduce: no
+phylum (0 of 7) with pooled p < 0.05; four genera with p < 0.05 (Coprococcus,
+Eubacterium, Megamonas, Pseudoramibacter); only Coprococcus after FDR.
+
+**F6. 1.x pooled taxa from a single study.** `meta.taxa()` counted the rows a taxon has,
+not the studies with an estimate for the term, so for `bfNo_BF` 82 of 185 "pooled" taxa
+came from one study and 4 had no estimate. The sex term is unaffected (all four studies
+report it). 2.0 counts studies with an estimate.
+
+**F7. Plain Hartung-Knapp is unsafe with very few studies.** With the 1.x data, plain
+Hartung-Knapp (`test = "knha"`) made six genera significant instead of four: four of them
+had only two studies with near-identical estimates, normal-theory p 0.22 to 0.86 but
+Hartung-Knapp p 3e-5 to 7e-5. The ad hoc variant (`test = "adhoc"`, the 2.0 default) gave
+0.43 to 0.89. With REML, the ad hoc test and FDR within the genus rank, only Coprococcus
+remains (p 1.4e-4, FDR 0.012); the three weaker 1.x hits do not. The headline conclusion
+holds; the secondary hits do not survive more appropriate small-sample inference.
+
+**F8. Unassigned lineages as "taxa".** Several apparent genus-level hits were pseudo-taxa
+such as `...o__clostridiales.other.other`, aggregates of unrelated organisms.
+
+Not yet done: an end-to-end rerun (refit the four studies with `fit_study()` and pool),
+which needs about 10 minutes of fitting and should be run in chunks.
+
+## 5. How to rerun
 
 ```
 Rscript data-raw/validate-2019-tables.R           # phylum level, about 25 s
 FULL=1 Rscript data-raw/validate-2019-tables.R    # plus all taxa of Example 1, about 2.5 min
 Rscript data-raw/convergence-sensitivity.R        # main phyla, 20 vs 500 iterations
 Rscript data-raw/convergence-all-taxa.R           # sample of non-converged taxa, about 3 min
+Rscript data-raw/validate-2019-meta.R             # pooling step, a few seconds
 ```

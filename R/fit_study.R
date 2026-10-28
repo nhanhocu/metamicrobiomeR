@@ -25,6 +25,10 @@
 #'   when `study$subject` is set. The subject is the sample-data column named in
 #'   `study$subject`.
 #' @param min_prevalence,min_mean Feature filters (see Details).
+#' @param exclude_unassigned Drop features that are unassigned at their own rank
+#'   (for example a genus-level feature with no genus, such as the 1.x
+#'   `...f__lachnospiraceae.other`)? Such features lump together unrelated
+#'   organisms. Default `TRUE`; use `FALSE` to reproduce 1.x.
 #' @param n_cycles Maximum number of outer iterations of the GAMLSS fitting
 #'   algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
 #'   Version 1.x used the GAMLSS default of 20, at which most fits on real data
@@ -38,7 +42,7 @@
 #' @export
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
-                      n_cycles = 100) {
+                      n_cycles = 100, exclude_unassigned = TRUE) {
   if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
   engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
@@ -66,6 +70,13 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     if (!"rank" %in% colnames(feats)) stop("The feature data has no 'rank' column.", call. = FALSE)
     idx <- which(feats$rank %in% rank)
     if (!length(idx)) stop("No features with rank: ", paste(rank, collapse = ", "), ".", call. = FALSE)
+  }
+  if (exclude_unassigned && "rank" %in% colnames(feats)) {
+    unassigned <- vapply(idx, function(i) {
+      r <- feats$rank[i]
+      !is.na(r) && r %in% colnames(feats) && is.na(feats[[r]][i])
+    }, logical(1))
+    idx <- idx[!unassigned]
   }
   n_all <- ncol(ra)
   keep <- vapply(idx, function(i) {

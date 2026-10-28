@@ -12,8 +12,8 @@ out <- list()
 for (k in names(ex)) {
   e <- ex[[k]]
   s <- legacy_to_study(as.data.frame(get(e$tab, env)[[5]]), list(id = k, feature_type = "otu", subject = "personid"))$study
-  a <- fit_study(s, e$f, rank = "phylum", longitudinal = e$long, n_cycles = 20)
-  b <- fit_study(s, e$f, rank = "phylum", longitudinal = e$long, n_cycles = 500)
+  a <- fit_study(s, e$f, rank = "phylum", longitudinal = e$long, n_cycles = 20, exclude_unassigned = FALSE)
+  b <- fit_study(s, e$f, rank = "phylum", longitudinal = e$long, n_cycles = 500, exclude_unassigned = FALSE)
   ia <- attr(a, "fit_info"); ib <- attr(b, "fit_info")
   a <- a[a$term == e$term & a$feature %in% phyla, ]; b <- b[b$term == e$term & b$feature %in% phyla, ]
   m <- merge(a[, c("feature", "estimate", "se", "p_value", "converged")], b[, c("feature", "estimate", "se", "p_value", "converged")],

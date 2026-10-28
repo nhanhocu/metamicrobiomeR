@@ -88,3 +88,15 @@ test_that("a warning reports fits that did not converge", {
   s <- make_bezi_study()
   expect_warning(fit_study(s, ~ group, n_cycles = 2), "did not converge")
 })
+
+test_that("features unassigned at their own rank are excluded unless asked for", {
+  skip_if_not_installed("gamlss")
+  s <- make_bezi_study()
+  tx <- data.frame(genus = c("Gen1", NA, "Gen3"), rank = "genus", row.names = rownames(mm_relabund(s)))
+  s2 <- as_study(relabund = mm_relabund(s), taxonomy = tx, samples = mm_samples(s),
+                 study = list(id = "sim", feature_type = "taxon"))
+  e <- suppressWarnings(fit_study(s2, ~ group))
+  expect_false("F2" %in% e$feature)
+  e2 <- suppressWarnings(fit_study(s2, ~ group, exclude_unassigned = FALSE))
+  expect_true("F2" %in% e2$feature)
+})

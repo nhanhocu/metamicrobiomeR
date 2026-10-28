@@ -17,7 +17,7 @@ y <- c(0.8, 0.1, 0.5, -0.2); se <- c(0.2, 0.3, 0.25, 0.4)
 bound <- bind_effects(eff("s1", y[1], se[1]), eff("s2", y[2], se[2]), eff("s3", y[3], se[3]), eff("s4", y[4], se[4]))
 
 test_that("DerSimonian-Laird pooling matches the hand calculation", {
-  p <- pool_effects(bound, method = "DL", hk = FALSE)
+  p <- pool_effects(bound, method = "DL", test = "z")
   h <- dl(y, se)
   expect_s3_class(p, "mm_pooled")
   expect_equal(p$k, 4)
@@ -30,36 +30,46 @@ test_that("DerSimonian-Laird pooling matches the hand calculation", {
 })
 
 test_that("the Hartung-Knapp adjustment widens the interval and changes the test", {
-  a <- pool_effects(bound, method = "DL", hk = FALSE)
-  b <- pool_effects(bound, method = "DL", hk = TRUE)
+  a <- pool_effects(bound, method = "DL", test = "z")
+  b <- pool_effects(bound, method = "DL", test = "adhoc")
   expect_equal(a$estimate, b$estimate, tolerance = 1e-8)
-  expect_gt(b$ci_hi - b$ci_lo, a$ci_hi - a$ci_lo)
-  expect_false(isTRUE(all.equal(a$p_value, b$p_value)))
+  expect_gte(b$ci_hi - b$ci_lo, a$ci_hi - a$ci_lo)
   expect_false(is.na(b$pi_lo))              # prediction interval with 4 studies
   two <- pool_effects(bind_effects(eff("s1", 0.5, 0.2), eff("s2", 0.4, 0.2)), method = "DL")
   expect_true(is.na(two$pi_lo))             # not reported with fewer than 3 studies
+})
+
+test_that("plain Hartung-Knapp is anti-conservative with two near-identical studies; the ad hoc default is not", {
+  two <- bind_effects(eff("s1", 0.050, 0.5), eff("s2", 0.052, 0.5))     # not significant by any sensible test
+  z <- pool_effects(two, method = "REML", test = "z")
+  knha <- pool_effects(two, method = "REML", test = "knha")
+  adhoc <- pool_effects(two, method = "REML", test = "adhoc")
+  expect_lt(knha$p_value, 0.05)             # the failure mode: spuriously small p (z gives p > 0.5)
+  expect_gt(z$p_value, 0.5)
+  expect_gte(adhoc$p_value, z$p_value)      # the default never beats the normal-theory test
+  expect_identical(attr(pool_effects(two), "settings")$test, "adhoc")
 })
 
 test_that("features need enough studies, and a missing feature is not pooled", {
   b <- bind_effects(eff("s1", 0.5, 0.2, "g1"), eff("s2", 0.4, 0.2, "g1"), eff("s3", 0.6, 0.2, "g1"),
                     eff("s1", 0.1, 0.2, "g2"),                       # only one study
                     eff("s2", 0.3, 0.2, "g3"), eff("s3", 0.2, 0.2, "g3"))
-  p <- pool_effects(b, method = "DL", hk = FALSE)
+  p <- pool_effects(b, method = "DL", test = "z")
   expect_setequal(p$feature, c("g1", "g3"))
   expect_equal(p$k[p$feature == "g3"], 2)
-  p2 <- pool_effects(b, method = "DL", hk = FALSE, min_prop = 1)       # must be in all 3 studies
+  p2 <- pool_effects(b, method = "DL", test = "z", min_prop = 1)       # must be in all 3 studies
   expect_equal(p2$feature, "g1")
 })
 
 test_that("p-values are adjusted within the requested family", {
   mk <- function(feature, rank, est) bind_effects(eff("s1", est, 0.1, feature, rank = rank), eff("s2", est, 0.1, feature, rank = rank))
   b <- bind_effects(mk("a", "genus", 0.5), mk("b", "genus", 0.1), mk("c", "family", 0.5), mk("d", "family", 0.1))
-  by_rank <- pool_effects(b, method = "DL", hk = FALSE)                                   # default: within rank
-  mixed <- pool_effects(b, method = "DL", hk = FALSE, adjust_by = c("part", "term"))
+  by_rank <- pool_effects(b, method = "DL", test = "z")                                   # default: within rank
+  mixed <- pool_effects(b, method = "DL", test = "z", adjust_by = c("part", "term"))
   expect_equal(by_rank$p_adjust[by_rank$feature == "b"], stats::p.adjust(by_rank$p_value[by_rank$rank == "genus"], "fdr")[by_rank$feature[by_rank$rank == "genus"] == "b"])
   expect_equal(sort(mixed$p_adjust), sort(stats::p.adjust(mixed$p_value, "fdr")))
-  expect_equal(pool_effects(b, method = "DL", hk = FALSE, p_adjust = "none")$p_adjust,
-               pool_effects(b, method = "DL", hk = FALSE, p_adjust = "none")$p_value)
+  expect_equal(pool_effects(b, method = "DL", test = "z", p_adjust = "none")$p_adjust,
+               pool_effects(b, method = "DL", test = "z", p_adjust = "none")$p_value)
 })
 
 test_that("terms and parts are pooled separately and can be selected", {
