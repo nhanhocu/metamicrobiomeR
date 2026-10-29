@@ -25,7 +25,8 @@
 #'   species (character, `NA` where unassigned), and `deepest`, the deepest rank that is assigned.
 #' @examples
 #' parse_taxonomy(c("k__Bacteria; p__Firmicutes; c__Clostridia; o__; f__; g__",
-#'                  "d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella",
+#'                  paste("d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria",
+#'                        "o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella", sep = ";"),
 #'                  "Unassigned"))
 #' @export
 parse_taxonomy <- function(x, sep = NULL) {
