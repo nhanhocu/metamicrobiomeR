@@ -1,6 +1,6 @@
 # Example forest plot: sex difference in infant gut microbiome, four studies (stored per-study results)
 source("data-raw/legacy-helpers.R")
-data(tabsex4); tab <- as.data.frame(tabsex4); p <- parse_legacy_names(tab$id)
+load("data-raw/legacy-cran-1.2-data/tabsex4.rda"); tab <- as.data.frame(tabsex4); p <- parse_legacy_names(tab$id)
 est <- tab[["Estimate.genderMale"]]; se <- tab[["Std. Error.genderMale"]]; ok <- !is.na(est) & !is.na(se)
 effects <- new_effect_table(study = tab$pop[ok], feature = tab$id[ok], term = "genderMale", estimate = est[ok], se = se[ok],
                             rank = unname(codes)[p$level][ok], part = "abundance", engine = "bezi_gamlss", effect_scale = "logit_mean")

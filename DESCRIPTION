@@ -1,33 +1,32 @@
 Package: metamicrobiomeR
-Title: Microbiome Data Analysis & Meta-Analysis with GAMLSS-BEZI &
-        Random Effects
+Type: Package
+Title: Differential Abundance and Meta-Analysis of Microbiome Studies
 Version: 2.0.0.9000
 Authors@R: c(
     person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut"),
     person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3283-0370"))
     )
-Description: Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
-    with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data 
-    (with various options for data transformation/normalization to address compositional effects) and 
-    random effects meta-analysis models for meta-analysis pooling estimates across microbiome studies 
-    are implemented. 
-    Random Forest model to predict microbiome age based on relative abundances of  
-    shared bacterial genera with the Bangladesh data (Subramanian et al 2014), 
-    comparison of multiple diversity indexes using linear/linear mixed effect models 
-    and some data display/visualization are also implemented.
-    The reference paper is published by 
-    Ho NT, Li F, Wang S, Kuhn L (2019) <doi:10.1186/s12859-019-2744-2> . 
-Depends: R (>= 4.0.0), gamlss
+Description: Analyses microbiome studies one at a time and pools the results across studies.
+    Studies are held in a validated study object that accepts counts or relative
+    abundances, taxonomy in rank columns and study-level metadata, and can be imported from
+    DADA2, QIIME 2, MetaPhlAn, BIOM, phyloseq and SummarizedExperiment objects. Per-study
+    engines fit zero-inflated beta-binomial (counts), zero-inflated beta (GAMLSS),
+    arcsine-square-root and centred log-ratio models, with optional subject random effects, and
+    return estimates in a common effect table. Random-effects meta-analysis
+    (with Hartung-Knapp inference, heterogeneity, prediction intervals, influence diagnostics,
+    leave-one-out and meta-regression on study characteristics), hierarchical false discovery
+    control across taxonomic ranks, alpha diversity, PERMANOVA, forest plots and provenance
+    manifests complete the workflow. Version 2.0 is a redesign of the package described in
+    Ho et al. (2019) <doi:10.1186/s12859-019-2744-2> and is not compatible with 1.x.
 License: GPL (>= 2)
-Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.1
-Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
-        matrixStats, zCompositions, compositions, stats, utils, metafor (>= 4.0-0)
-Suggests: testthat, gamlss.dist, knitr, rmarkdown, grDevices, tools, caret,
-        randomForest, RColorBrewer,
-        phyloseq, SummarizedExperiment, S4Vectors, biomformat
+URL: https://github.com/paytonyau/metamicrobiomeR
+BugReports: https://github.com/paytonyau/metamicrobiomeR/issues
+Depends: R (>= 4.1.0)
+Imports: ggplot2, lme4, metafor (>= 4.0-0), methods, stats, utils
+Suggests: biomformat, covr, gamlss, gamlss.dist, glmmTMB, jsonlite, knitr, permute,
+        phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan
 VignetteBuilder: knitr
-URL: https://github.com/nhanhocu/metamicrobiomeR
-BugReports: https://github.com/nhanhocu/metamicrobiomeR/issues
+Encoding: UTF-8
+Config/testthat/edition: 2
+RoxygenNote: 7.3.1

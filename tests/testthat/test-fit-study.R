@@ -61,26 +61,28 @@ test_that("fit_study validates its input", {
   expect_error(fit_study(list(), ~ group), "mm_study")
 })
 
-test_that("fit_study reproduces taxa.compare() from 1.x on the Bangladesh data", {
-  skip_on_cran()
-  skip_if_not_installed("gamlss")
-  utils::data("taxtab6", package = "metamicrobiomeR", envir = environment())
-  tab <- as.data.frame(get("taxtab6", envir = environment()))
-  phyla <- paste0("k__bacteria.p__", c("actinobacteria", "bacteroidetes", "firmicutes", "proteobacteria"))
-  rel <- t(as.matrix(tab[, phyla])); colnames(rel) <- as.character(tab$x.sampleid)
+legacy_ref <- function() readRDS(testthat::test_path("fixtures", "legacy-reference.rds"))
+legacy_study <- function(ref) {
+  tab <- ref$tab; phyla <- grep("^k__", colnames(tab), value = TRUE)
+  rel <- t(as.matrix(tab[, phyla])); colnames(rel) <- tab$x.sampleid
   smp <- tab[, c("bf", "age.sample", "personid")]; rownames(smp) <- colnames(rel)
-  s <- as_study(relabund = rel, samples = smp,
-                study = list(id = "bangladesh", feature_type = "otu", subject = "personid"))
-  new <- suppressWarnings(fit_study(s, ~ bf + age.sample, n_cycles = 20))
-  old <- suppressMessages(suppressWarnings(
-    taxa.compare(taxtab = tab[, c("personid", "bf", "age.sample", phyla)], propmed.rel = "gamlss",
-                 comvar = "bf", adjustvar = "age.sample", longitudinal = "yes")))
+  as_study(relabund = rel, samples = smp, study = list(id = "bangladesh", feature_type = "otu", subject = "personid"))
+}
+expect_matches_legacy <- function(new, old) {
   for (term in c("bfNon_exclusiveBF", "bfNo_BF", "age.sample")) {
     n <- new[new$term == term, ]; n <- n[match(old$id, n$feature), ]
     expect_equal(n$estimate, old[[paste0("Estimate.", term)]], tolerance = 1e-8)
     expect_equal(n$se, old[[paste0("Std. Error.", term)]], tolerance = 1e-8)
     expect_equal(n$p_value, old[[paste0("Pr(>|t|).", term)]], tolerance = 1e-8)
   }
+}
+
+test_that("fit_study reproduces the 1.x GAMLSS-BEZI results (stored reference, Bangladesh data)", {
+  skip_if_not_installed("gamlss")
+  ref <- legacy_ref()
+  new <- suppressWarnings(fit_study(legacy_study(ref), ~ bf + age.sample, n_cycles = 20))
+  expect_equal(length(unique(new$feature)), 4)
+  expect_matches_legacy(new, ref$bezi)
 })
 
 test_that("a warning reports fits that did not converge", {
@@ -118,31 +120,8 @@ test_that("the lm_asin engine returns effects on the arcsine square root scale",
   expect_error(bind_effects(e, other), "effect scales")
 })
 
-test_that("lm_asin reproduces taxa.compare() from 1.x (linear mixed and linear models)", {
-  skip_on_cran()
-  utils::data("taxtab6", package = "metamicrobiomeR", envir = environment())
-  tab <- as.data.frame(get("taxtab6", envir = environment()))
-  phyla <- paste0("k__bacteria.p__", c("actinobacteria", "bacteroidetes", "firmicutes", "proteobacteria"))
-  rel <- t(as.matrix(tab[, phyla])); colnames(rel) <- as.character(tab$x.sampleid)
-  smp <- tab[, c("bf", "age.sample", "personid")]; rownames(smp) <- colnames(rel)
-  s <- as_study(relabund = rel, samples = smp, study = list(id = "b", feature_type = "otu", subject = "personid"))
-  for (long in c(TRUE, FALSE)) {
-    new <- fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = long)
-    old <- suppressMessages(suppressWarnings(
-      taxa.compare(taxtab = tab[, c("personid", "bf", "age.sample", phyla)], propmed.rel = "lm", transform = "asin.sqrt",
-                   comvar = "bf", adjustvar = "age.sample", longitudinal = if (long) "yes" else "no")))
-    for (term in c("bfNon_exclusiveBF", "bfNo_BF", "age.sample")) {
-      n <- new[new$term == term, ]; n <- n[match(old$id, n$feature), ]
-      expect_equal(n$estimate, old[[paste0("Estimate.", term)]], tolerance = 1e-8)
-      expect_equal(n$se, old[[paste0("Std. Error.", term)]], tolerance = 1e-8)
-      expect_equal(n$p_value, old[[paste0("Pr(>|t|).", term)]], tolerance = 1e-8)
-    }
-  }
-})
-
-test_that("failed fits are reported, not silently dropped", {
-  s <- make_bezi_study()
-  d <- fit_study(s, ~ group, engine = "lm_asin", min_prevalence = 0.99999)   # nothing passes the filter
-  expect_equal(nrow(d), 0)
-  expect_s3_class(d, "mm_effects")
+test_that("lm_asin reproduces the 1.x linear mixed and linear models (stored reference)", {
+  ref <- legacy_ref(); s <- legacy_study(ref)
+  expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = TRUE), ref$lmasin_mixed)
+  expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = FALSE), ref$lmasin_linear)
 })

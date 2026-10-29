@@ -4,7 +4,7 @@
 # with the stored per-study results of the other three studies and pooled.
 source("data-raw/legacy-helpers.R")
 env <- new.env(); for (f in list.files("data-raw/legacy-1.1/results", full.names = TRUE)) load(f, env)
-data(tabsex4); tab <- as.data.frame(tabsex4)
+load("data-raw/legacy-cran-1.2-data/tabsex4.rda"); tab <- as.data.frame(tabsex4)
 
 s <- legacy_to_study(as.data.frame(get("taxtab6.rm", env)[[5]]), list(id = "Bangladesh", feature_type = "otu", subject = "personid"))$study
 dir.create("dev/validation", showWarnings = FALSE, recursive = TRUE)

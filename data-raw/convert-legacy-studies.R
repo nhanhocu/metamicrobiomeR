@@ -4,7 +4,7 @@
 # and round-trip. Study metadata from Table 6 of Ho et al. 2019.
 source("data-raw/legacy-helpers.R")
 
-data(taxtab6); data(gtab.3stud)
+load("data-raw/legacy-cran-1.2-data/taxtab6.rda"); load("data-raw/legacy-cran-1.2-data/gtab.3stud.rda")
 res <- list(
   legacy_to_study(taxtab6, list(id = "bangladesh", feature_type = "otu", region = "V4",
                                 platform = "Illumina MiSeq", database = "Greengenes", db_version = "13.8",

@@ -1,3 +1,2 @@
-utils::globalVariables(c("sequences.per.sample", "pop", "plotvar","esticat","pdot",
-                         "x","y","xend","yend","estimate","psigcol","ll","ul","esticol",
-                         "estimate","se","study","BEZI","rel_abund","taxa",".","xmin","xmax","panel","size","id","wlab"))
+# Names used in ggplot2 aesthetics (non-standard evaluation)
+utils::globalVariables(c("x", "y", "xend", "yend", "xmin", "xmax", "panel", "size", "id", "wlab"))

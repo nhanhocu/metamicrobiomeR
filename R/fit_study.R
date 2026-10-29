@@ -90,6 +90,8 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (longitudinal && is.na(subject)) {
     stop("A longitudinal model needs study$subject (the repeated-measures ID column).", call. = FALSE)
   }
+  switch(engine, bezi_gamlss = .need("gamlss", "the 'bezi_gamlss' engine"),
+         zibb_glmmtmb = .need("glmmTMB", "the 'zibb_glmmtmb' engine"))
   counts <- mm_counts(study)
   if (engine == "zibb_glmmtmb" && is.null(counts)) {
     stop("The 'zibb_glmmtmb' engine needs counts; this study only has relative abundances.", call. = FALSE)
@@ -132,6 +134,8 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   re_term <- if (engine == "bezi_gamlss") "random(.subject)" else "(1 | .subject)"
   terms_f <- attr(stats::terms(formula), "term.labels")
   f <- stats::reformulate(c(terms_f, if (longitudinal) re_term), response = ".y")
+  # random() must be found without gamlss being attached: evaluate the formula in its namespace
+  if (engine == "bezi_gamlss") environment(f) <- asNamespace("gamlss")
 
   rows <- vector("list", length(idx)); log <- vector("list", length(idx))
   for (k in seq_along(idx)) {

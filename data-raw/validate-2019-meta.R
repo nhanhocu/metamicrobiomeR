@@ -3,7 +3,7 @@
 # with the stored pooled result (`metab.sex`, produced by meta.taxa() in 1.x).
 source("data-raw/legacy-helpers.R")
 env <- new.env(); for (f in list.files("data-raw/legacy-1.1/results", full.names = TRUE)) load(f, env)
-data(tabsex4)                                   # the four per-study results, stacked (CRAN-bundled)
+load("data-raw/legacy-cran-1.2-data/tabsex4.rda")      # the four per-study results, stacked (bundled with CRAN 1.2)
 tab <- as.data.frame(tabsex4)
 terms <- sub("^Estimate\\.", "", grep("^Estimate\\.", colnames(tab), value = TRUE))
 p <- parse_legacy_names(tab$id); rank_of <- unname(codes)[p$level]

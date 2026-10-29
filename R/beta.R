@@ -24,7 +24,7 @@
 #' @export
 fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank = NULL, seed = NULL,
                      longitudinal = NULL) {
-  .need("vegan", "fit_beta()")
+  .need("vegan", "fit_beta()"); .need("permute", "fit_beta()")
   if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group.", call. = FALSE)
   info <- mm_study_info(study); sdat <- mm_samples(study)

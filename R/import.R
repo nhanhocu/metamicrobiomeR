@@ -158,12 +158,12 @@ read_biom_study <- function(file, samples = NULL, study) {
 study_from_phyloseq <- function(ps, study, abundance = c("auto", "counts", "relabund")) {
   .need("phyloseq", "study_from_phyloseq()")
   abundance <- match.arg(abundance)
-  m <- as(phyloseq::otu_table(ps), "matrix")
+  m <- methods::as(phyloseq::otu_table(ps), "matrix")
   if (!phyloseq::taxa_are_rows(ps)) m <- t(m)
   tax <- if (is.null(phyloseq::tax_table(ps, errorIfNULL = FALSE))) NULL else
-    .rank_columns(as.data.frame(as(phyloseq::tax_table(ps), "matrix"), stringsAsFactors = FALSE))
+    .rank_columns(as.data.frame(methods::as(phyloseq::tax_table(ps), "matrix"), stringsAsFactors = FALSE))
   if (!is.null(tax)) tax <- tax[rownames(m), , drop = FALSE]
-  smp <- as.data.frame(as(phyloseq::sample_data(ps, errorIfNULL = FALSE), "data.frame"))
+  smp <- as.data.frame(methods::as(phyloseq::sample_data(ps, errorIfNULL = FALSE), "data.frame"))
   if (!nrow(smp)) smp <- data.frame(row.names = colnames(m))
   is_count <- abundance == "counts" || (abundance == "auto" && all(abs(m - round(m)) < 1e-8))
   as_study(counts = if (is_count) m else NULL, relabund = if (!is_count) m else NULL, taxonomy = tax,
