@@ -1,0 +1,101 @@
+---
+title: "Getting started with metamicrobiomeR 2.0"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with metamicrobiomeR 2.0}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 5, dpi = 80)
+has_tmb <- requireNamespace("glmmTMB", quietly = TRUE)
+library(metamicrobiomeR)
+```
+
+metamicrobiomeR analyses microbiome studies one at a time and then pools the results. The
+workflow has four steps: put each study into a **study object**, fit a model to every feature
+of each study to get an **effect table**, **pool** the effect tables across studies, and look
+at the result (forest plot, diagnostics, manifest).
+
+## 1. Studies
+
+We simulate four small studies with a known set of differential features (so we can check
+the answer), different effect sizes (between-study heterogeneity) and varying sequencing depth.
+
+```{r sim}
+sim <- simulate_studies(n_studies = 4, tau = 0.3, n_samples = 40, n_features = 10, n_diff = 3,
+                        effect = 1.2, seed = 7)
+studies <- sim$studies
+studies[[1]]
+sim$truth[sim$truth$diff, ]
+```
+
+A study holds counts (or relative abundances), the feature annotation with taxonomy in rank
+columns, the sample data, and study-level metadata. Build one yourself with `as_study()`, or
+import it with `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`,
+`study_from_phyloseq()` or `study_from_se()`:
+
+```{r import, eval = FALSE}
+study <- read_dada2(seqtab, taxa, samples, list(id = "cohort1", region = "V4", database = "SILVA 138"))
+genus <- agglomerate(study, "genus")                         # ASVs to genera
+```
+
+`manifest()` records what is in a study and `check_study()` validates it:
+
+```{r manifest}
+m <- manifest(studies[[1]]); m$samples; m$depth
+```
+
+## 2. One model per feature
+
+`fit_study()` fits the same model to every feature and returns an effect table. The engines are
+`"zibb_glmmtmb"` (a zero-inflated beta-binomial on counts that uses the sequencing depth),
+`"bezi_gamlss"` (the model of version 1.x), `"lm_asin"` and `"lm_clr"` (compositional sensitivity).
+Estimates of different engines are on different scales, so use the same engine for all studies.
+
+```{r fit, eval = has_tmb}
+effects <- lapply(studies, fit_study, ~ group, engine = "zibb_glmmtmb", longitudinal = FALSE)
+effects[[1]][effects[[1]]$term == "groupb", c("study", "feature", "estimate", "se", "p_value", "converged")][1:4, ]
+```
+
+```{r fit-fallback, eval = !has_tmb, echo = FALSE}
+effects <- lapply(studies, fit_study, ~ group, engine = "lm_asin", longitudinal = FALSE)
+```
+
+## 3. Pooling
+
+```{r pool}
+bound <- bind_effects(effects)            # refuses to mix engines or effect scales
+pooled <- pool_effects(bound, term = "groupb")
+head(pooled[, c("feature", "k", "estimate", "ci_lo", "ci_hi", "p_value", "I2", "max_weight", "p_adjust")], 4)
+```
+
+The default is random-effects meta-analysis with REML and the ad hoc Hartung-Knapp test
+(`test = "adhoc"`), which stays safe with few studies. `method = "DL", test = "z"` gives the
+version 1.x calculation. `max_weight` is the share of the result carried by the most influential
+study: a value near 1 means one study decides the result.
+
+```{r loo}
+loo <- leave_one_out(bound, feature = pooled$feature[1], term = "groupb")
+loo[, c("omitted", "estimate", "p_value")]
+```
+
+## 4. Looking at the result
+
+```{r forest}
+plot_forest(bound, pooled, feature = pooled$feature[1:2], term = "groupb")
+```
+
+## More
+
+* **Study characteristics:** `meta_regress()` asks whether the effect differs with, say, the
+  sequencing region; `study_table()` collects the study metadata.
+* **Taxonomic ranks:** `agglomerate()`, `parse_taxonomy()` and `harmonise_names()` bring studies
+  with different databases onto common taxa; `adjust_hierarchical()` controls the false
+  discovery rate top-down through the taxonomy.
+* **Diversity:** `fit_alpha()` returns standardised alpha-diversity effects as an effect table
+  that pools like any feature; `fit_beta()` and `pool_beta()` do PERMANOVA and combine studies.
+* **Function tables:** `read_function_table()` needs you to say whether functions were measured
+  or predicted; `subset_samples()` can filter on a quality column such as `nsti`.
+* **Reporting:** `write_manifest()` stores the data summary, settings and software versions.
