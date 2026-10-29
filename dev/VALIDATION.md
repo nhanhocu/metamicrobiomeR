@@ -130,7 +130,28 @@ FDR values (0.9989, 0.9707, 0.9707, 0.9191) cannot be obtained as Benjamini-Hoch
 the four displayed or all eight phylum-level features (all give 0.9626). No conclusion
 changes: nothing is significant in that block.
 
-## 6. How to rerun
+## 6. The headline meta-analysis result rests on one study
+
+**F13. Coprococcus is driven by USA(NC).** Found by plotting the pooled result
+(`plot_forest()`). For Coprococcus the per-study sex estimates are Haiti 0.014 (SE 0.43),
+USA(CA/FL) 0.55 (SE 0.35) and USA(NC) 0.43 (SE **0.0052**). USA(NC) carries about 100% of
+the random-effects weight, so the pooled estimate and its p-value are essentially that one
+study's. Without USA(NC), pooling the other two gives estimate 0.33 with p = 0.22
+(DerSimonian-Laird, normal test).
+
+The NC standard error is not credible. Among the other three studies no standard error for
+the sex term is below 0.097 (Bangladesh minimum 0.097, Haiti 0.17, CA/FL 0.12), but NC has 9
+taxa below 0.05 (minimum 0.0019), several with extreme estimates (-10.1, +3.7): the pattern of
+degenerate fits in a very small, sparse study. The NC sample data are not in the repository,
+so the fits cannot be checked directly. The paper's statement that Coprococcus is
+significantly higher in male infants (FDR < 0.0001) therefore rests on what looks like a
+numerical artefact of one study. The same applies to the other 1.x "pooled" results that
+involve NC taxa with tiny standard errors.
+
+Software response: `pool_effects()` now reports `max_weight` and `top_study`, `plot_forest()`
+prints each study's weight, and `leave_one_out()` repeats the pooling without each study.
+
+## 7. How to rerun
 
 ```
 Rscript data-raw/validate-2019-tables.R           # phylum level, about 25 s
@@ -140,4 +161,5 @@ Rscript data-raw/convergence-all-taxa.R           # sample of non-converged taxa
 Rscript data-raw/validate-2019-meta.R             # pooling step, a few seconds
 Rscript data-raw/validate-2019-lmas.R             # LMAS columns, about 1 min
 Rscript data-raw/refit-sex-bangladesh.R           # Bangladesh refit plus pooling, about 3 min
+Rscript data-raw/figure-forest-example.R          # forest plot, dev/figures/forest-sex-example.png
 ```

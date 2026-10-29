@@ -87,3 +87,36 @@ test_that("invalid input and unusable estimates are handled", {
   expect_equal(p$k, 2)
   expect_error(pool_effects(bind_effects(eff("s1", 0.5, 0.2)), min_studies = 2), "No feature")
 })
+
+test_that("influence diagnostics report the weight of the most influential study", {
+  p <- pool_effects(bound, method = "DL", test = "z")
+  h <- dl(y, se)
+  ws <- 1 / (se^2 + h$tau2); share <- ws / sum(ws)
+  expect_equal(p$max_weight, max(share), tolerance = 1e-8)
+  expect_equal(p$top_study, "s1")                              # the study with the smallest standard error
+  # one very precise study carries almost all the weight
+  dom <- bind_effects(eff("a", 0.4, 0.005), eff("b", 0.0, 0.4), eff("c", 0.5, 0.35))
+  expect_gt(pool_effects(dom, method = "DL", test = "z")$max_weight, 0.99)
+  expect_identical(pool_effects(dom, method = "DL", test = "z")$top_study, "a")
+})
+
+test_that("leave_one_out repeats the pooling without each study", {
+  mkf <- function(study, feature, est, se) eff(study, est, se, feature = feature)
+  b <- bind_effects(mkf("s1", "g", 0.8, 0.2), mkf("s2", "g", 0.1, 0.3), mkf("s3", "g", 0.5, 0.25), mkf("s4", "g", -0.2, 0.4))
+  l <- leave_one_out(b, method = "DL", test = "z")
+  expect_setequal(l$omitted, c("s1", "s2", "s3", "s4"))
+  expect_true(all(l$k == 3))
+  for (s in c("s1", "s3")) {
+    keep <- setdiff(c("s1", "s2", "s3", "s4"), s)
+    h <- dl(c(s1 = 0.8, s2 = 0.1, s3 = 0.5, s4 = -0.2)[keep], c(s1 = 0.2, s2 = 0.3, s3 = 0.25, s4 = 0.4)[keep])
+    expect_equal(l$estimate[l$omitted == s], h$est, tolerance = 1e-8)
+    expect_equal(l$p_value[l$omitted == s], h$p, tolerance = 1e-8)
+  }
+  # the result that depends on one study loses significance without it
+  dom <- bind_effects(eff("a", 0.43, 0.005), eff("b", 0.01, 0.43), eff("c", 0.55, 0.35))
+  l2 <- leave_one_out(dom, method = "DL", test = "z")
+  expect_lt(pool_effects(dom, method = "DL", test = "z")$p_value, 1e-6)
+  expect_gt(l2$p_value[l2$omitted == "a"], 0.1)
+  expect_error(leave_one_out(bind_effects(eff("a", 0.1, 0.1))), "two studies")
+  expect_error(leave_one_out(data.frame(a = 1)), "mm_effects")
+})

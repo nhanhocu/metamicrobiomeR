@@ -47,7 +47,11 @@ An object of class `mm_pooled` (a data.frame), one row per feature,
   part and term, with the number of studies `k`, the pooled `estimate`, `se`,
   confidence limits, test `statistic` and `p_value`, the heterogeneity measures
   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
-  unless there are at least 3 studies) and the adjusted p-value `p_adjust`.
+  unless there are at least 3 studies), the share of the total random-effects
+  weight carried by the most influential study (`max_weight`, between 0 and 1) and
+  that study (`top_study`), and the adjusted p-value `p_adjust`. A `max_weight`
+  close to 1 means one study determines the pooled result; use [leave_one_out()]
+  to see it without that study.
 }
 \description{
 Random-effects meta-analysis of the per-study estimates in an effect table,

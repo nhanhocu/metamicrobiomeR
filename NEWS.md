@@ -19,6 +19,12 @@ release with the old interface. See `dev/SPEC.md` for the new data contracts.
   intervals, FDR within rank). It reproduces the 1.x pooled sex-difference result
   with `method = "DL", test = "z"`. 1.x also "pooled" taxa seen in only one study
   for terms missing from some studies; 2.0 requires estimates from at least two.
+* `plot_forest()`: forest plot of per-study and pooled effects for one or several
+  features, with study weights, the pooled diamond, the prediction interval and a
+  heterogeneity summary.
+* `pool_effects()` reports `max_weight` and `top_study` (the share of the pooled result
+  carried by the most influential study); `leave_one_out()` repeats the pooling without
+  each study in turn.
 * `fit_study(engine = "lm_asin")`: the arcsine-square-root linear (mixed) model of 1.x,
   reproducing its results (the 1.x mixed-model p-values were 2% too small, see 1.3).
 * `fit_study()` defaults to `n_cycles = 100` and drops features unassigned at

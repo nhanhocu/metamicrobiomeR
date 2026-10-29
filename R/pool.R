@@ -33,7 +33,11 @@
 #'   part and term, with the number of studies `k`, the pooled `estimate`, `se`,
 #'   confidence limits, test `statistic` and `p_value`, the heterogeneity measures
 #'   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
-#'   unless there are at least 3 studies) and the adjusted p-value `p_adjust`.
+#'   unless there are at least 3 studies), the share of the total random-effects
+#'   weight carried by the most influential study (`max_weight`, between 0 and 1) and
+#'   that study (`top_study`), and the adjusted p-value `p_adjust`. A `max_weight`
+#'   close to 1 means one study determines the pooled result; use [leave_one_out()]
+#'   to see it without that study.
 #' @export
 pool_effects <- function(effects, term = NULL, part = NULL,
                          method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),
@@ -70,6 +74,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
     if (is.null(fit)) return(NULL)
     pi <- tryCatch(suppressWarnings(stats::predict(fit)), error = function(e) NULL)
     rk <- d$rank[!is.na(d$rank)]
+    ws <- 1 / (d$se^2 + fit$tau2); share <- ws / sum(ws)
     data.frame(feature = d$feature[1], rank = if (length(rk)) rk[1] else NA_character_,
                part = d$part[1], term = d$term[1], k = k,
                estimate = as.numeric(fit$beta), se = fit$se, ci_lo = fit$ci.lb, ci_hi = fit$ci.ub,
@@ -77,6 +82,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
                Q = fit$QE, Q_p = fit$QEp,
                pi_lo = if (k >= 3 && !is.null(pi)) pi$pi.lb else NA_real_,
                pi_hi = if (k >= 3 && !is.null(pi)) pi$pi.ub else NA_real_,
+               max_weight = max(share), top_study = as.character(d$study[which.max(share)]),
                stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
@@ -91,5 +97,37 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   attr(out, "settings") <- list(method = method, test = test, min_studies = min_studies, min_prop = min_prop,
                                 p_adjust = p_adjust, adjust_by = adjust_by)
   class(out) <- c("mm_pooled", "data.frame")
+  out
+}
+
+#' Pooled effects with each study left out in turn
+#'
+#' Repeats [pool_effects()] once per study, omitting that study each time, to show
+#' how much a result depends on any single study.
+#'
+#' @param effects An `mm_effects` object with at least two studies.
+#' @param feature Optional character vector restricting the features.
+#' @param term,part Optional restrictions, as in [pool_effects()].
+#' @param ... Further arguments passed to [pool_effects()] (`method`, `test`, ...).
+#'   Adjusted p-values are computed among the features pooled in each run.
+#' @return A data.frame with the columns of [pool_effects()] plus `omitted`, the
+#'   study left out; features that can no longer be pooled without that study are
+#'   absent from its rows.
+#' @export
+leave_one_out <- function(effects, feature = NULL, term = NULL, part = NULL, ...) {
+  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  if (!is.null(feature)) effects <- effects[effects$feature %in% feature, , drop = FALSE]
+  studies <- unique(as.character(effects$study))
+  if (length(studies) < 2) stop("Leave-one-out needs at least two studies.", call. = FALSE)
+  res <- lapply(studies, function(s) {
+    p <- tryCatch(suppressWarnings(pool_effects(effects[effects$study != s, , drop = FALSE],
+                                                term = term, part = part, ...)), error = function(e) NULL)
+    if (is.null(p)) return(NULL)
+    p <- as.data.frame(p); p$omitted <- s
+    p
+  })
+  out <- do.call(rbind, res)
+  if (is.null(out)) stop("No feature could be pooled after omitting any single study.", call. = FALSE)
+  rownames(out) <- NULL
   out
 }
