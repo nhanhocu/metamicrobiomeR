@@ -61,6 +61,10 @@ separately for every feature, model part and term, using `metafor::rma.uni()`.
 A feature is pooled only if it was estimated in at least `min_studies` studies
 and in at least `min_prop` of all studies that report that part and term.
 Studies with a missing estimate or a non-positive standard error are dropped.
+The Hartung-Knapp tests (`"adhoc"`, `"knha"`) use a t distribution with `k - 1` degrees of
+freedom, so with only two studies they have one degree of freedom and even a clear effect
+will not be significant; that is the honest answer with so little replication, and
+`test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.
 }
