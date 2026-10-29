@@ -111,7 +111,7 @@ read_metaphlan <- function(profile, samples, study, level = "species") {
   if (!"clade_name" %in% colnames(pt)) stop("'profile' needs a 'clade_name' column.", call. = FALSE)
   p <- parse_taxonomy(pt$clade_name, sep = "|")
   keep <- !is.na(p$deepest) & p$deepest == level & !grepl("t__", pt$clade_name, fixed = TRUE)
-  if (!any(keep)) stop("No clades at level '", level, "' in the profile (deepest levels found: ", .show(unique(na.omit(p$deepest)), 4), ").", call. = FALSE)
+  if (!any(keep)) stop("No clades at level '", level, "' in the profile (deepest levels found: ", .show(unique(stats::na.omit(p$deepest)), 4), ").", call. = FALSE)
   .inform("Kept ", sum(keep), " of ", length(keep), " rows: the clades at level '", level, "'.")
   pt <- pt[keep, , drop = FALSE]; p <- p[keep, , drop = FALSE]
   vals <- as.matrix(pt[, !colnames(pt) %in% c("clade_name", "NCBI_tax_id"), drop = FALSE]); mode(vals) <- "numeric"
