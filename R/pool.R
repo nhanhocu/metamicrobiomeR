@@ -42,6 +42,7 @@
 #'   that study (`top_study`), and the adjusted p-value `p_adjust`. A `max_weight`
 #'   close to 1 means one study determines the pooled result; use [leave_one_out()]
 #'   to see it without that study.
+#' @family pooling
 #' @export
 pool_effects <- function(effects, term = NULL, part = NULL,
                          method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),
@@ -136,6 +137,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
 #' @return A data.frame with the columns of [pool_effects()] plus `omitted`, the
 #'   study left out; features that can no longer be pooled without that study are
 #'   absent from its rows.
+#' @family pooling
 #' @export
 leave_one_out <- function(effects, feature = NULL, term = NULL, part = NULL, ...) {
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")

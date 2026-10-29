@@ -17,3 +17,9 @@ A named character vector: the parent feature ID of each feature, `NA` for
 For a study whose features sit at several ranks (a `rank` column), finds for each
 feature the feature at the nearest higher rank with the same lineage.
 }
+\seealso{
+Other taxonomy: 
+\code{\link{harmonise_names}()},
+\code{\link{parse_taxonomy}()}
+}
+\concept{taxonomy}

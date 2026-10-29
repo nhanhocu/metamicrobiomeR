@@ -28,3 +28,9 @@ matched names for the ranks you analyse.
 \examples{
 harmonise_names(c("[Ruminococcus]", "Firmicutes_A", "Bacillota", "Escherichia Shigella"))
 }
+\seealso{
+Other taxonomy: 
+\code{\link{feature_parents}()},
+\code{\link{parse_taxonomy}()}
+}
+\concept{taxonomy}

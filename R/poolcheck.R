@@ -26,6 +26,7 @@
 #' @param rank For studies: the rank whose taxa are compared.
 #' @return A data.frame with `feature`, the number of studies `k` and the study IDs, sorted by
 #'   `k`; the logical feature-by-study matrix is in the attribute `membership`.
+#' @family checks before pooling
 #' @export
 feature_coverage <- function(x, rank = NULL) {
   if (inherits(x, "mm_effects")) {
@@ -63,6 +64,7 @@ feature_coverage <- function(x, rank = NULL) {
 #' @return An object of class `mm_poolcheck`: `table` (see [study_table()]), `issues` (a
 #'   data.frame with `level`, `issue`, `detail`), `coverage` (see [feature_coverage()], or
 #'   `NULL`) and `ok` (no warnings).
+#' @family checks before pooling
 #' @export
 check_poolable <- function(..., rank = NULL, small_n = 10, strict = FALSE) {
   xs <- .as_study_list(list(...))

@@ -3,6 +3,17 @@
 #' Analyse microbiome studies one at a time and pool the results across studies. See the
 #' vignette `getting-started` for the workflow.
 #'
+#' @section Where to start:
+#' * **One call:** [meta_analyse()] runs the whole workflow (checks, per-study models, quality check,
+#'   pooling) and returns an object that prints a summary and plots. Start here.
+#' * **Step by step** (full control): build studies with [as_study()] or an importer ([read_dada2()],
+#'   [study_from_phyloseq()], ...); fit a model to each with [fit_study()]; combine with [bind_effects()]
+#'   and [pool_effects()]; look with [plot_forest()], [plot_heatmap()], [plot_volcano()].
+#' * **Before you trust a result:** [check_poolable()], [check_effects_quality()], [pool_sensitivity()],
+#'   [leave_one_out()].
+#' * **Other tools' results:** [effects_from()] brings MaAsLin2, ANCOM-BC2 or LinDA output into the same
+#'   framework.
+#'
 #' @section Messages:
 #' Functions print a short message when they make a decision on your behalf or leave data out
 #' (for example samples with missing values, features below the filters, or features pooled from

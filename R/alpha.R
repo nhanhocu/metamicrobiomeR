@@ -11,6 +11,7 @@
 #'   depend strongly on sequencing depth, so rarefying or a depth covariate is advisable.
 #' @param seed Optional seed for the rarefaction.
 #' @return A data.frame with one row per sample (row names are the sample IDs) and one column per metric.
+#' @family per-study models
 #' @export
 alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed"), rarefy = NULL, seed = NULL) {
   .check_class(study, "mm_study", "study", "as_study()")
@@ -55,6 +56,7 @@ alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed")
 #' @param longitudinal Add a subject random intercept? Defaults to `TRUE` when `study$subject` is set.
 #' @return An `mm_effects` object with `feature` = metric, `part = "overall"` and
 #'   `effect_scale` `"sd_units"` (standardised) or `"alpha_raw"`.
+#' @family per-study models
 #' @export
 fit_alpha <- function(study, formula, metrics = c("shannon", "simpson", "observed"), standardise = TRUE,
                       longitudinal = NULL, rarefy = NULL, seed = NULL) {

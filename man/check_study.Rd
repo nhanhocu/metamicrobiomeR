@@ -16,3 +16,13 @@ check_study(x)
 Validates the rules in `dev/SPEC.md`. Errors on violations, warns on soft
 problems (e.g. samples with zero depth).
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{as_study}()},
+\code{\link{merge_studies}()},
+\code{\link{mm_accessors}},
+\code{\link{study_table}()},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

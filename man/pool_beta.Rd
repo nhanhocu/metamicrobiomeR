@@ -22,3 +22,14 @@ Fisher's method or with weighted Stouffer's method (weights proportional to the 
 the sample size), and reports the sample-size-weighted mean R-squared as a descriptive
 summary. Heterogeneity is not modelled, and the studies must use the same distance.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{combine_pvalues}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_effects}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

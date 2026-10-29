@@ -19,6 +19,7 @@
 #'   estimates, the proportion converged, the minimum, the chosen quantile and the median of
 #'   the standard errors, and how many were flagged) and `rows` (the effect rows with the flag
 #'   columns `flag_se`, `flag_converged`, `flag_estimate` and `flagged`).
+#' @family checks before pooling
 #' @export
 check_effects_quality <- function(effects, se_ratio = 0.1, max_abs_estimate = NULL, quantile = 0.05) {
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
@@ -68,6 +69,7 @@ print.mm_quality <- function(x, ...) {
 #' @param drop_nonconverged,drop_implausible_se Which flags to act on.
 #' @return The filtered `mm_effects` object, with the removed rows and the reason in the
 #'   attribute `dropped`.
+#' @family checks before pooling
 #' @export
 filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_se = TRUE, se_ratio = 0.1, max_abs_estimate = NULL) {
   q <- check_effects_quality(effects, se_ratio = se_ratio, max_abs_estimate = max_abs_estimate)
@@ -108,6 +110,7 @@ filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_s
 #' @return An object of class `mm_poolcompare`: `long` (all pooled rows with the `setting`),
 #'   `wide` (one row per feature, part and term with the p-values and the significance under
 #'   each setting), `n_significant` (per setting) and `robust` (features significant under all).
+#' @family pooling
 #' @export
 pool_sensitivity <- function(effects, settings = NULL, term = NULL, part = NULL, alpha = 0.05, significance = c("p_adjust", "p_value"), ...) {
   significance <- match.arg(significance)
@@ -169,6 +172,7 @@ print.mm_poolcompare <- function(x, ...) {
 #' @return A data.frame of class `mm_combined` with `k`, `n_pos`, `n_neg`, `direction`
 #'   (`"up"`, `"down"` or `"mixed"`), `sign_test_p`, the combined `statistic` (Stouffer z) and
 #'   `p_value`, and `p_adjust`.
+#' @family pooling
 #' @export
 combine_pvalues <- function(effects, method = c("stouffer", "fisher"), weights = c("sqrt_n", "none"), term = NULL, part = NULL,
                             min_studies = 2, p_adjust = "fdr", adjust_by = c("part", "term", "rank")) {

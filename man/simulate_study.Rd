@@ -58,3 +58,8 @@ subject effect. Because the data are compositional, a change in some features sh
 proportions of all the others; with `balanced = FALSE` (all differential features move in
 the same direction) this compositional effect is strong.
 }
+\seealso{
+Other simulation: 
+\code{\link{simulate_studies}()}
+}
+\concept{simulation}

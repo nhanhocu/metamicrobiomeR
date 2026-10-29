@@ -47,6 +47,19 @@ genus <- agglomerate(study, "genus")                         # ASVs to genera
 m <- manifest(studies[[1]]); m$samples; m$depth
 ```
 
+## The short way, once you have the studies
+
+If you have several studies and want a pooled result, one call does the whole workflow:
+
+```{r short}
+res <- meta_analyse(studies, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE))
+res
+```
+
+`plot(res)` draws a forest plot of the strongest features (`plot(res, "heatmap")` and `plot(res, "volcano")` give
+overviews), and `as.data.frame(res)` is the pooled table. The rest of this vignette goes through the same steps one at
+a time, which gives you full control over each.
+
 ## 2. One model per feature
 
 `fit_study()` fits the same model to every feature and returns an effect table. The engines are

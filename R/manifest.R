@@ -9,6 +9,7 @@
 #'
 #' @param x An `mm_study`, `mm_effects` or `mm_pooled` object.
 #' @return A named list of class `mm_manifest`.
+#' @family reporting
 #' @export
 manifest <- function(x) {
   ver <- function(p) tryCatch(as.character(utils::packageVersion(p)), error = function(e) NA_character_)
@@ -56,6 +57,7 @@ print.mm_manifest <- function(x, ...) { cat(.manifest_lines(unclass(x)), sep = "
 #' @param file Output path.
 #' @param format `"text"` (default, readable) or `"json"` (needs the `jsonlite` package).
 #' @return The path, invisibly.
+#' @family reporting
 #' @export
 write_manifest <- function(x, file, format = c("text", "json")) {
   format <- match.arg(format)

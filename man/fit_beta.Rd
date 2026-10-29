@@ -44,3 +44,13 @@ is tested marginally (given the others). For repeated measures (a subject is set
 subjects are permuted, which is valid only for terms that are constant within a subject; use
 it for between-subject factors.
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{bind_effects}()},
+\code{\link{check_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_study}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

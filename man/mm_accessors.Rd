@@ -35,3 +35,13 @@ mm_study_info(x)
 \description{
 Accessors for study objects
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{as_study}()},
+\code{\link{check_study}()},
+\code{\link{merge_studies}()},
+\code{\link{study_table}()},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

@@ -20,3 +20,15 @@ An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case).
 \description{
 Convert a phyloseq object to a study
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_metaphlan}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

@@ -20,3 +20,15 @@ An `mm_study` with counts and, when the file has taxonomy, rank columns.
 \description{
 Read a BIOM file
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_metaphlan}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

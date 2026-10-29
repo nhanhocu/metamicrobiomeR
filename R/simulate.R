@@ -46,6 +46,7 @@
 #' @param seed Optional seed.
 #' @return A list with the `mm_study` (`study`) and the `truth`: a data.frame with the feature,
 #'   whether it is differential (`diff`) and its true log effect (`beta`).
+#' @family simulation
 #' @export
 simulate_study <- function(n_samples = 60, n_features = 30, n_diff = 6, effect = 1, balanced = TRUE, depth = 20000,
                            depth_sd = 0.5, overdispersion = 20, zero_inflation = 0, n_subjects = NULL, subject_sd = 0.5,
@@ -71,6 +72,7 @@ simulate_study <- function(n_samples = 60, n_features = 30, n_diff = 6, effect =
 #' @param small_study If `TRUE`, the last study has only a fifth of the samples.
 #' @inheritParams simulate_study
 #' @return A list with `studies` (a list of `mm_study` objects) and `truth` (as in [simulate_study()]).
+#' @family simulation
 #' @export
 simulate_studies <- function(n_studies = 4, tau = 0.3, small_study = FALSE, n_samples = 60, n_features = 30, n_diff = 6,
                              effect = 1, balanced = TRUE, depth = 20000, depth_sd = 0.5, overdispersion = 20,

@@ -39,3 +39,13 @@ without an assignment at that rank are collected into one feature
 sequencing depth, stay unchanged; [fit_study()] leaves such features out of the
 models by default.
 }
+\seealso{
+Other studies: 
+\code{\link{as_study}()},
+\code{\link{check_study}()},
+\code{\link{merge_studies}()},
+\code{\link{mm_accessors}},
+\code{\link{study_table}()},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

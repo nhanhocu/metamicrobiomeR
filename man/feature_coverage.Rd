@@ -21,3 +21,10 @@ For an effect table, the studies in which each feature was estimated. For a list
 and a rank, the taxa each study offers at that rank (names harmonised with
 [harmonise_names()], unassigned excluded). Features seen in only one study cannot be pooled.
 }
+\seealso{
+Other checks before pooling: 
+\code{\link{check_effects_quality}()},
+\code{\link{check_poolable}()},
+\code{\link{filter_effects}()}
+}
+\concept{checks before pooling}

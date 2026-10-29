@@ -45,3 +45,9 @@ shows the estimate (diverging scale, centred on zero); stars show p-values (`*` 
 without an estimate are grey. The colour range is set by the 95th percentile of the absolute
 estimates, so a few extreme values do not wash out the rest.
 }
+\seealso{
+Other plots: 
+\code{\link{plot_forest}()},
+\code{\link{plot_volcano}()}
+}
+\concept{plots}

@@ -1,0 +1,113 @@
+sims <- function(n = 3, ...) simulate_studies(n_studies = n, n_samples = 30, n_features = 8, n_diff = 3, effect = 1.5, tau = 0.2, seed = 4, ...)$studies
+run <- function(s, ...) suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0), ...))
+
+test_that("meta_analyse equals the step-by-step workflow and returns one object", {
+  s <- sims()
+  res <- run(s)
+  expect_s3_class(res, "mm_meta")
+  manual <- pool_effects(bind_effects(lapply(s, fit_study, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0)), term = "groupb")
+  expect_equal(as.data.frame(res$pooled), as.data.frame(manual))
+  expect_equal(as.data.frame(res), as.data.frame(res$pooled))
+  expect_s3_class(res$effects, "mm_effects"); expect_equal(res$studies$study, c("sim1", "sim2", "sim3"))
+  expect_equal(res$settings$engine, "lm_asin"); expect_equal(res$settings$formula, "~group")
+  out <- testthat::capture_output(print(res))
+  expect_match(out, "<mm_meta> 3 studies \\(sim1, sim2, sim3\\) \\| engine lm_asin \\| model ~group")
+  expect_match(out, "8 features pooled \\(REML, adhoc test\\) \\| adjusted p <= 0.05:"); expect_match(out, "checks: 0 warning\\(s\\)")
+  expect_match(out, "plot\\(x\\) draws a forest plot")
+})
+
+test_that("the summary explains an empty result instead of showing a bare zero", {
+  few <- simulate_studies(n_studies = 3, n_samples = 14, n_features = 6, n_diff = 1, effect = 0.2, tau = 0.5, seed = 2)$studies
+  res <- suppressMessages(meta_analyse(few, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_match(testthat::capture_output(print(res)), "No feature reaches adjusted p <= 0.05; the table is ordered by p-value. With 3 studies there is little power")
+  strong <- suppressMessages(meta_analyse(simulate_studies(n_studies = 5, n_samples = 80, n_features = 6, n_diff = 3, effect = 3, tau = 0.05, depth_sd = 0.2, seed = 3)$studies,
+                                          ~ group, term = "groupb", engine = "lm_asin", test = "z", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_false(grepl("No feature reaches", testthat::capture_output(print(strong))))
+})
+
+test_that("plot and as.data.frame work from the result", {
+  res <- run(sims())
+  f <- plot(res); expect_s3_class(f, "ggplot")
+  expect_length(unique(ggplot2::ggplot_build(f)$layout$layout$PANEL), 3)                          # the three strongest features
+  expect_length(unique(ggplot2::ggplot_build(plot(res, top = 2))$layout$layout$PANEL), 2)
+  one <- plot(res, feature = "F1"); expect_length(unique(ggplot2::ggplot_build(one)$layout$layout$PANEL), 1)
+  expect_s3_class(plot(res, "heatmap"), "ggplot"); expect_s3_class(plot(res, "volcano"), "ggplot")
+  with_x <- lapply(sims(), function(st) { set.seed(1); st$samples$x <- rnorm(nrow(st$samples)); st })
+  both <- suppressMessages(meta_analyse(with_x, ~ group + x, engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_error(plot(both), "Several terms were pooled"); expect_s3_class(plot(both, term = "groupb"), "ggplot")
+})
+
+test_that("the engine is chosen automatically and the choice is reported", {
+  s <- sims()
+  skip_if_not_installed("glmmTMB")
+  m1 <- testthat::capture_messages(meta_analyse(s, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0.5)))
+  expect_true(any(grepl("Using the 'zibb_glmmtmb' engine \\(every study has counts\\)", m1)))
+  rel <- lapply(s, function(x) as_study(relabund = mm_relabund(x), samples = mm_samples(x), study = list(id = x$study$id, feature_type = "taxon")))
+  m2 <- testthat::capture_messages(meta_analyse(rel, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_true(any(grepl("Using the 'lm_asin' engine \\(not every study has counts\\)", m2)))
+})
+
+# a study whose fits are degenerate: within each group the abundances are (almost) constant, so the standard errors collapse
+degenerate <- function(base) {
+  set.seed(9); rel <- mm_relabund(base); g <- mm_samples(base)$group
+  for (j in seq_len(nrow(rel))) for (lv in levels(g)) rel[j, g == lv] <- mean(rel[j, g == lv]) + rnorm(sum(g == lv), 0, 1e-9)
+  rel <- pmax(rel, 1e-6); rel <- sweep(rel, 2, colSums(rel), "/") * 0.999
+  as_study(relabund = rel, samples = mm_samples(base), study = list(id = "bad", feature_type = "taxon"))
+}
+
+test_that("implausible estimates are reported by default and can be filtered out", {
+  s <- c(sims(2), list(degenerate(sims(1)[[1]])))
+  expect_warning(res <- suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0))),
+                 "estimates look doubtful \\(bad: \\d+\\).*use quality = \"filter\" to drop them")
+  expect_gt(sum(res$quality$rows$flagged), 0); expect_equal(nrow(res$effects), 24)                                # kept
+  expect_message(f <- meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "filter", fit_args = list(longitudinal = FALSE, min_prevalence = 0)),
+                 "Dropped \\d+ of 24 estimates before pooling")
+  expect_lt(nrow(f$effects), 24)
+  expect_silent(suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "off", fit_args = list(longitudinal = FALSE, min_prevalence = 0))))
+  expect_null(suppressWarnings(suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "off", fit_args = list(longitudinal = FALSE, min_prevalence = 0))))$quality)
+})
+
+test_that("warnings from a study are passed on with its name, not lost", {
+  s <- sims(); one <- s[[2]]; one$samples$group <- factor(rep("a", 30)); s[[2]] <- one                  # every fit in sim2 fails
+  expect_warning(suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0), quality = "off")),
+                 "^\\[sim2\\] \\d+ of 8 fits failed")
+})
+
+test_that("problems are reported with the name of the study they come from", {
+  s <- sims(); na <- s[[2]]; na$samples$group[1:5] <- NA; s[[2]] <- na
+  m <- testthat::capture_messages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_true(any(grepl("^\\[sim2\\] 5 of 30 samples have missing values", m)))
+  bad <- sims(); bad[[3]]$samples$group <- NULL
+  expect_error(meta_analyse(bad, ~ group, engine = "lm_asin"), "Study 'sim3': Variable not found in the sample data: group")
+  small <- c(sims(2), list(simulate_study(n_samples = 8, n_features = 8, n_diff = 3, id = "tiny", seed = 3)$study))
+  expect_warning(suppressMessages(meta_analyse(small, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0))),
+                 "The studies may not be safe to pool: small studies \\(fewer than 10 samples\\) \\(tiny \\(n = 8\\)\\)")
+  expect_silent(suppressMessages(suppressWarnings(meta_analyse(small, ~ group, term = "groupb", engine = "lm_asin", check = FALSE, quality = "off", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))))
+})
+
+test_that("a rank agglomerates ASV-level studies and matches taxa across databases", {
+  mk <- function(id, genera, phyla, seed) {
+    set.seed(seed); n <- 20; nf <- length(genera)
+    cnt <- matrix(rpois(nf * n, 40), nf, n, dimnames = list(paste0("f", seq_len(nf)), paste0("S", seq_len(n))))
+    cnt[1, rep(c(FALSE, TRUE), 10)] <- cnt[1, rep(c(FALSE, TRUE), 10)] * 4L                              # one differential taxon
+    as_study(counts = cnt, taxonomy = data.frame(phylum = phyla, genus = genera, row.names = rownames(cnt), stringsAsFactors = FALSE),
+             samples = data.frame(group = factor(rep(c("a", "b"), 10)), row.names = colnames(cnt)), study = list(id = id, feature_type = "asv"))
+  }
+  a <- mk("A", c("Blautia", "Roseburia", "[Ruminococcus]", "Bacteroides"), c("F", "F", "F", "B"), 1)
+  b <- mk("B", c("Blautia", "Ruminococcus", "Bacteroides", "Prevotella"), c("F_A", "F_A", "B", "B"), 2)
+  c3 <- mk("C", c("Blautia", "Ruminococcus", "Bacteroides", "Alistipes"), c("F", "F", "B", "B"), 3)
+  res <- suppressMessages(meta_analyse(list(a, b, c3), ~ group, term = "groupb", rank = "genus", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0), quality = "off"))
+  expect_true(all(c("Blautia", "Ruminococcus", "Bacteroides") %in% res$pooled$feature))                       # [Ruminococcus] matched with Ruminococcus
+  expect_false("Prevotella" %in% res$pooled$feature)                                                          # in one study only
+  expect_equal(unique(res$pooled$rank), "genus"); expect_equal(res$pooled$k[res$pooled$feature == "Blautia"], 3)
+  expect_equal(res$settings$rank, "genus")
+})
+
+test_that("meta_analyse validates its input", {
+  s <- sims()
+  expect_error(meta_analyse(s[1], ~ group), "needs at least two studies; got 1. Use fit_study\\(\\)")
+  expect_error(meta_analyse(list(s[[1]], s[[1]]), ~ group), "Study IDs must be unique; 'sim1' is used twice")
+  expect_error(meta_analyse(s, group ~ 1), "'formula' must be one-sided")
+  expect_error(meta_analyse(list(1, 2), ~ group), "Supply mm_study objects")
+  expect_error(meta_analyse(s, ~ group, engine = "nonsense"))
+})

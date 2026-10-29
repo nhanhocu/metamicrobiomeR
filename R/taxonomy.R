@@ -27,6 +27,7 @@
 #' silva <- paste("d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria",
 #'                "o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella", sep = ";")
 #' parse_taxonomy(c("k__Bacteria; p__Firmicutes; c__Clostridia; o__; f__; g__", silva, "Unassigned"))
+#' @family taxonomy
 #' @export
 parse_taxonomy <- function(x, sep = NULL) {
   x <- as.character(x)
@@ -73,6 +74,7 @@ parse_taxonomy <- function(x, sep = NULL) {
 #' @return Character vector of the same length (`NA` stays `NA`).
 #' @examples
 #' harmonise_names(c("[Ruminococcus]", "Firmicutes_A", "Bacillota", "Escherichia Shigella"))
+#' @family taxonomy
 #' @export
 harmonise_names <- function(x, synonyms = NULL) {
   syn <- c(Bacillota = "Firmicutes", Actinomycetota = "Actinobacteria", Pseudomonadota = "Proteobacteria",
@@ -110,6 +112,7 @@ harmonise_names <- function(x, synonyms = NULL) {
 #' @param synonyms Passed to [harmonise_names()] when `key = "name"`.
 #' @return An `mm_study` with one feature per taxon, a `rank` column, and the rank
 #'   columns down to the requested rank.
+#' @family studies
 #' @export
 agglomerate <- function(study, rank, key = c("lineage", "name"), unassigned = c("keep", "drop"), synonyms = NULL) {
   .check_class(study, "mm_study", "study", "as_study()")

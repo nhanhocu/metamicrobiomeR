@@ -24,6 +24,7 @@
 #' @return An `mm_study` whose sample IDs are `<study>:<sample>`, with the extra sample column
 #'   `study_var`. If every study has a subject column, a combined subject column
 #'   `subject_merged` (study plus subject) is set as the study's subject.
+#' @family studies
 #' @export
 merge_studies <- function(studies, rank = NULL, key = c("name", "lineage"), features = c("intersection", "union"), study_var = "study") {
   key <- match.arg(key); features <- match.arg(features)

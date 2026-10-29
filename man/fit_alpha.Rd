@@ -37,3 +37,13 @@ By default each metric is standardised to mean 0 and standard deviation 1 within
 study first, which makes effects comparable between studies that measure on different
 scales (as in 1.x); the estimates are then in standard-deviation units.
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{bind_effects}()},
+\code{\link{check_effects}()},
+\code{\link{fit_beta}()},
+\code{\link{fit_study}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

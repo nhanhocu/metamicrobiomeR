@@ -27,3 +27,9 @@ silva <- paste("d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria",
                "o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella", sep = ";")
 parse_taxonomy(c("k__Bacteria; p__Firmicutes; c__Clostridia; o__; f__; g__", silva, "Unassigned"))
 }
+\seealso{
+Other taxonomy: 
+\code{\link{feature_parents}()},
+\code{\link{harmonise_names}()}
+}
+\concept{taxonomy}

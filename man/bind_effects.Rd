@@ -23,3 +23,13 @@ An `mm_effects` object.
 Stacks per-study effect tables and checks that they can be pooled: no
 duplicated rows, and one effect scale per model part and term.
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{check_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_beta}()},
+\code{\link{fit_study}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

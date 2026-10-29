@@ -19,6 +19,7 @@
 #' @param stars Draw the significance stars?
 #' @param feature_labels Optional named character vector of labels for the features.
 #' @return A `ggplot` object.
+#' @family plots
 #' @export
 plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, features = NULL, top = 25, order_by = c("p_value", "estimate"),
                          stars = TRUE, feature_labels = NULL) {
@@ -84,6 +85,7 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
 #'   degenerate fits, do not squash the rest; points beyond the range are drawn at the edge as
 #'   triangles. Use `Inf` to show everything.
 #' @return A `ggplot` object.
+#' @family plots
 #' @export
 plot_volcano <- function(pooled, alpha = 0.05, label_top = 8, feature_labels = NULL, x_range = NULL) {
   .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")

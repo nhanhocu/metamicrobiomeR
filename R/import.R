@@ -32,6 +32,7 @@
 #'   `"asv"`.
 #' @return An `mm_study` with counts. Features are named `ASV1`, `ASV2`, ... and keep their
 #'   sequence in the feature data.
+#' @family importers
 #' @export
 read_dada2 <- function(seqtab, taxa = NULL, samples, study) {
   seqtab <- as.matrix(seqtab)
@@ -62,6 +63,7 @@ read_dada2 <- function(seqtab, taxa = NULL, samples, study) {
 #'   QIIME 2 metadata file (its `#q2:types` row is ignored).
 #' @param study Named list of study metadata; `feature_type` defaults to `"asv"`.
 #' @return An `mm_study` with counts.
+#' @family importers
 #' @export
 read_qiime2 <- function(feature_table, taxonomy = NULL, samples, study) {
   ft <- if (is.character(feature_table) && length(feature_table) == 1 && file.exists(feature_table)) {
@@ -101,6 +103,7 @@ read_qiime2 <- function(feature_table, taxonomy = NULL, samples, study) {
 #' @param level Taxonomic level to keep, default `"species"`.
 #' @return An `mm_study` with relative abundances (converted from percent to proportions)
 #'   and a `rank` column set to `level`.
+#' @family importers
 #' @export
 read_metaphlan <- function(profile, samples, study, level = "species") {
   level <- match.arg(level, .mm_ranks)
@@ -129,6 +132,7 @@ read_metaphlan <- function(profile, samples, study, level = "species") {
 #'   sample metadata stored in the BIOM file is used.
 #' @param study Named list of study metadata (see [as_study()]).
 #' @return An `mm_study` with counts and, when the file has taxonomy, rank columns.
+#' @family importers
 #' @export
 read_biom_study <- function(file, samples = NULL, study) {
   .need("biomformat", "read_biom_study()")
@@ -156,6 +160,7 @@ read_biom_study <- function(file, samples = NULL, study) {
 #' @param abundance `"auto"` (default) treats integer values as counts and other values as
 #'   relative abundances; or force `"counts"` or `"relabund"`.
 #' @return An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case).
+#' @family importers
 #' @export
 study_from_phyloseq <- function(ps, study, abundance = c("auto", "counts", "relabund")) {
   .need("phyloseq", "study_from_phyloseq()")
@@ -180,6 +185,7 @@ study_from_phyloseq <- function(ps, study, abundance = c("auto", "counts", "rela
 #' @param study Named list of study metadata (see [as_study()]).
 #' @param abundance As in [study_from_phyloseq()].
 #' @return An `mm_study`; the row data supply the taxonomy ranks and the column data the sample data.
+#' @family importers
 #' @export
 study_from_se <- function(se, assay = 1, study, abundance = c("auto", "counts", "relabund")) {
   .need("SummarizedExperiment", "study_from_se()")
@@ -199,6 +205,7 @@ study_from_se <- function(se, assay = 1, study, abundance = c("auto", "counts", 
 #' @param study An `mm_study`.
 #' @return A `phyloseq` object (counts if available, else relative abundances), or a
 #'   `SummarizedExperiment` with the study's assays.
+#' @family importers
 #' @name study_export
 NULL
 
@@ -238,6 +245,7 @@ as_summarized_experiment <- function(study) {
 #' @param measured `TRUE` for measured, `FALSE` for predicted functions (required).
 #' @param source Name of the tool and version, recorded as the study's `pipeline`.
 #' @return An `mm_study` of type `"function"` with relative abundances.
+#' @family importers
 #' @export
 read_function_table <- function(table, samples, study, measured, source = NULL) {
   if (missing(measured) || !is.logical(measured) || length(measured) != 1 || is.na(measured)) {
@@ -267,6 +275,7 @@ read_function_table <- function(table, samples, study, measured, source = NULL) 
 #'   logical vector is also accepted.
 #' @return An `mm_study` with the selected samples or features. Relative abundances that
 #'   were stored (not derived from counts) are not renormalised.
+#' @family studies
 #' @export
 subset_samples <- function(study, keep) {
   .check_class(study, "mm_study", "study", "as_study()")

@@ -21,6 +21,7 @@
 #'   the p-values too small.
 #' @return A data.frame of class `mm_beta` with one row per term: `study`, `term`, `df`, `R2`
 #'   (the share of the distance variation explained), `F`, `p_value`, `n` and `distance`.
+#' @family per-study models
 #' @export
 fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank = NULL, seed = NULL,
                      longitudinal = NULL) {
@@ -79,6 +80,7 @@ fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank
 #' @param method `"stouffer"` (default) or `"fisher"`.
 #' @return A data.frame with one row per term: the number of studies `k`, the combined
 #'   `p_value`, the mean `R2`, and the `method`.
+#' @family pooling
 #' @export
 pool_beta <- function(..., method = c("stouffer", "fisher")) {
   method <- match.arg(method)

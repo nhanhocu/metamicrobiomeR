@@ -32,3 +32,14 @@ tested. This replaces adjusting all ranks together, which ignores that a genus b
 to a phylum. The error-control guarantee of the published procedures depends on
 assumptions about the dependence between tests; check it by simulation for your design.
 }
+\seealso{
+Other pooling: 
+\code{\link{combine_pvalues}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_effects}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

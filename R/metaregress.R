@@ -21,6 +21,7 @@
 #'   the coefficient `estimate`, `se`, confidence limits, `statistic` and `p_value`, the
 #'   omnibus test of all moderators (`QM`, `QM_p`, adjusted `QM_p_adjust`), the residual
 #'   heterogeneity `tau2` and `I2`.
+#' @family pooling
 #' @export
 meta_regress <- function(effects, study_data, moderators, term = NULL, part = NULL,
                          method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),

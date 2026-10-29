@@ -30,3 +30,13 @@ A data.frame with one row per sample (row names are the sample IDs) and one colu
 \description{
 Per-sample alpha diversity
 }
+\seealso{
+Other per-study models: 
+\code{\link{bind_effects}()},
+\code{\link{check_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_beta}()},
+\code{\link{fit_study}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

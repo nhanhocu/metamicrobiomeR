@@ -19,6 +19,7 @@
 #' @param effect_scale Scale of `estimate`, e.g. "logit_mean", "log_odds", "smd".
 #' @param converged Logical, did the fit converge.
 #' @return An object of class `mm_effects` (a data.frame).
+#' @family per-study models
 #' @export
 new_effect_table <- function(study, feature, term, estimate, se,
                              rank = NA_character_, part = "overall", df = NA_real_,
@@ -39,6 +40,7 @@ new_effect_table <- function(study, feature, term, estimate, se,
 #'
 #' @param x An `mm_effects` object.
 #' @return `x`, invisibly, if all checks pass.
+#' @family per-study models
 #' @export
 check_effects <- function(x) {
   .check_class(x, "mm_effects", "x", "fit_study() or bind_effects()")
@@ -78,6 +80,7 @@ check_effects <- function(x) {
 #'   same part and term from different engines: estimates of different models are
 #'   not comparable even when the scale label is the same.
 #' @return An `mm_effects` object.
+#' @family per-study models
 #' @export
 bind_effects <- function(..., allow_mixed_scale = FALSE, allow_mixed_engine = FALSE) {
   xs <- list(...)

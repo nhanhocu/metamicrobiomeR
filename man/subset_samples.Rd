@@ -23,3 +23,13 @@ An `mm_study` with the selected samples or features. Relative abundances that
 \description{
 Subset the samples or features of a study
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{as_study}()},
+\code{\link{check_study}()},
+\code{\link{merge_studies}()},
+\code{\link{mm_accessors}},
+\code{\link{study_table}()}
+}
+\concept{studies}

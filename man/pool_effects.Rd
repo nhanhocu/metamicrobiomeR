@@ -68,3 +68,14 @@ will not be significant; that is the honest answer with so little replication, a
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{combine_pvalues}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

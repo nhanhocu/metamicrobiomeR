@@ -31,6 +31,17 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
 * **Output and reporting:** `plot_forest()`, `manifest()`, `write_manifest()`.
 * **Simulation:** `simulate_study()`, `simulate_studies()`.
 
+## Easier to use, and faster
+
+* `meta_analyse()` runs the whole workflow in one call (checks, per-study models, quality check, pooling) and
+  returns an object with `print()`, `plot()` and `as.data.frame()` methods. Messages and warnings are labelled with
+  the study they come from. The step-by-step functions remain.
+* Pooling is 14 to 45 times faster (a lean DL/REML/PM core, tested against metafor; metafor remains the fallback
+  for other estimators), `leave_one_out()` and `pool_sensitivity()` follow, `meta_regress()` and `combine_pvalues()`
+  are faster, `parse_taxonomy()` is vectorised (identical output, tested against the original), and `fit_study()`
+  gains `cores` for parallel fitting. See `dev/PERFORMANCE.md`.
+* Help pages are grouped into families and the package help page lists where to start.
+
 ## Messages
 
 * Informational messages say what the package decided or left out (samples with missing values, features

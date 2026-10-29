@@ -47,3 +47,13 @@ An object of class `mm_effects` (a data.frame).
 \description{
 One row per study x feature x model part x term. Scalars are recycled.
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{bind_effects}()},
+\code{\link{check_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_beta}()},
+\code{\link{fit_study}()}
+}
+\concept{per-study models}

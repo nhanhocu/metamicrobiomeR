@@ -50,3 +50,15 @@ against your version): MaAsLin2's `all_results.tsv` (columns `feature`, `metadat
 variable, `lfc_*`, `se_*`, `p_*`); LinDA's table for one variable (row names are the features;
 columns `log2FoldChange`, `lfcSE`, `pvalue`).
 }
+\seealso{
+Other importers: 
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_metaphlan}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

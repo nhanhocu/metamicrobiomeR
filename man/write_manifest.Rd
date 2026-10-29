@@ -19,3 +19,8 @@ The path, invisibly.
 \description{
 Write a manifest to a file
 }
+\seealso{
+Other reporting: 
+\code{\link{manifest}()}
+}
+\concept{reporting}

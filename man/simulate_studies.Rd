@@ -60,3 +60,8 @@ Studies share the features, the baseline composition (up to a study-specific per
 and the set of differential features, but each has its own effect size, drawn around
 `effect` with standard deviation `tau`. Optionally the last study is a small, sparse study.
 }
+\seealso{
+Other simulation: 
+\code{\link{simulate_study}()}
+}
+\concept{simulation}

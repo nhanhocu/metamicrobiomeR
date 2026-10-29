@@ -22,6 +22,7 @@
 #' @param feature_labels Optional named character vector mapping feature IDs to the
 #'   labels shown in the panel titles.
 #' @return A `ggplot` object, one panel per feature.
+#' @family plots
 #' @export
 plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NULL,
                         level = 0.95, show_pi = TRUE, feature_labels = NULL) {
@@ -54,7 +55,7 @@ plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NUL
   studies <- unique(sel$study); m <- length(studies)
   ypos <- stats::setNames(m:1 + 0.5, studies)
   lab_of <- function(f) if (!is.null(feature_labels) && !is.na(feature_labels[f])) unname(feature_labels[f]) else f
-  fmt <- function(x) formatC(x, digits = 2, format = "g")
+  fmt <- function(x) trimws(formatC(x, digits = 2, format = "g"))
   panel_title <- function(f) {
     r <- pl[pl$feature == f, , drop = FALSE]
     if (is.null(pl) || !nrow(r)) return(paste0(lab_of(f), "\nnot pooled (too few studies)"))

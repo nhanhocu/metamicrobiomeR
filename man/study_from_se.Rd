@@ -27,3 +27,15 @@ An `mm_study`; the row data supply the taxonomy ranks and the column data the sa
 \description{
 Convert a SummarizedExperiment or TreeSummarizedExperiment to a study
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_metaphlan}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()}
+}
+\concept{importers}

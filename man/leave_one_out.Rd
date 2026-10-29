@@ -25,3 +25,14 @@ A data.frame with the columns of [pool_effects()] plus `omitted`, the
 Repeats [pool_effects()] once per study, omitting that study each time, to show
 how much a result depends on any single study.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{combine_pvalues}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_effects}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

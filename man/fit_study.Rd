@@ -101,3 +101,13 @@ Features are kept if they are present (abundance above zero) in at least
 `min_prevalence` of all samples and their mean relative abundance exceeds
 `min_mean`. Samples with a missing value in the model are dropped for that feature.
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{bind_effects}()},
+\code{\link{check_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_beta}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

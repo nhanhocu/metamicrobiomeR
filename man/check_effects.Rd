@@ -15,3 +15,13 @@ check_effects(x)
 \description{
 Check an effect table
 }
+\seealso{
+Other per-study models: 
+\code{\link{alpha_diversity}()},
+\code{\link{bind_effects}()},
+\code{\link{fit_alpha}()},
+\code{\link{fit_beta}()},
+\code{\link{fit_study}()},
+\code{\link{new_effect_table}()}
+}
+\concept{per-study models}

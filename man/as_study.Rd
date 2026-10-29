@@ -47,3 +47,13 @@ a feature-by-sample abundance matrix, feature annotations (taxonomy in rank
 columns), sample data and study-level metadata. See `dev/SPEC.md` for the full
 specification.
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{check_study}()},
+\code{\link{merge_studies}()},
+\code{\link{mm_accessors}},
+\code{\link{study_table}()},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

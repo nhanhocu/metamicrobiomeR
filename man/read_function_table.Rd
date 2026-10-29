@@ -29,3 +29,15 @@ normalises each sample to proportions. Whether the functions were *measured* (sh
 metagenomes, e.g. HUMAnN) or *predicted* from marker genes (e.g. PICRUSt2) must be stated,
 because the two should not be pooled without flagging the difference.
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_metaphlan}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

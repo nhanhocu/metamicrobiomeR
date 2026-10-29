@@ -8,6 +8,7 @@
 #' @param study An `mm_study` with rank columns and a `rank` column.
 #' @return A named character vector: the parent feature ID of each feature, `NA` for
 #'   features without a parent in the study.
+#' @family taxonomy
 #' @export
 feature_parents <- function(study) {
   .check_class(study, "mm_study", "study", "as_study()")
@@ -53,6 +54,7 @@ feature_parents <- function(study) {
 #' @return `pooled` with the extra columns `level` (depth in the tree), `p_hier` (the
 #'   hierarchically adjusted p-value, `NA` if the feature was not tested because its parent was
 #'   not rejected) and `hier_rejected` (`p_hier <= q`).
+#' @family pooling
 #' @export
 adjust_hierarchical <- function(pooled, parent, q = 0.05, p_col = "p_value") {
   .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")

@@ -24,3 +24,15 @@ An `mm_study` with relative abundances (converted from percent to proportions)
 Reads a (merged) MetaPhlAn table and keeps the clades of one taxonomic level, whose
 relative abundances (in percent) sum to the classified fraction of each sample.
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_qiime2}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

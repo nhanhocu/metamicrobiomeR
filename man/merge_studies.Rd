@@ -44,3 +44,13 @@ every feature and fills the missing ones with zero, which treats a taxon missing
 study's database as truly absent. If some studies have only proportions, all studies are
 merged as proportions.
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{as_study}()},
+\code{\link{check_study}()},
+\code{\link{mm_accessors}},
+\code{\link{study_table}()},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

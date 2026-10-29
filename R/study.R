@@ -49,6 +49,7 @@
 #' @param relabund_scale Scale of `relabund`: "proportion" (0 to 1) or "percent"
 #'   (0 to 100, converted to proportions).
 #' @return An object of class `mm_study`.
+#' @family studies
 #' @export
 as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
                      study = list(), relabund_scale = c("proportion", "percent")) {
@@ -137,6 +138,7 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
 #'
 #' @param x An `mm_study` object.
 #' @return `x`, invisibly, if all checks pass.
+#' @family studies
 #' @export
 check_study <- function(x) {
   .check_class(x, "mm_study", "x", "as_study()")
@@ -182,6 +184,7 @@ check_study <- function(x) {
 #'   `mm_depth()`: total counts per sample (`NA` if only proportions are stored);
 #'   `mm_features()`, `mm_samples()`: the annotation data.frames; `mm_study_info()`:
 #'   the study metadata list.
+#' @family studies
 #' @name mm_accessors
 NULL
 
@@ -242,6 +245,7 @@ print.mm_study <- function(x, ...) {
 #' @return A data.frame with one row per study: `study`, `feature_type`, `region`,
 #'   `platform`, `database`, `db_version`, `pipeline`, `measured`, `n_samples`
 #'   and `n_features`.
+#' @family studies
 #' @export
 study_table <- function(...) {
   xs <- list(...)

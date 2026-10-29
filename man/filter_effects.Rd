@@ -31,3 +31,10 @@ The filtered `mm_effects` object, with the removed rows and the reason in the
 Removes estimates flagged by [check_effects_quality()]: from fits that did not converge
 and/or with an implausibly small standard error (or very large estimate).
 }
+\seealso{
+Other checks before pooling: 
+\code{\link{check_effects_quality}()},
+\code{\link{check_poolable}()},
+\code{\link{feature_coverage}()}
+}
+\concept{checks before pooling}

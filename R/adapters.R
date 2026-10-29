@@ -25,6 +25,7 @@
 #'   `estimate`, `se` and `p_value` (and optionally `n`).
 #' @param part,rank Model part and feature rank to record.
 #' @return An `mm_effects` object with `engine` set to the tool.
+#' @family importers
 #' @export
 effects_from <- function(x, tool = c("generic", "maaslin2", "ancombc2", "linda"), study, effect_scale, term = NULL, columns = NULL,
                          part = "abundance", rank = NA_character_) {

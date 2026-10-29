@@ -49,3 +49,14 @@ Like pooling, it is not protected against degenerate fits: a single study with a
 p-value (for example from a fit with an implausibly small standard error) can dominate the
 combination, so run [check_effects_quality()] and [filter_effects()] first.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_effects}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

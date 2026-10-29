@@ -44,3 +44,14 @@ database) with `metafor::rma.uni()`. This asks whether the effect differs
 between kinds of studies. With few studies the power is low, and a feature
 needs more studies than there are model coefficients.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{combine_pvalues}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_effects}()},
+\code{\link{pool_sensitivity}()}
+}
+\concept{pooling}

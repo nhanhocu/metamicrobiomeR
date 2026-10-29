@@ -24,3 +24,15 @@ An `mm_study` with counts.
 \description{
 Read QIIME 2 exports
 }
+\seealso{
+Other importers: 
+\code{\link{effects_from}()},
+\code{\link{read_biom_study}()},
+\code{\link{read_dada2}()},
+\code{\link{read_function_table}()},
+\code{\link{read_metaphlan}()},
+\code{\link{study_export}},
+\code{\link{study_from_phyloseq}()},
+\code{\link{study_from_se}()}
+}
+\concept{importers}

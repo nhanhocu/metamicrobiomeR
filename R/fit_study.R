@@ -71,6 +71,7 @@
 #' @return An `mm_effects` object with one row per feature, model part and covariate
 #'   term. The attribute `fit_info` is a data.frame with one row per fitted feature
 #'   (samples used, convergence, number of warnings, and any error message).
+#' @family per-study models
 #' @export
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,

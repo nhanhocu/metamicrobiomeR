@@ -18,3 +18,13 @@ A data.frame with one row per study: `study`, `feature_type`, `region`,
 Collects the metadata of several studies into one data.frame, to be used as the
 `study_data` of [meta_regress()] or to check what is being pooled.
 }
+\seealso{
+Other studies: 
+\code{\link{agglomerate}()},
+\code{\link{as_study}()},
+\code{\link{check_study}()},
+\code{\link{merge_studies}()},
+\code{\link{mm_accessors}},
+\code{\link{subset_samples}()}
+}
+\concept{studies}

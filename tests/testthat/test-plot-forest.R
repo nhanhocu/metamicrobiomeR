@@ -45,8 +45,8 @@ test_that("a supplied pooled table is used and the panel title reports the poole
   expect_match(ttl, "DL, z test", fixed = TRUE)
   expect_match(ttl, "k = 4", fixed = TRUE)
   expect_match(ttl, "I2 = ", fixed = TRUE)
-  est <- formatC(pl$estimate[pl$feature == "g1"], digits = 2, format = "g")
-  expect_match(ttl, paste0("pooled ", est), fixed = TRUE)
+  est <- trimws(formatC(pl$estimate[pl$feature == "g1"], digits = 2, format = "g"))
+  expect_match(ttl, paste0("pooled ", est, " ["), fixed = TRUE)                              # no stray padding between the label and the number
   default <- titles(plot_forest(eff, feature = "g1"))
   expect_match(default, "REML, adhoc test", fixed = TRUE)
 })

@@ -8,27 +8,65 @@ Originally described in Ho et al. (2019), *BMC Bioinformatics* 20:188,
 > compatible with 1.x**; the API may still change. Version 1.3 (branch `legacy-1.x`) is the last
 > release with the old interface.
 
-## Workflow
+## The short way
 
 ```r
 library(metamicrobiomeR)
 
+studies <- list(study1, study2, study3)            # mm_study objects: see "Getting your data in" below
+res <- meta_analyse(studies, ~ group + age, term = "groupb", rank = "genus")
+res                                                 # summary: studies, engine, features pooled, top results
+plot(res)                                           # forest plots of the strongest features (also "heatmap", "volcano")
+as.data.frame(res)                                  # the pooled table
+```
+
+`meta_analyse()` checks that the studies can be pooled, matches taxa across databases by name, fits the same model to every
+study, flags implausible estimates, and pools. Messages and warnings are labelled with the study they come from.
+Everything it did is kept in `res$effects`, `res$studies`, `res$checks` and `res$quality`.
+
+## Step by step (full control)
+
+```r
 # 1. studies: counts or proportions, taxonomy in rank columns, study metadata
 study <- read_dada2(seqtab, taxa, samples, list(id = "cohort1", region = "V4", database = "SILVA 138"))
 genus <- agglomerate(study, "genus")
 
-# 2. one model per feature -> effect table
+# 2. one model per feature -> effect table (cores = 4 fits the features in parallel on Linux/macOS)
 eff <- fit_study(genus, ~ group + age, engine = "zibb_glmmtmb")
 
-# 3. pool across studies
-bound  <- bind_effects(eff1, eff2, eff3)         # refuses to mix engines or scales
-pooled <- pool_effects(bound, term = "groupb")   # REML + ad hoc Hartung-Knapp, FDR within rank
+# 3. check, then pool across studies
+bound <- bind_effects(eff1, eff2, eff3)             # refuses to mix engines or scales
+check_effects_quality(bound)                        # an implausibly small standard error gives one study all the weight
+pooled <- pool_effects(bound, term = "groupb")      # REML + ad hoc Hartung-Knapp, FDR within rank
+pool_sensitivity(bound, term = "groupb")            # does the answer depend on the test?
 
 # 4. look, check influence, report
 plot_forest(bound, pooled, feature = "g__Blautia", term = "groupb")
 leave_one_out(bound, feature = "g__Blautia", term = "groupb")
 write_manifest(genus, "cohort1-manifest.txt")
 ```
+
+## Getting your data in
+
+`read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
+`study_from_se()` (SummarizedExperiment / TreeSummarizedExperiment), or `as_study()` from plain matrices.
+Results from other tools (MaAsLin2, ANCOM-BC2, LinDA) can be pooled too: `effects_from()`.
+
+## Scope: what this package is and is not
+
+It is the **meta-analysis layer for microbiome studies**: it takes per-study abundance tables, fits comparable
+models, and pools them with the checks that matter when there are only a few studies. It is not a complete
+microbiome analysis environment, and does not try to be.
+
+| | |
+|---|---|
+| **Covered** | Import from common formats; taxonomy harmonisation by name across databases; per-study differential abundance (four engines) and alpha and beta diversity; random-effects pooling, meta-regression, leave-one-out, hierarchical FDR; p-value combination; one-stage analysis of merged studies; checks before and after pooling; forest, heatmap and volcano plots; a reproducibility manifest; simulation |
+| **Bring your own** | Preprocessing (DADA2, QIIME 2, MetaPhlAn), descriptive plots and ordination (phyloseq, mia, vegan), other differential-abundance methods (pool their output with `effects_from()`) |
+| **Not covered** | Batch-effect correction across studies; a compositional-bias-corrected estimator of its own (a CLR model is offered as a sensitivity analysis, and a pilot benchmark showed it does not control false positives when many features differ); network and co-occurrence analysis; strain-level analysis; publication-bias methods (they need many more studies than microbiome meta-analyses usually have); random slopes and other longitudinal structure beyond a subject intercept |
+
+Validation status: the 2.0 model reproduces the tables of the 2019 paper (see `dev/VALIDATION.md`, which also lists
+errors found in the original), and a pilot simulation compares the engines (`dev/BENCHMARK-PILOT.md`). Neither is a
+substitute for peer review or a full benchmark.
 
 Functions say what they decided or left out (for example "6 of 40 samples have missing values and are left
 out") and stay quiet otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences the messages, not the warnings.

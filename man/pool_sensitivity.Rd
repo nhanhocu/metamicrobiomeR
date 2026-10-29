@@ -42,3 +42,14 @@ under all of them. Results that depend on the estimator or on the test (for exam
 feature significant with the normal test but not with the Hartung-Knapp test) deserve
 caution, especially with few studies.
 }
+\seealso{
+Other pooling: 
+\code{\link{adjust_hierarchical}()},
+\code{\link{combine_pvalues}()},
+\code{\link{leave_one_out}()},
+\code{\link{meta_analyse}()},
+\code{\link{meta_regress}()},
+\code{\link{pool_beta}()},
+\code{\link{pool_effects}()}
+}
+\concept{pooling}

@@ -36,3 +36,10 @@ times the typical small standard error of the other studies (their median 5th pe
 Estimates from fits that did not converge, and (optionally) very large estimates, are flagged
 too. The comparison needs at least two studies.
 }
+\seealso{
+Other checks before pooling: 
+\code{\link{check_poolable}()},
+\code{\link{feature_coverage}()},
+\code{\link{filter_effects}()}
+}
+\concept{checks before pooling}

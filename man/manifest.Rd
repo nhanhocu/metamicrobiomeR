@@ -18,3 +18,8 @@ reported and reproduced: for a study, its metadata and a data summary (dimension
 zeros, ranks, sample variables); for an effect table, the engines, settings and convergence;
 for a pooled table, the pooling settings. Software versions and the date are included.
 }
+\seealso{
+Other reporting: 
+\code{\link{write_manifest}()}
+}
+\concept{reporting}

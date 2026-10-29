@@ -29,3 +29,10 @@ if a rank is given, how many taxa the studies share. Findings are `"warning"` (p
 likely to mislead without action) or `"note"` (worth knowing; consider a moderator or
 harmonisation).
 }
+\seealso{
+Other checks before pooling: 
+\code{\link{check_effects_quality}()},
+\code{\link{feature_coverage}()},
+\code{\link{filter_effects}()}
+}
+\concept{checks before pooling}

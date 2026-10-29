@@ -35,3 +35,9 @@ Pooled estimate against the evidence (minus log10 of the p-value), with the feat
 significant after adjustment highlighted and the strongest ones labelled. Panels are drawn for
 each combination of model part and term.
 }
+\seealso{
+Other plots: 
+\code{\link{plot_forest}()},
+\code{\link{plot_heatmap}()}
+}
+\concept{plots}

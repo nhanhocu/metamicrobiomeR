@@ -46,3 +46,9 @@ proportional to the study's random-effects weight in the pooled result, which is
 printed beside each estimate; studies without an estimate for a feature are marked
 "not estimated".
 }
+\seealso{
+Other plots: 
+\code{\link{plot_heatmap}()},
+\code{\link{plot_volcano}()}
+}
+\concept{plots}
