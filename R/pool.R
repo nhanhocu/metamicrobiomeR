@@ -156,12 +156,15 @@ leave_one_out <- function(effects, feature = NULL, term = NULL, part = NULL, ...
 #' @export
 print.mm_pooled <- function(x, n = 6, ...) {
   d <- as.data.frame(x); s <- attr(x, "settings")
+  if (!all(c("feature", "part", "term", "k", "estimate", "p_value", "I2") %in% colnames(d)) || !nrow(d)) { print(d, ...); return(invisible(x)) }
   cat("<mm_pooled> ", .plural(nrow(d), "feature"), " pooled",
       if (!is.null(s)) paste0(" (", s$method, ", ", s$test, " test)"), "; ", d$k[which.min(d$k)], " to ", max(d$k), " studies each\n", sep = "")
   sig <- if ("p_adjust" %in% colnames(d)) sum(d$p_adjust <= 0.05, na.rm = TRUE) else NA
-  cat("  adjusted p <= 0.05: ", sig, " | median I2: ", format(round(stats::median(d$I2, na.rm = TRUE)), trim = TRUE), "%",
+  one_pt <- length(unique(d$part)) == 1 && length(unique(d$term)) == 1
+  cat("  ", if (one_pt) paste0("term ", d$term[1], " (", d$part[1], ") | "), "adjusted p <= 0.05: ", sig, " | median I2: ", format(round(stats::median(d$I2, na.rm = TRUE)), trim = TRUE), "%",
       if ("max_weight" %in% colnames(d) && any(d$max_weight > 0.9, na.rm = TRUE)) paste0(" | ", sum(d$max_weight > 0.9, na.rm = TRUE), " dominated by one study (max_weight > 0.9)"), "\n", sep = "")
-  show <- d[seq_len(min(n, nrow(d))), intersect(c("feature", "part", "term", "k", "estimate", "ci_lo", "ci_hi", "p_value", "p_adjust", "I2", "max_weight"), colnames(d)), drop = FALSE]
+  cols <- c("feature", if (!one_pt) c("part", "term"), "k", "estimate", "ci_lo", "ci_hi", "p_value", "p_adjust", "I2")
+  show <- d[seq_len(min(n, nrow(d))), intersect(cols, colnames(d)), drop = FALSE]
   print(show, row.names = FALSE, digits = 3)
   if (nrow(d) > n) cat("# ... ", nrow(d) - n, " more rows\n", sep = "")
   invisible(x)

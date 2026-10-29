@@ -57,3 +57,4 @@ legacy_to_study <- function(tab, study, id_col = "x.sampleid") {
          duplicated_sample_ids = dup_ids))
 }
 
+options(metamicrobiomeR.quiet = TRUE)   # keep the validation output readable

@@ -56,7 +56,7 @@ Estimates of different engines are on different scales, so use the same engine f
 
 ```{r fit, eval = has_tmb}
 effects <- lapply(studies, fit_study, ~ group, engine = "zibb_glmmtmb", longitudinal = FALSE)
-effects[[1]][effects[[1]]$term == "groupb", c("study", "feature", "estimate", "se", "p_value", "converged")][1:4, ]
+effects[[1]]                              # a short header (study, engine, scale, convergence), then the first rows
 ```
 
 ```{r fit-fallback, eval = !has_tmb, echo = FALSE}
@@ -68,8 +68,12 @@ effects <- lapply(studies, fit_study, ~ group, engine = "lm_asin", longitudinal 
 ```{r pool}
 bound <- bind_effects(effects)            # refuses to mix engines or effect scales
 pooled <- pool_effects(bound, term = "groupb")
-head(pooled[, c("feature", "k", "estimate", "ci_lo", "ci_hi", "p_value", "I2", "max_weight", "p_adjust")], 4)
+pooled                                    # the header counts features, studies per feature and flags dominance
 ```
+
+Functions tell you when they make a decision for you or leave data out (for example "Fitting 8 of
+10 features", or "2 of 12 features not pooled"), and warn only about things that are likely to affect
+the result. Silence the messages with `options(metamicrobiomeR.quiet = TRUE)`; warnings stay.
 
 The default is random-effects meta-analysis with REML and the ad hoc Hartung-Knapp test
 (`test = "adhoc"`), which stays safe with few studies. `method = "DL", test = "z"` gives the

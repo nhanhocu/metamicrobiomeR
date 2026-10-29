@@ -53,7 +53,8 @@ check_effects <- function(x) {
   if (anyNA(x$converged)) stop("'converged' must not be missing.", call. = FALSE)
   if (any(x$se < 0, na.rm = TRUE)) stop("'se' must not be negative.", call. = FALSE)
   if (any(x$se == 0, na.rm = TRUE)) {
-    warning(sum(x$se == 0, na.rm = TRUE), " standard error(s) are exactly zero; such estimates cannot be weighted and are not used when pooling.", call. = FALSE)
+    n0 <- sum(x$se == 0, na.rm = TRUE)
+    warning(.plural(n0, "standard error"), if (n0 == 1) " is" else " are", " exactly zero; such estimates cannot be weighted and are not used when pooling.", call. = FALSE)
   }
   if (any(is.infinite(x$estimate)) || any(is.infinite(x$se))) stop("'estimate' and 'se' must be finite or NA.", call. = FALSE)
   key <- paste(x$study, x$feature, x$part, x$term, sep = "\r")
@@ -111,13 +112,16 @@ bind_effects <- function(..., allow_mixed_scale = FALSE, allow_mixed_engine = FA
 #' @export
 print.mm_effects <- function(x, n = 6, ...) {
   d <- as.data.frame(x)
+  if (!all(.mm_effect_cols %in% colnames(d))) { print(d, ...); return(invisible(x)) }      # columns were dropped: plain data frame
   cat("<mm_effects> ", .plural(length(unique(d$study)), "study", "studies"), " (", .show(sort(unique(d$study)), 4), "), ",
       .plural(length(unique(d$feature)), "feature"), ", ", .plural(nrow(d), "row"), "\n", sep = "")
   cat("  engine: ", paste(sort(unique(d$engine)), collapse = ", "), " | scale: ", paste(sort(unique(d$effect_scale)), collapse = ", "),
       " | parts: ", paste(sort(unique(d$part)), collapse = ", "), " | terms: ", .show(sort(unique(d$term)), 4), "\n", sep = "")
   cat("  converged: ", sum(d$converged), " of ", nrow(d), if (any(!d$converged)) "  (see the 'converged' column)", "\n", sep = "")
   if (nrow(d)) {
-    show <- d[seq_len(min(n, nrow(d))), c("study", "feature", "part", "term", "estimate", "se", "p_value"), drop = FALSE]
+    cols <- c("study", "feature", "part", "term", "estimate", "se", "p_value")
+    cols <- cols[!(cols %in% c("study", "part", "term") & vapply(cols, function(cc) length(unique(d[[cc]])) == 1, logical(1)))]   # constant: in the header
+    show <- d[seq_len(min(n, nrow(d))), cols, drop = FALSE]
     print(show, row.names = FALSE, digits = 3)
     if (nrow(d) > n) cat("# ... ", nrow(d) - n, " more rows\n", sep = "")
   }
