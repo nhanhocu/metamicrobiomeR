@@ -223,3 +223,28 @@ print.mm_study <- function(x, ...) {
   if (length(meta)) cat("  ", paste(names(meta), meta, sep = ": ", collapse = "; "), "\n", sep = "")
   invisible(x)
 }
+
+#' Study-level table for meta-regression
+#'
+#' Collects the metadata of several studies into one data.frame, to be used as the
+#' `study_data` of [meta_regress()] or to check what is being pooled.
+#'
+#' @param ... `mm_study` objects, or a single list of them.
+#' @return A data.frame with one row per study: `study`, `feature_type`, `region`,
+#'   `platform`, `database`, `db_version`, `pipeline`, `measured`, `n_samples`
+#'   and `n_features`.
+#' @export
+study_table <- function(...) {
+  xs <- list(...)
+  if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "mm_study")) xs <- xs[[1]]
+  if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_study"))) stop("Supply mm_study objects.", call. = FALSE)
+  rows <- lapply(xs, function(x) {
+    s <- x$study; a <- x$assays[[1]]
+    data.frame(study = s$id, feature_type = s$feature_type, region = s$region, platform = s$platform,
+               database = s$database, db_version = s$db_version, pipeline = s$pipeline,
+               measured = as.logical(s$measured), n_samples = ncol(a), n_features = nrow(a), stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  if (anyDuplicated(out$study)) stop("Study IDs must be unique.", call. = FALSE)
+  out
+}
