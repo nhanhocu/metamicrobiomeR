@@ -26,7 +26,8 @@ RoxygenNote: 7.3.1
 Imports: meta, lme4, gdata, plyr, dplyr, tidyr, ggplot2, gridExtra,
         matrixStats, zCompositions, compositions, stats, utils, metafor (>= 4.0-0)
 Suggests: testthat, gamlss.dist, knitr, rmarkdown, grDevices, tools, caret,
-        randomForest, RColorBrewer
+        randomForest, RColorBrewer,
+        phyloseq, SummarizedExperiment, S4Vectors, biomformat
 VignetteBuilder: knitr
 URL: https://github.com/nhanhocu/metamicrobiomeR
 BugReports: https://github.com/nhanhocu/metamicrobiomeR/issues
