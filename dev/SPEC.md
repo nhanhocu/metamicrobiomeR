@@ -1,67 +1,53 @@
-# metamicrobiomeR 2.0: format specification (draft 0.1)
+# metamicrobiomeR 2.0: specification (v1.0 of the draft)
 
-Status: draft for discussion. Version 2.0 is a clean break: there is no support
-for the 1.x wide-table layout. Two contracts hold the package together:
-the **study object** (input) and the **effect table** (what models return and
-what pooling consumes).
+Version 2.0 is a clean break from 1.x. Two contracts hold the package together: the
+**study object** (input) and the **effect table** (what models return and pooling consumes).
 
 ## 1. Study object (`mm_study`)
 
-A study is one cohort or dataset, processed with one pipeline. Orientation is
-**features x samples** (as in phyloseq and SummarizedExperiment).
+One cohort or dataset processed with one pipeline. Orientation is **features x samples**.
 
-| Component | Type | Rules |
-|---|---|---|
-| `assays$counts` | numeric matrix, features x samples | Non-negative integers. Optional if `relabund` is given. |
-| `assays$relabund` | numeric matrix, same dimnames | Proportions in [0, 1]. Optional if `counts` is given. Percent input is converted on entry. |
-| `features` | data.frame, one row per feature | Row names are unique feature IDs (ASV/OTU ID, taxon string, pathway ID). Optional rank columns: kingdom, phylum, class, order, family, genus, species. Optional `rank`: the level at which the feature is defined (a taxonomic rank for agglomerated tables such as QIIME1 L2 to L7; `leaf` for ASV/OTU features). It is never inferred from the taxonomy: a genus-level feature with an unassigned genus is still genus-level. |
-| `samples` | data.frame, one row per sample | Row names are sample IDs matching the assay columns. |
-| `study` | named list | Required: `id`, `feature_type`. Recommended: `region`, `platform`, `database`, `db_version`, `pipeline`, `measured` (functions only), `subject` (name of the repeated-measures ID column in `samples`). |
+| Component | Rules |
+|---|---|
+| `assays$counts` | non-negative integers; optional if `relabund` is given |
+| `assays$relabund` | proportions in [0, 1]; percent input is converted; optional if `counts` is given |
+| `features` | row names are unique feature IDs; optional rank columns kingdom to species; optional `rank` (the level at which a feature is defined; never inferred from the taxonomy) |
+| `samples` | one row per sample, row names are the sample IDs |
+| `study` | required `id`, `feature_type` (`otu`, `asv`, `taxon`, `function`); recommended `region`, `platform`, `database`, `db_version`, `pipeline`, `measured`, `subject` |
 
-`feature_type` is one of `otu`, `asv`, `taxon`, `function`.
+`check_study()` enforces: unique non-missing IDs identical across assays; no missing values; integer
+counts; proportions with sums at most 1 within each `rank` group; the subject column exists. Placeholders
+for unassigned lineages (`other`, empty tokens, `Unassigned`) are `NA` in the rank columns.
 
-Rules enforced by `check_study()`:
-
-* Feature IDs and sample IDs are unique, non-missing, and identical across assays.
-* No missing values in assays; counts are non-negative integers.
-* Relative abundances are in [0, 1]; sums within each `rank` group may not exceed 1 (all features form one group if `rank` is absent)
-  (sums below 1 are allowed: filtering and unassigned reads are normal).
-* `samples` has one row per assay column; `study$subject` exists in `samples` if given.
-* Warnings (not errors) for samples with zero depth.
-
-Taxonomy lives in rank columns, never in feature names. Placeholders for
-unassigned or padded lineages (`other`, empty tokens such as `g__`, `Unassigned`)
-are stored as `NA` in the rank columns; importers are responsible for this. Ranks are analysed
-separately (rank-aware agglomeration comes in a later release); features at
-different ranks are nested, not independent.
+Created by `as_study()` and the importers. `agglomerate()` sums features to a rank and keeps the
+unassigned reads in one feature so that totals and proportions are unchanged.
 
 ## 2. Effect table (`mm_effects`)
 
-One row per study x feature x model part x term. This is the only thing
-the pooling layer needs, so any engine (or an adapter for another tool's
-output) can feed it.
+One row per study x feature x model part x term: `study`, `feature`, `rank`, `part`
+(`abundance`, `prevalence`, `dispersion`, `overall`), `term`, `estimate`, `se`, `df`, `p_value`, `n`,
+`engine`, `effect_scale`, `converged`. `bind_effects()` refuses duplicates and refuses to combine
+studies with different effect scales or different engines for the same part and term.
 
-| Column | Type | Meaning |
+| Engine | Input | Scale |
 |---|---|---|
-| `study` | character | Study ID |
-| `feature` | character | Feature ID |
-| `rank` | character | Feature rank (NA if not applicable) |
-| `part` | character | `abundance`, `prevalence`, `dispersion` or `overall` |
-| `term` | character | Model term, e.g. `sexMale` |
-| `estimate` | numeric | Coefficient |
-| `se` | numeric | Standard error (>= 0 or NA) |
-| `df` | numeric | Degrees of freedom, NA if not defined |
-| `p_value` | numeric | Within-study p-value, NA if not available |
-| `n` | integer | Samples used |
-| `engine` | character | Engine that produced the estimate |
-| `effect_scale` | character | Scale of `estimate`, e.g. `logit_mean`, `log_odds`, `smd` |
-| `converged` | logical | Did the fit converge |
+| `zibb_glmmtmb` | counts | `logit_mean` (abundance); `logit_zero_prob` (prevalence, opt-in) |
+| `bezi_gamlss` | proportions | `logit_mean` |
+| `lm_asin` | proportions | `asin_sqrt_mean` |
+| `lm_clr` | counts or proportions | `clr_mean` |
+| `fit_alpha()` | any | `sd_units` or `alpha_raw` |
 
-Pooling is only valid when every study reports the same `effect_scale` for a
-term; `bind_effects()` refuses to mix scales unless told to.
+## 3. Pooled table (`mm_pooled`)
 
-## 3. Out of scope for the first release of the format
+`pool_effects()`: random-effects meta-analysis per feature, part and term (`metafor`); columns `k`,
+`estimate`, `se`, confidence limits, `statistic`, `p_value`, `tau2`, `I2`, `Q`, `Q_p`, prediction interval,
+`max_weight` and `top_study` (influence), `p_adjust` (FDR within the chosen family, default within
+rank, part and term). `test = "adhoc"` (default), `"knha"` or `"z"`. `leave_one_out()` and
+`meta_regress()` build on it; `adjust_hierarchical()` adds top-down FDR across ranks.
 
-Rank agglomeration, import helpers (phyloseq, TreeSummarizedExperiment, BIOM,
-DADA2, MetaPhlAn), harmonisation across taxonomies and databases, alpha and beta
-diversity outcomes, and function-level metadata beyond `measured`.
+## 4. Not covered
+
+Distance-based results (PERMANOVA) have no estimate and standard error, so they are combined by
+p-value (`pool_beta()`), not pooled as effects. Taxonomy harmonisation across databases is by name
+(`harmonise_names()`, `agglomerate(key = "name")`) and is lossy for GTDB. No engine corrects for the
+compositionality of the data beyond the CLR sensitivity analysis (see `dev/BENCHMARK-PILOT.md`).

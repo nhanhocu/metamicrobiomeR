@@ -1,34 +1,36 @@
 # metamicrobiomeR (development version)
 
-Version 2.0 is a redesign and a **clean break from 1.x**: the 1.x wide-table
-input layout and the dot-case functions (`taxa.compare()`, `meta.taxa()` and
-so on) will not be supported. Version 1.3 (branch `legacy-1.x`) is the last
-release with the old interface. See `dev/SPEC.md` for the new data contracts.
+Version 2.0 is a redesign and a **clean break from 1.x**: the 1.x input format and functions
+are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old interface; see
+`vignette("migrating-from-1x")`. The specification is in `dev/SPEC.md`; validation against the
+2019 paper in `dev/VALIDATION.md`.
 
-* New study object (`as_study()`, `check_study()`, accessors) with taxonomy in
-  rank columns, optional counts and validated study metadata.
-* New effect table (`new_effect_table()`, `check_effects()`, `bind_effects()`)
-  as the interface between models and pooling.
-* `fit_study()` with the 1.x GAMLSS-BEZI engine (`bezi_gamlss`): fits a model to
-  every feature of a study and returns an effect table, with convergence reported
-  for every fit and an `n_cycles` option. It reproduces `taxa.compare()` from 1.x
-  and all GAMLSS-BEZI results in Tables 3 to 5 of Ho et al. (2019); see
-  `dev/VALIDATION.md` for the validation and the findings it produced.
-* `pool_effects()`: random-effects meta-analysis of an effect table (REML by
-  default, Hartung-Knapp with the ad hoc correction, heterogeneity, prediction
-  intervals, FDR within rank). It reproduces the 1.x pooled sex-difference result
-  with `method = "DL", test = "z"`. 1.x also "pooled" taxa seen in only one study
-  for terms missing from some studies; 2.0 requires estimates from at least two.
-* `plot_forest()`: forest plot of per-study and pooled effects for one or several
-  features, with study weights, the pooled diamond, the prediction interval and a
-  heterogeneity summary.
-* `pool_effects()` reports `max_weight` and `top_study` (the share of the pooled result
-  carried by the most influential study); `leave_one_out()` repeats the pooling without
-  each study in turn.
-* `fit_study(engine = "lm_asin")`: the arcsine-square-root linear (mixed) model of 1.x,
-  reproducing its results (the 1.x mixed-model p-values were 2% too small, see 1.3).
-* `fit_study()` defaults to `n_cycles = 100` and drops features unassigned at
-  their own rank (`exclude_unassigned = TRUE`); both can be set to the 1.x behaviour.
+## New
+
+* **Study object and effect table** as the two data contracts (`as_study()`, `check_study()`,
+  `new_effect_table()`, `bind_effects()`), with taxonomy in rank columns and validated study metadata.
+* **Importers:** `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`,
+  `study_from_phyloseq()`, `study_from_se()`, `read_function_table()`; `as_phyloseq()` and
+  `as_summarized_experiment()`; `subset_samples()`, `subset_features()`.
+* **Taxonomy:** `parse_taxonomy()`, `harmonise_names()`, `agglomerate()`, `feature_parents()`.
+* **Engines in `fit_study()`:** `zibb_glmmtmb` (zero-inflated beta-binomial on counts, uses the
+  sequencing depth, optional prevalence part), `bezi_gamlss` (the 1.x model; default `n_cycles = 100`),
+  `lm_asin`, and `lm_clr` (compositional sensitivity). Estimates of different engines cannot be combined.
+* **Pooling:** `pool_effects()` (REML and the ad hoc Hartung-Knapp test by default, heterogeneity,
+  prediction intervals, `max_weight` and `top_study`), `leave_one_out()`, `meta_regress()` with
+  `study_table()`, `adjust_hierarchical()`, `pool_beta()`.
+* **Diversity:** `alpha_diversity()`, `fit_alpha()`, `fit_beta()`.
+* **Output and reporting:** `plot_forest()`, `manifest()`, `write_manifest()`.
+* **Simulation:** `simulate_study()`, `simulate_studies()`.
+
+## Changed from 1.x
+
+* 1.x mixed-model p-values were 2% too small, adjusted p-value columns were truncated at the last
+  dot, the GMPR transform returned only missing values, and `meta.taxa()` "pooled" taxa seen in only
+  one study; none of this carries over.
+* Unassigned lineages are excluded from models by default; FDR is adjusted within a rank.
+* The package now has few dependencies: `ggplot2`, `lme4`, `metafor`; the engines and importers use
+  suggested packages.
 
 # metamicrobiomeR 1.3
 
