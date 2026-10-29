@@ -69,7 +69,7 @@ simulate_study <- function(n_samples = 60, n_features = 30, n_diff = 6, effect =
 #' @param n_studies Number of studies.
 #' @param tau Between-study standard deviation of the effect.
 #' @param small_study If `TRUE`, the last study has only a fifth of the samples.
-#' @param ... Arguments of [simulate_study()] shared by all studies (`seed` sets the overall seed).
+#' @inheritParams simulate_study
 #' @return A list with `studies` (a list of `mm_study` objects) and `truth` (as in [simulate_study()]).
 #' @export
 simulate_studies <- function(n_studies = 4, tau = 0.3, small_study = FALSE, n_samples = 60, n_features = 30, n_diff = 6,

@@ -30,7 +30,27 @@ simulate_studies(
 
 \item{small_study}{If `TRUE`, the last study has only a fifth of the samples.}
 
-\item{...}{Arguments of [simulate_study()] shared by all studies (`seed` sets the overall seed).}
+\item{n_samples, n_features}{Number of samples and features.}
+
+\item{n_diff}{Number of truly differential features.}
+
+\item{effect}{Group effect on the log proportion of the differential features.}
+
+\item{balanced}{If `TRUE`, differential features alternate between increasing and decreasing.}
+
+\item{depth, depth_sd}{Median sequencing depth and the standard deviation of its logarithm.}
+
+\item{overdispersion}{Dirichlet concentration (smaller means more overdispersion).}
+
+\item{zero_inflation}{Probability that a count is set to zero.}
+
+\item{n_subjects}{Number of subjects for repeated measures (`NULL` for independent samples).}
+
+\item{subject_sd}{Standard deviation of the subject effect on the log proportions.}
+
+\item{between}{If `TRUE` with subjects, the group is constant within a subject.}
+
+\item{seed}{Optional seed.}
 }
 \value{
 A list with `studies` (a list of `mm_study` objects) and `truth` (as in [simulate_study()]).
