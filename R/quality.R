@@ -148,6 +148,9 @@ print.mm_poolcompare <- function(x, ...) {
 #' of the sample size) or Fisher's method (applied to the one-sided p-values in each direction).
 #' It reports the number of studies with positive and negative estimates and a sign test.
 #' It gives evidence of an effect, not an estimate of its size, and does not model heterogeneity.
+#' Like pooling, it is not protected against degenerate fits: a single study with an extreme
+#' p-value (for example from a fit with an implausibly small standard error) can dominate the
+#' combination, so run [check_effects_quality()] and [filter_effects()] first.
 #'
 #' @param effects An `mm_effects` object (studies need not share an engine or scale). The
 #'   `p_value` column is used; where it is missing, a normal-approximation p-value is computed

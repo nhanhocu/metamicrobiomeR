@@ -19,6 +19,14 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
 * **Pooling:** `pool_effects()` (REML and the ad hoc Hartung-Knapp test by default, heterogeneity,
   prediction intervals, `max_weight` and `top_study`), `leave_one_out()`, `meta_regress()` with
   `study_table()`, `adjust_hierarchical()`, `pool_beta()`.
+* **Checks before pooling:** `check_poolable()` (mixed measured/predicted functions, databases, regions, small
+  studies, taxon overlap), `feature_coverage()`, `check_effects_quality()` and `filter_effects()` (implausibly
+  small standard errors, non-converged fits, large estimates), `pool_sensitivity()` (the same effects pooled under
+  several settings).
+* **More ways to combine studies:** `combine_pvalues()` (directional Stouffer or Fisher with a sign test; works
+  across engines and tools), `merge_studies()` (one-stage analysis with study as a covariate), `meta_regress()`.
+* **Results from other tools:** `effects_from()` for MaAsLin2, ANCOM-BC2, LinDA and generic tables.
+* **Plots:** `plot_heatmap()` (studies by features with a pooled column) and `plot_volcano()`.
 * **Diversity:** `alpha_diversity()`, `fit_alpha()`, `fit_beta()`.
 * **Output and reporting:** `plot_forest()`, `manifest()`, `write_manifest()`.
 * **Simulation:** `simulate_study()`, `simulate_studies()`.

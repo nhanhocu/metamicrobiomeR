@@ -45,4 +45,7 @@ scores and combined with weighted Stouffer's method (weights proportional to the
 of the sample size) or Fisher's method (applied to the one-sided p-values in each direction).
 It reports the number of studies with positive and negative estimates and a sign test.
 It gives evidence of an effect, not an estimate of its size, and does not model heterogeneity.
+Like pooling, it is not protected against degenerate fits: a single study with an extreme
+p-value (for example from a fit with an implausibly small standard error) can dominate the
+combination, so run [check_effects_quality()] and [filter_effects()] first.
 }

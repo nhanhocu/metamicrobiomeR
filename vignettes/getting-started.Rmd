@@ -87,6 +87,27 @@ loo[, c("omitted", "estimate", "p_value")]
 plot_forest(bound, pooled, feature = pooled$feature[1:2], term = "groupb")
 ```
 
+## Checks before you trust a pooled result
+
+Pooled results can be dominated by one study, or hide differences between studies. Check the
+studies, check the estimates, and see how much the answer depends on the method:
+
+```{r checks}
+check_poolable(studies)                                   # metadata, sample sizes, overlap
+q <- check_effects_quality(bound); q                       # implausibly small standard errors?
+bound2 <- filter_effects(bound)                            # drops flagged estimates (if any)
+pool_sensitivity(bound, term = "groupb", min_prop = 0)     # same data, several pooling settings
+```
+
+Two further ways to combine studies are `combine_pvalues()` (needs only p-values and signs, so
+it also works across engines or tools, but is just as vulnerable to a degenerate study) and
+`merge_studies()` for a one-stage analysis with the study as a covariate. Results from other
+tools are brought in with `effects_from()`.
+
+```{r overview, fig.height = 4.5}
+plot_heatmap(bound, pooled, term = "groupb", top = 8)
+```
+
 ## More
 
 * **Study characteristics:** `meta_regress()` asks whether the effect differs with, say, the

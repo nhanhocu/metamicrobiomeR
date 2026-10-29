@@ -151,7 +151,24 @@ involve NC taxa with tiny standard errors.
 Software response: `pool_effects()` now reports `max_weight` and `top_study`, `plot_forest()`
 prints each study's weight, and `leave_one_out()` repeats the pooling without each study.
 
-## 7. How to rerun
+## 7. The new diagnostics on the real data
+
+`data-raw/diagnostics-real-data.R` applies the checks added after F13 to the four-study sex analysis.
+
+* `check_effects_quality()` flags 9 of 700 estimates, **all in USA(NC)** (smallest standard error
+  0.0019 against a typical small value of 0.132 in the other studies), including Coprococcus, and none
+  of the 691 estimates of the other three studies.
+* `filter_effects()` drops those 9. Pooling then gives Coprococcus k = 2, p = 0.22, and **no genus is
+  significant** at FDR 0.05 under the 1.x settings (before: Coprococcus only).
+* `pool_sensitivity()` (genus level, adjusted p <= 0.05): the 1.x calculation, REML with the normal test and
+  the ad hoc test each call 1 feature significant, plain Hartung-Knapp calls 4.
+* `combine_pvalues()` is **not** protected against this: Coprococcus gets a combined p of 1.6e-10 before
+  filtering (NC's p-value is 2e-21) and 0.26 after. Run the quality filter first.
+
+The thresholds are heuristics (`se_ratio = 0.1`), so look at what is flagged rather than trusting the default
+blindly.
+
+## 8. How to rerun
 
 ```
 Rscript data-raw/validate-2019-tables.R           # phylum level, about 25 s
@@ -162,4 +179,6 @@ Rscript data-raw/validate-2019-meta.R             # pooling step, a few seconds
 Rscript data-raw/validate-2019-lmas.R             # LMAS columns, about 1 min
 Rscript data-raw/refit-sex-bangladesh.R           # Bangladesh refit plus pooling, about 3 min
 Rscript data-raw/figure-forest-example.R          # forest plot, dev/figures/forest-sex-example.png
+Rscript data-raw/diagnostics-real-data.R          # the new diagnostics on the sex analysis
+Rscript data-raw/figure-overview-example.R        # heatmap and volcano plot
 ```

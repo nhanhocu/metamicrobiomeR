@@ -41,8 +41,10 @@ for the changes from 1.x.
 | Import | `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`, `study_from_se()`, `read_function_table()`; export with `as_phyloseq()`, `as_summarized_experiment()` |
 | Taxonomy | `parse_taxonomy()`, `harmonise_names()`, `feature_parents()` |
 | Per-study models | `fit_study()` with engines `zibb_glmmtmb` (counts, uses depth, optional prevalence part), `bezi_gamlss` (the 1.x model), `lm_asin`, `lm_clr`; `fit_alpha()`, `fit_beta()` |
-| Pooling | `bind_effects()`, `pool_effects()`, `leave_one_out()`, `meta_regress()`, `pool_beta()`, `adjust_hierarchical()` |
-| Output | `plot_forest()`, `manifest()`, `write_manifest()` |
+| Before pooling | `check_poolable()`, `feature_coverage()`, `check_effects_quality()`, `filter_effects()` |
+| Pooling | `bind_effects()`, `pool_effects()`, `leave_one_out()`, `pool_sensitivity()`, `meta_regress()`, `combine_pvalues()`, `merge_studies()` (one-stage), `pool_beta()`, `adjust_hierarchical()` |
+| Other tools' results | `effects_from()` (MaAsLin2, ANCOM-BC2, LinDA, generic) |
+| Output | `plot_forest()`, `plot_heatmap()`, `plot_volcano()`, `manifest()`, `write_manifest()` |
 | Simulation | `simulate_study()`, `simulate_studies()` |
 
 The two data contracts (the study object and the effect table) are specified in
