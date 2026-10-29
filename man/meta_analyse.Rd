@@ -77,8 +77,10 @@ with the study they come from. The steps remain available separately for full co
 returned object holds every intermediate result.
 }
 \examples{
-sim <- simulate_studies(n_studies = 3, n_samples = 30, n_features = 6, n_diff = 2, effect = 1.5, seed = 1)
-res <- meta_analyse(sim$studies, ~ group, term = "groupb", engine = "lm_asin", longitudinal = FALSE)
+sim <- simulate_studies(n_studies = 3, n_samples = 30, n_features = 6,
+                        n_diff = 2, effect = 1.5, seed = 1)
+res <- meta_analyse(sim$studies, ~ group, term = "groupb", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
 res
 }
 \seealso{
