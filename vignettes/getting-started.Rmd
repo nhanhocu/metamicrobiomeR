@@ -99,6 +99,11 @@ bound2 <- filter_effects(bound)                            # drops flagged estim
 pool_sensitivity(bound, term = "groupb", min_prop = 0)     # same data, several pooling settings
 ```
 
+With four small studies the normal-theory tests find the truly differential features, while the
+conservative default (which allows for the uncertainty of the between-study variance with only three
+degrees of freedom) does not: a typical situation with few, small studies. Report which setting you used,
+and treat features that are significant under all settings as the most reliable.
+
 Two further ways to combine studies are `combine_pvalues()` (needs only p-values and signs, so
 it also works across engines or tools, but is just as vulnerable to a degenerate study) and
 `merge_studies()` for a one-stage analysis with the study as a covariate. Results from other
