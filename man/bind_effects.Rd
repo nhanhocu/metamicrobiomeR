@@ -4,13 +4,17 @@
 \alias{bind_effects}
 \title{Combine effect tables from several studies}
 \usage{
-bind_effects(..., allow_mixed_scale = FALSE)
+bind_effects(..., allow_mixed_scale = FALSE, allow_mixed_engine = FALSE)
 }
 \arguments{
 \item{...}{`mm_effects` objects, or a single list of them.}
 
 \item{allow_mixed_scale}{If `FALSE` (default), error when studies report the
 same part and term on different effect scales.}
+
+\item{allow_mixed_engine}{If `FALSE` (default), error when studies report the
+same part and term from different engines: estimates of different models are
+not comparable even when the scale label is the same.}
 }
 \value{
 An `mm_effects` object.

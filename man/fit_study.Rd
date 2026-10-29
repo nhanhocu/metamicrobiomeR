@@ -13,7 +13,10 @@ fit_study(
   min_prevalence = 0.05,
   min_mean = 5e-05,
   n_cycles = 100,
-  exclude_unassigned = TRUE
+  exclude_unassigned = TRUE,
+  prevalence = NULL,
+  zero_inflation = TRUE,
+  pseudocount = NULL
 )
 }
 \arguments{
@@ -22,7 +25,7 @@ fit_study(
 \item{formula}{One-sided formula with the covariates, e.g. `~ group + age`.
 Variables are looked up in the sample data.}
 
-\item{engine}{Model engine: `"bezi_gamlss"` (default) or `"lm_asin"`.}
+\item{engine}{Model engine (see Details), default `"bezi_gamlss"`.}
 
 \item{rank}{Optional character vector of feature ranks to analyse (matched
 against the `rank` column of the feature data). `NULL` analyses all features.}
@@ -33,42 +36,62 @@ when `study$subject` is set. The subject is the sample-data column named in
 
 \item{min_prevalence, min_mean}{Feature filters (see Details).}
 
-\item{n_cycles}{(`bezi_gamlss` only) Maximum number of outer iterations of the GAMLSS fitting
-algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
-Version 1.x used the GAMLSS default of 20, at which most fits on real data
-did not converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce
-1.x results. Fits that reach the limit are flagged `converged = FALSE` and a
-warning reports how many.}
+\item{n_cycles}{(`bezi_gamlss` only) Maximum number of outer iterations of the GAMLSS
+fitting algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
+Version 1.x used the GAMLSS default of 20, at which most fits on real data did not
+converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce 1.x results.
+Fits that reach the limit are flagged `converged = FALSE` and a warning reports how many.}
 
 \item{exclude_unassigned}{Drop features that are unassigned at their own rank
 (for example a genus-level feature with no genus, such as the 1.x
 `...f__lachnospiraceae.other`)? Such features lump together unrelated
 organisms. Default `TRUE`; use `FALSE` to reproduce 1.x.}
+
+\item{prevalence}{(`zibb_glmmtmb` only) One-sided formula for the covariates of the
+probability of a structural zero, e.g. `~ group`. `NULL` (default) fits an
+intercept-only zero-inflation part, so only abundance effects are reported.
+Prevalence effects can be poorly identified; unidentifiable ones are flagged
+`converged = FALSE`.}
+
+\item{zero_inflation}{(`zibb_glmmtmb` only) Include a zero-inflation part? It is
+dropped automatically for features without zero counts. `FALSE` fits a plain
+beta-binomial model.}
+
+\item{pseudocount}{(`lm_clr` only) Value added to counts (default 0.5) or, for
+proportions, to relative abundances (default half the smallest positive value).}
 }
 \value{
-An `mm_effects` object with one row per feature and covariate term,
-  `part = "abundance"` and the effect scale of the engine. The attribute
-  `fit_info` is a data.frame with one row per fitted feature (samples used,
-  convergence, number of warnings, and any error message).
+An `mm_effects` object with one row per feature, model part and covariate
+  term. The attribute `fit_info` is a data.frame with one row per fitted feature
+  (samples used, convergence, number of warnings, and any error message).
 }
 \description{
 Fits the same model to each feature and returns the estimates as an effect
-table. Two engines from metamicrobiomeR 1.x are available.
+table. Four engines are available.
 }
 \details{
-* `"bezi_gamlss"`: a GAMLSS with a zero-inflated beta (BEZI) family on relative
-  abundance, with a logit link for the mean. Only the mean (abundance) part
-  depends on the covariates; the zero-inflation and dispersion parts are
-  intercept-only, as in 1.x. Effects are on the logit scale (`"logit_mean"`).
-* `"lm_asin"`: a linear model on the arcsine square root of the relative
-  abundance (the transformation used by MaAsLin), a linear mixed model with a
-  subject random intercept when `longitudinal` (p-values from the normal
-  approximation, as in 1.x), otherwise `lm()` with t-based p-values. Effects are
-  on the arcsine-square-root scale (`"asin_sqrt_mean"`) and are not comparable
-  with `"bezi_gamlss"` estimates.
+* `"zibb_glmmtmb"`: a zero-inflated beta-binomial model on the counts with the
+  sequencing depth as the number of trials (`glmmTMB`), a logit link for the mean
+  abundance and an optional subject random intercept. Needs counts. Returns the
+  abundance effects (`part = "abundance"`, scale `"logit_mean"`) and, if
+  `prevalence` is given, effects on the probability of a structural zero
+  (`part = "prevalence"`, scale `"logit_zero_prob"`; a positive value means the
+  feature is more often absent).
+* `"bezi_gamlss"`: the model of metamicrobiomeR 1.x: a GAMLSS with a zero-inflated
+  beta (BEZI) family on relative abundance, logit link for the mean. Only the mean
+  part depends on the covariates, as in 1.x. Scale `"logit_mean"`.
+* `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
+  (the transformation used by MaAsLin), a linear mixed model with a subject random
+  intercept when `longitudinal` (p-values from the normal approximation, as in 1.x),
+  otherwise `lm()` with t-based p-values. Scale `"asin_sqrt_mean"`.
+* `"lm_clr"`: the same linear (mixed) model on the centred log-ratio transform of the
+  features at the analysed rank, as a compositional sensitivity analysis. A pseudocount
+  replaces zeros. Scale `"clr_mean"`.
+
+Estimates from different engines are on different scales and are not comparable;
+[bind_effects()] refuses to combine them.
 
 Features are kept if they are present (abundance above zero) in at least
 `min_prevalence` of all samples and their mean relative abundance exceeds
-`min_mean`. Relative abundances of 1 or more are set to 0.9999 and samples with
-missing values in the model are dropped for that feature.
+`min_mean`. Samples with a missing value in the model are dropped for that feature.
 }

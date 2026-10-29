@@ -67,9 +67,12 @@ check_effects <- function(x) {
 #' @param ... `mm_effects` objects, or a single list of them.
 #' @param allow_mixed_scale If `FALSE` (default), error when studies report the
 #'   same part and term on different effect scales.
+#' @param allow_mixed_engine If `FALSE` (default), error when studies report the
+#'   same part and term from different engines: estimates of different models are
+#'   not comparable even when the scale label is the same.
 #' @return An `mm_effects` object.
 #' @export
-bind_effects <- function(..., allow_mixed_scale = FALSE) {
+bind_effects <- function(..., allow_mixed_scale = FALSE, allow_mixed_engine = FALSE) {
   xs <- list(...)
   if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "data.frame")) xs <- xs[[1]]
   if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_effects"))) {
@@ -85,6 +88,15 @@ bind_effects <- function(..., allow_mixed_scale = FALSE) {
     if (length(bad)) {
       stop("Studies report different effect scales for: ", paste(bad, collapse = "; "),
            ". Pooling needs one scale per term (set allow_mixed_scale = TRUE to override).", call. = FALSE)
+    }
+  }
+  if (!allow_mixed_engine) {
+    grp <- paste(out$part, out$term, sep = " / ")
+    neng <- tapply(out$engine, grp, function(s) length(unique(s[!is.na(s)])))
+    bad <- names(neng)[neng > 1]
+    if (length(bad)) {
+      stop("Studies were fitted with different engines for: ", paste(bad, collapse = "; "),
+           ". Fit all studies with the same engine (or set allow_mixed_engine = TRUE).", call. = FALSE)
     }
   }
   rownames(out) <- NULL
