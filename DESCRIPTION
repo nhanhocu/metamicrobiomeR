@@ -26,7 +26,6 @@ Depends: R (>= 4.1.0)
 Imports: ggplot2, lme4, metafor (>= 4.0-0), methods, stats, utils
 Suggests: biomformat, covr, gamlss, gamlss.dist, glmmTMB, jsonlite, knitr, permute,
         phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan
-VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 2
 RoxygenNote: 7.3.1
