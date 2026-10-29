@@ -23,8 +23,7 @@ SILVA style `D_0__`, `D_1__`, ..., and plain lineages whose ranks are given by p
 `Unassigned`, `uncultured`, `unclassified`, `other`, ...) become `NA`.
 }
 \examples{
-parse_taxonomy(c("k__Bacteria; p__Firmicutes; c__Clostridia; o__; f__; g__",
-                 paste("d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria",
-                       "o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella", sep = ";"),
-                 "Unassigned"))
+silva <- paste("d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria",
+               "o__Enterobacterales;f__Enterobacteriaceae;g__Escherichia-Shigella", sep = ";")
+parse_taxonomy(c("k__Bacteria; p__Firmicutes; c__Clostridia; o__; f__; g__", silva, "Unassigned"))
 }
