@@ -160,11 +160,11 @@ study_from_phyloseq <- function(ps, study, abundance = c("auto", "counts", "rela
   abundance <- match.arg(abundance)
   m <- methods::as(phyloseq::otu_table(ps), "matrix")
   if (!phyloseq::taxa_are_rows(ps)) m <- t(m)
-  tax <- if (is.null(phyloseq::tax_table(ps, errorIfNULL = FALSE))) NULL else
-    .rank_columns(as.data.frame(methods::as(phyloseq::tax_table(ps), "matrix"), stringsAsFactors = FALSE))
+  tt <- phyloseq::access(ps, "tax_table", errorIfNULL = FALSE)
+  tax <- if (is.null(tt)) NULL else .rank_columns(as.data.frame(methods::as(tt, "matrix"), stringsAsFactors = FALSE))
   if (!is.null(tax)) tax <- tax[rownames(m), , drop = FALSE]
-  smp <- as.data.frame(methods::as(phyloseq::sample_data(ps, errorIfNULL = FALSE), "data.frame"))
-  if (!nrow(smp)) smp <- data.frame(row.names = colnames(m))
+  sd <- phyloseq::access(ps, "sam_data", errorIfNULL = FALSE)
+  smp <- if (is.null(sd)) data.frame(row.names = colnames(m)) else as.data.frame(methods::as(sd, "data.frame"))
   is_count <- abundance == "counts" || (abundance == "auto" && all(abs(m - round(m)) < 1e-8))
   as_study(counts = if (is_count) m else NULL, relabund = if (!is_count) m else NULL, taxonomy = tax,
            samples = smp, study = .default_type(study, "asv"))

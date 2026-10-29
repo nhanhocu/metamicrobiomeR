@@ -133,8 +133,8 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
 check_study <- function(x) {
   if (!inherits(x, "mm_study")) stop("'x' must be an mm_study object.", call. = FALSE)
   a <- x$assays
-  ref <- a[[1]]
   if (length(a) == 0) stop("A study needs at least one assay.", call. = FALSE)
+  ref <- a[[1]]
   for (nm in names(a)) {
     m <- a[[nm]]
     if (anyNA(m)) stop("Assay '", nm, "' contains missing values.", call. = FALSE)
