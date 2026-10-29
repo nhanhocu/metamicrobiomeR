@@ -16,7 +16,8 @@ fit_study(
   exclude_unassigned = TRUE,
   prevalence = NULL,
   zero_inflation = TRUE,
-  pseudocount = NULL
+  pseudocount = NULL,
+  cores = getOption("metamicrobiomeR.cores", 1L)
 )
 }
 \arguments{
@@ -59,6 +60,11 @@ beta-binomial model.}
 
 \item{pseudocount}{(`lm_clr` only) Value added to counts (default 0.5) or, for
 proportions, to relative abundances (default half the smallest positive value).}
+
+\item{cores}{Number of processor cores for fitting the features in parallel (default 1, or
+`options(metamicrobiomeR.cores = )`). Uses forking, so it is available on Linux and macOS but not on
+Windows, where one core is used. Worthwhile for the count model and GAMLSS, which take about a second
+per feature; the linear engines are fast anyway. Results do not depend on `cores`.}
 }
 \value{
 An `mm_effects` object with one row per feature, model part and covariate

@@ -64,6 +64,10 @@
 #'   beta-binomial model.
 #' @param pseudocount (`lm_clr` only) Value added to counts (default 0.5) or, for
 #'   proportions, to relative abundances (default half the smallest positive value).
+#' @param cores Number of processor cores for fitting the features in parallel (default 1, or
+#'   `options(metamicrobiomeR.cores = )`). Uses forking, so it is available on Linux and macOS but not on
+#'   Windows, where one core is used. Worthwhile for the count model and GAMLSS, which take about a second
+#'   per feature; the linear engines are fast anyway. Results do not depend on `cores`.
 #' @return An `mm_effects` object with one row per feature, model part and covariate
 #'   term. The attribute `fit_info` is a data.frame with one row per fitted feature
 #'   (samples used, convergence, number of warnings, and any error message).
@@ -71,7 +75,7 @@
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
                       n_cycles = 100, exclude_unassigned = TRUE, prevalence = NULL,
-                      zero_inflation = TRUE, pseudocount = NULL) {
+                      zero_inflation = TRUE, pseudocount = NULL, cores = getOption("metamicrobiomeR.cores", 1L)) {
   .check_class(study, "mm_study", "study", "as_study()")
   engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
@@ -79,6 +83,12 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   }
   if (!is.null(prevalence) && (!inherits(prevalence, "formula") || length(prevalence) != 2)) {
     stop("'prevalence' must be a one-sided formula, e.g. ~ group.", call. = FALSE)
+  }
+  if (!is.numeric(cores) || length(cores) != 1 || is.na(cores) || cores < 1) stop("'cores' must be a single number of at least 1; got ", format(cores)[1], ".", call. = FALSE)
+  cores <- as.integer(cores)
+  if (cores > 1 && .Platform$OS.type == "windows") {
+    .inform("Parallel fitting is not available on Windows; using 1 core.", once = "windows-cores")
+    cores <- 1L
   }
   info <- mm_study_info(study)
   sdat <- mm_samples(study)
@@ -153,8 +163,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   # random() must be found without gamlss being attached: evaluate the formula in its namespace
   if (engine == "bezi_gamlss") environment(f) <- asNamespace("gamlss")
 
-  rows <- vector("list", length(idx)); log <- vector("list", length(idx))
-  for (k in seq_along(idx)) {
+  fit_one <- function(k) {
     i <- idx[k]; fid <- rownames(ra)[i]
     d <- d0
     d$.y <- Y[fid, ]
@@ -169,14 +178,20 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
       lm_asin = .fit_lm(f, d, longitudinal, .mm_engine_scale[["lm_asin"]]),
       lm_clr = .fit_lm(f, d, longitudinal, .mm_engine_scale[["lm_clr"]]),
       zibb_glmmtmb = .fit_zibb(terms_f, d, longitudinal, prevalence, zero_inflation))
-    log[[k]] <- data.frame(feature = fid, n = nrow(d), converged = res$converged, n_warnings = length(res$warnings),
-                           first_warning = if (length(res$warnings)) res$warnings[1] else NA_character_,
-                           singular = isTRUE(res$singular), error = res$error, stringsAsFactors = FALSE)
-    if (!is.null(res$rows) && nrow(res$rows)) {
-      rk <- if ("rank" %in% colnames(feats)) feats$rank[i] else NA_character_
-      rows[[k]] <- cbind(feature = fid, rank = rk, res$rows, n = nrow(d), stringsAsFactors = FALSE)
-    }
+    list(log = data.frame(feature = fid, n = nrow(d), converged = res$converged, n_warnings = length(res$warnings),
+                          first_warning = if (length(res$warnings)) res$warnings[1] else NA_character_,
+                          singular = isTRUE(res$singular), error = res$error, stringsAsFactors = FALSE),
+         row = if (!is.null(res$rows) && nrow(res$rows)) {
+           rk <- if ("rank" %in% colnames(feats)) feats$rank[i] else NA_character_
+           cbind(feature = fid, rank = rk, res$rows, n = nrow(d), stringsAsFactors = FALSE)
+         })
   }
+  fits <- if (cores > 1 && length(idx) > 1) parallel::mclapply(seq_along(idx), fit_one, mc.cores = min(cores, length(idx))) else lapply(seq_along(idx), fit_one)
+  for (k in seq_along(fits)) if (inherits(fits[[k]], "try-error")) {          # a worker died: report it as a failed fit
+    fits[[k]] <- list(log = data.frame(feature = rownames(ra)[idx[k]], n = NA_integer_, converged = FALSE, n_warnings = 0L, first_warning = NA_character_,
+                                       singular = FALSE, error = trimws(as.character(fits[[k]])), stringsAsFactors = FALSE), row = NULL)
+  }
+  rows <- lapply(fits, `[[`, "row"); log <- lapply(fits, `[[`, "log")
   tab <- do.call(rbind, rows)
   if (is.null(tab)) tab <- data.frame(feature = character(), rank = character(), term = character(),
                                       part = character(), estimate = numeric(), se = numeric(), p_value = numeric(),

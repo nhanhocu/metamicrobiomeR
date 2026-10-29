@@ -73,27 +73,29 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   effects$.key <- paste(effects$.group, effects$feature, sep = "\r")
   keys <- unique(effects$.key)
 
-  rows <- lapply(keys, function(key) {
-    d <- effects[effects$.key == key, , drop = FALSE]
-    k <- nrow(d)
-    if (k < min_studies || k < min_prop * n_studies[[d$.group[1]]]) return(NULL)
-    fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = d$estimate, sei = d$se, method = method, test = test)),
-                    error = function(e) NULL)
-    if (is.null(fit)) return(NULL)
-    pi <- tryCatch(suppressWarnings(stats::predict(fit)), error = function(e) NULL)
-    rk <- d$rank[!is.na(d$rank)]
-    ws <- 1 / (d$se^2 + fit$tau2); share <- ws / sum(ws)
-    data.frame(feature = d$feature[1], rank = if (length(rk)) rk[1] else NA_character_,
-               part = d$part[1], term = d$term[1], k = k,
-               estimate = as.numeric(fit$beta), se = fit$se, ci_lo = fit$ci.lb, ci_hi = fit$ci.ub,
-               statistic = fit$zval, p_value = fit$pval, tau2 = fit$tau2, I2 = fit$I2,
-               Q = fit$QE, Q_p = fit$QEp,
-               pi_lo = if (k >= 3 && !is.null(pi)) pi$pi.lb else NA_real_,
-               pi_hi = if (k >= 3 && !is.null(pi)) pi$pi.ub else NA_real_,
-               max_weight = max(share), top_study = as.character(d$study[which.max(share)]),
-               stringsAsFactors = FALSE)
-  })
-  out <- do.call(rbind, rows)
+  est <- effects$estimate; sev <- effects$se; stu <- as.character(effects$study); rk_all <- effects$rank
+  grp_idx <- split(seq_len(nrow(effects)), factor(effects$.key, levels = keys))      # one pass, not one scan per feature
+  fast <- method %in% c("REML", "DL", "PM")
+  pool_one <- function(ii) {
+    k <- length(ii)
+    if (k < min_studies || k < min_prop * n_studies[[effects$.group[ii[1]]]]) return(NULL)
+    y <- est[ii]; v <- sev[ii]^2
+    r <- if (fast) .rma_fast(y, v, method = method, test = test) else .rma_metafor(y, v, method, test)
+    if (is.null(r)) return(NULL)
+    ws <- 1 / (v + r$tau2); share <- ws / sum(ws)
+    rk <- rk_all[ii]; rk <- rk[!is.na(rk)]
+    list(feature = effects$feature[ii[1]], rank = if (length(rk)) rk[1] else NA_character_, part = effects$part[ii[1]], term = effects$term[ii[1]],
+         k = k, estimate = r$beta[1], se = r$se[1], ci_lo = r$ci_lb[1], ci_hi = r$ci_ub[1], statistic = r$stat[1], p_value = r$pval[1],
+         tau2 = r$tau2, I2 = r$I2, Q = r$QE, Q_p = r$QEp,
+         pi_lo = if (k >= 3 && !is.null(r$pi_lb)) r$pi_lb else NA_real_, pi_hi = if (k >= 3 && !is.null(r$pi_ub)) r$pi_ub else NA_real_,
+         max_weight = max(share), top_study = stu[ii][which.max(share)])
+  }
+  rows <- lapply(grp_idx, pool_one)
+  rows <- rows[!vapply(rows, is.null, logical(1))]
+  out <- if (length(rows)) {
+    cols <- names(rows[[1]])
+    as.data.frame(lapply(stats::setNames(cols, cols), function(cn) unlist(lapply(rows, `[[`, cn), use.names = FALSE)), stringsAsFactors = FALSE)
+  } else NULL
   if (is.null(out)) {
     kmax <- max(table(effects$.key))
     stop("No feature was estimated in enough studies to pool: it needs at least ", min_studies, " studies and ", .pct(min_prop),
@@ -168,4 +170,13 @@ print.mm_pooled <- function(x, n = 6, ...) {
   print(show, row.names = FALSE, digits = 3)
   if (nrow(d) > n) cat("# ... ", nrow(d) - n, " more rows\n", sep = "")
   invisible(x)
+}
+
+# metafor, for the estimators the fast core does not cover (EB, ML, HE, SJ)
+.rma_metafor <- function(y, v, method, test) {
+  fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = y, vi = v, method = method, test = test)), error = function(e) NULL)
+  if (is.null(fit)) return(NULL)
+  pr <- if (length(y) >= 3) tryCatch(suppressWarnings(stats::predict(fit)), error = function(e) NULL) else NULL
+  list(beta = as.numeric(fit$beta), se = fit$se, ci_lb = fit$ci.lb, ci_ub = fit$ci.ub, stat = fit$zval, pval = fit$pval, tau2 = fit$tau2,
+       I2 = fit$I2, QE = fit$QE, QEp = fit$QEp, pi_lb = if (!is.null(pr)) pr$pi.lb, pi_ub = if (!is.null(pr)) pr$pi.ub)
 }

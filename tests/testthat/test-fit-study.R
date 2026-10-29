@@ -125,3 +125,18 @@ test_that("lm_asin reproduces the 1.x linear mixed and linear models (stored ref
   expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = TRUE), ref$lmasin_mixed)
   expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = FALSE), ref$lmasin_linear)
 })
+
+test_that("fitting on several cores gives identical results", {
+  skip_on_os("windows")
+  s <- make_bezi_study()
+  a <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, cores = 1)
+  b <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, cores = 2)
+  expect_identical(as.data.frame(a), as.data.frame(b)); expect_identical(attr(a, "fit_info"), attr(b, "fit_info"))
+  skip_if_not_installed("gamlss")
+  g1 <- suppressWarnings(fit_study(s, ~ group, longitudinal = FALSE, cores = 1)); g2 <- suppressWarnings(fit_study(s, ~ group, longitudinal = FALSE, cores = 2))
+  expect_equal(as.data.frame(g1), as.data.frame(g2))
+  old <- options(metamicrobiomeR.cores = 2); on.exit(options(old))
+  expect_identical(as.data.frame(fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0)), as.data.frame(a))   # the option is used
+  expect_error(fit_study(s, ~ group, cores = 0), "'cores' must be a single number of at least 1")
+  expect_error(fit_study(s, ~ group, cores = "two"), "'cores' must be")
+})

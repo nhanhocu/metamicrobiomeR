@@ -78,3 +78,49 @@ test_that("agglomerate validates its input", {
   expect_error(agglomerate(s, "nonsense"))
   expect_error(agglomerate(agglomerate(s, "genus"), "phylum"), "already agglomerated")
 })
+
+# ---- the vectorised parser must equal the original loop implementation
+parse_taxonomy_reference <- function(x, sep = NULL) {
+  x <- as.character(x)
+  if (is.null(sep)) sep <- if (any(grepl("|", x, fixed = TRUE))) "|" else ";"
+  ranks <- metamicrobiomeR:::.mm_ranks; pr <- metamicrobiomeR:::.mm_prefix_rank
+  out <- matrix(NA_character_, length(x), length(ranks), dimnames = list(NULL, ranks))
+  for (i in seq_along(x)) {
+    if (is.na(x[i]) || !nzchar(trimws(x[i]))) next
+    parts <- trimws(strsplit(x[i], sep, fixed = TRUE)[[1]])
+    silva_old <- grepl("^D_[0-9]+__", parts); prefixed <- grepl("^[A-Za-z]__", parts)
+    if (all(silva_old)) { pos <- as.integer(sub("^D_([0-9]+)__.*", "\\1", parts)) + 1L; val <- sub("^D_[0-9]+__", "", parts)
+    } else if (all(prefixed)) { rk <- match(tolower(substr(parts, 1, 1)), names(pr)); keep <- !is.na(rk); pos <- match(pr[rk[keep]], ranks); val <- substring(parts[keep], 4)
+    } else { pos <- seq_along(parts); val <- parts }
+    ok <- pos >= 1 & pos <= length(ranks)
+    out[i, pos[ok]] <- metamicrobiomeR:::.clean_taxon(val[ok])
+  }
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  out$deepest <- vapply(seq_len(nrow(out)), function(i) { k <- which(!is.na(unlist(out[i, ranks], use.names = FALSE))); if (length(k)) ranks[max(k)] else NA_character_ }, character(1))
+  out
+}
+
+test_that("the vectorised parse_taxonomy equals the original implementation on all conventions", {
+  set.seed(42)
+  nm <- function(n) sample(c("Firmicutes", "Bacteroidota", "[Ruminococcus]", "Escherichia-Shigella", "uncultured", "Unassigned", "unclassified", "other", "", "Clostridia_unclassified",
+                             "Lachnospiraceae", "Blautia", "Faecalibacterium_prausnitzii", "uncultured_bacterium", "NA"), n, TRUE)
+  gen <- function(style, n) vapply(seq_len(n), function(i) {
+    len <- sample(1:7, 1); v <- nm(len)
+    switch(style,
+      greengenes = paste(paste0(c("k", "p", "c", "o", "f", "g", "s")[seq_len(len)], "__", v), collapse = "; "),
+      silva_q2 = paste(paste0(c("d", "p", "c", "o", "f", "g", "s")[seq_len(len)], "__", v), collapse = ";"),
+      silva_old = paste(paste0("D_", seq_len(len) - 1, "__", v), collapse = ";"),
+      positional = paste(v, collapse = ";"),
+      mixed = paste(c(paste0("k__", v[1]), v[-1]), collapse = ";"),
+      metaphlan = paste(c(paste0(c("k", "p", "c", "o", "f", "g", "s")[seq_len(len)], "__", v), if (runif(1) < 0.3) "t__SGB1"), collapse = "|"))
+  }, character(1))
+  for (style in c("greengenes", "silva_q2", "silva_old", "positional", "mixed")) {
+    x <- c(gen(style, 400), NA, "", "   ", "Unassigned")
+    expect_identical(parse_taxonomy(x), parse_taxonomy_reference(x), info = style)
+  }
+  xm <- c(gen("metaphlan", 400), "k__Bacteria")
+  expect_identical(parse_taxonomy(xm), parse_taxonomy_reference(xm), info = "metaphlan")
+  xs <- gen("greengenes", 50); xs <- gsub(";", "|", xs)
+  expect_identical(parse_taxonomy(xs, sep = "|"), parse_taxonomy_reference(xs, sep = "|"))
+  expect_identical(parse_taxonomy(character(0)), parse_taxonomy_reference(character(0)))
+})

@@ -31,30 +31,28 @@
 parse_taxonomy <- function(x, sep = NULL) {
   x <- as.character(x)
   if (is.null(sep)) sep <- if (any(grepl("|", x, fixed = TRUE))) "|" else ";"
-  out <- matrix(NA_character_, length(x), length(.mm_ranks), dimnames = list(NULL, .mm_ranks))
-  for (i in seq_along(x)) {
-    if (is.na(x[i]) || !nzchar(trimws(x[i]))) next
-    parts <- trimws(strsplit(x[i], sep, fixed = TRUE)[[1]])
-    silva_old <- grepl("^D_[0-9]+__", parts)
-    prefixed <- grepl("^[A-Za-z]__", parts)
-    if (all(silva_old)) {
-      pos <- as.integer(sub("^D_([0-9]+)__.*", "\\1", parts)) + 1L
-      val <- sub("^D_[0-9]+__", "", parts)
-    } else if (all(prefixed)) {
-      rk <- match(tolower(substr(parts, 1, 1)), names(.mm_prefix_rank))
-      keep <- !is.na(rk)                                    # e.g. MetaPhlAn strain level t__ is ignored
-      pos <- match(.mm_prefix_rank[rk[keep]], .mm_ranks); val <- substring(parts[keep], 4)
-    } else {
-      pos <- seq_along(parts); val <- parts
-    }
-    ok <- pos >= 1 & pos <= length(.mm_ranks)
-    out[i, pos[ok]] <- .clean_taxon(val[ok])
+  n <- length(x); nr <- length(.mm_ranks)
+  out <- matrix(NA_character_, n, nr, dimnames = list(NULL, .mm_ranks))
+  ok_str <- !is.na(x) & nzchar(trimws(x))
+  parts <- strsplit(x[ok_str], sep, fixed = TRUE)
+  lens <- lengths(parts)
+  if (length(parts) && any(lens > 0)) {
+    tok <- trimws(unlist(parts)); id <- rep(which(ok_str), lens); at <- sequence(lens)
+    is_old <- grepl("^D_[0-9]+__", tok); is_pref <- grepl("^[A-Za-z]__", tok)
+    str_old <- tapply(is_old, id, all)[as.character(id)]; str_pref <- tapply(is_pref, id, all)[as.character(id)]
+    pos <- at; val <- tok
+    o <- str_old; pos[o] <- as.integer(sub("^D_([0-9]+)__.*", "\\1", tok[o])) + 1L; val[o] <- sub("^D_[0-9]+__", "", tok[o])
+    pf <- !str_old & str_pref
+    rk <- match(tolower(substr(tok[pf], 1, 1)), names(.mm_prefix_rank))
+    pos[pf] <- match(.mm_prefix_rank[rk], .mm_ranks); pos[pf][is.na(rk)] <- NA_integer_       # e.g. MetaPhlAn strain level t__ is ignored
+    val[pf] <- substring(tok[pf], 4)
+    keep <- !is.na(pos) & pos >= 1 & pos <= nr
+    out[cbind(id[keep], pos[keep])] <- .clean_taxon(val[keep])
   }
   out <- as.data.frame(out, stringsAsFactors = FALSE)
-  out$deepest <- vapply(seq_len(nrow(out)), function(i) {
-    k <- which(!is.na(unlist(out[i, .mm_ranks], use.names = FALSE)))
-    if (length(k)) .mm_ranks[max(k)] else NA_character_
-  }, character(1))
+  filled <- !is.na(as.matrix(out))
+  out$deepest <- ifelse(rowSums(filled) > 0, .mm_ranks[pmax.int(1L, max.col(filled * rep(seq_len(nr), each = n), ties.method = "last"))], NA_character_)
+  out$deepest[rowSums(filled) == 0] <- NA_character_
   out
 }
 

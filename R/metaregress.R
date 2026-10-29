@@ -46,22 +46,23 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
   if (!nrow(effects)) stop("No usable estimates.", call. = FALSE)
   effects <- cbind(effects, study_data[match(effects$study, study_data$study), mv, drop = FALSE])
   key <- paste(effects$part, effects$term, effects$feature, sep = "\r")
-  rows <- lapply(unique(key), function(k) {
-    d <- effects[key == k, , drop = FALSE]
+  grp_idx <- split(seq_len(nrow(effects)), factor(key, levels = unique(key)))                  # one pass, not one scan per feature
+  rows <- lapply(grp_idx, function(ii) {
+    d <- effects[ii, , drop = FALSE]
     for (v in mv) if (is.character(d[[v]])) d[[v]] <- factor(d[[v]])
     for (v in mv) if (is.factor(d[[v]])) d[[v]] <- droplevels(d[[v]])
     if (any(vapply(mv, function(v) length(unique(d[[v]])) < 2, logical(1)))) return(NULL)   # a moderator without variation
     mm <- stats::model.matrix(moderators, d)
     if (nrow(d) <= ncol(mm) || qr(mm)$rank < ncol(mm)) return(NULL)                          # too few studies or collinear
-    fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = d$estimate, sei = d$se, mods = moderators, data = d,
-                                                      method = method, test = test)), error = function(e) NULL)
-    if (is.null(fit)) return(NULL)
-    cf <- seq_along(fit$beta)[-1]
+    r <- if (method %in% c("REML", "DL", "PM")) .rma_fast(d$estimate, d$se^2, X = mm, method = method, test = test)
+         else .rma_metafor_mods(d, moderators, mm, method, test)
+    if (is.null(r)) return(NULL)
+    cf <- seq_len(ncol(mm))[-1]
     rk <- d$rank[!is.na(d$rank)]
     data.frame(feature = d$feature[1], rank = if (length(rk)) rk[1] else NA_character_, part = d$part[1], term = d$term[1],
-               k = nrow(d), moderator = rownames(fit$beta)[cf], estimate = as.numeric(fit$beta)[cf], se = fit$se[cf],
-               ci_lo = fit$ci.lb[cf], ci_hi = fit$ci.ub[cf], statistic = fit$zval[cf], p_value = fit$pval[cf],
-               QM = fit$QM, QM_p = fit$QMp, tau2 = fit$tau2, I2 = fit$I2, stringsAsFactors = FALSE)
+               k = nrow(d), moderator = colnames(mm)[cf], estimate = r$beta[cf], se = r$se[cf],
+               ci_lo = r$ci_lb[cf], ci_hi = r$ci_ub[cf], statistic = r$stat[cf], p_value = r$pval[cf],
+               QM = r$QM, QM_p = r$QMp, tau2 = r$tau2, I2 = r$I2, stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
   n_skip <- sum(vapply(rows, is.null, logical(1)))
@@ -80,4 +81,11 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
   attr(out, "settings") <- list(method = method, test = test, moderators = deparse(moderators), p_adjust = p_adjust)
   class(out) <- c("mm_metareg", "data.frame")
   out
+}
+
+# metafor, for the estimators the fast core does not cover
+.rma_metafor_mods <- function(d, moderators, mm, method, test) {
+  fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = d$estimate, sei = d$se, mods = moderators, data = d, method = method, test = test)), error = function(e) NULL)
+  if (is.null(fit)) return(NULL)
+  list(beta = as.numeric(fit$beta), se = fit$se, ci_lb = fit$ci.lb, ci_ub = fit$ci.ub, stat = fit$zval, pval = fit$pval, tau2 = fit$tau2, I2 = fit$I2, QM = fit$QM, QMp = fit$QMp)
 }

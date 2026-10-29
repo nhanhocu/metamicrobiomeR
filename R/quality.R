@@ -183,27 +183,32 @@ combine_pvalues <- function(effects, method = c("stouffer", "fisher"), weights =
   d <- d[!is.na(d$p_value) & !is.na(d$estimate), , drop = FALSE]
   if (!nrow(d)) stop("No estimates with a p-value.", call. = FALSE)
   key <- paste(d$part, d$term, d$feature, sep = "\r")
-  rows <- lapply(unique(key), function(k) {
-    x <- d[key == k, , drop = FALSE]; K <- nrow(x)
+  grp_idx <- split(seq_len(nrow(d)), factor(key, levels = unique(key)))                       # one pass, not one scan per feature
+  pv <- pmin(pmax(d$p_value, 1e-300), 1); sg <- sign(d$estimate); nn <- ifelse(is.na(d$n) | d$n < 1, 1, d$n); rk_all <- d$rank
+  rows <- lapply(grp_idx, function(ii) {
+    K <- length(ii)
     if (K < min_studies) return(NULL)
-    p <- pmin(pmax(x$p_value, 1e-300), 1); sg <- sign(x$estimate)
+    p <- pv[ii]; s <- sg[ii]
     z <- NA_real_
     if (method == "stouffer") {
-      w <- if (weights == "sqrt_n") sqrt(ifelse(is.na(x$n) | x$n < 1, 1, x$n)) else rep(1, K)
-      z <- sum(w * sg * stats::qnorm(p / 2, lower.tail = FALSE)) / sqrt(sum(w^2))
+      w <- if (weights == "sqrt_n") sqrt(nn[ii]) else rep(1, K)
+      z <- sum(w * s * stats::qnorm(p / 2, lower.tail = FALSE)) / sqrt(sum(w^2))
       pc <- 2 * stats::pnorm(-abs(z))
     } else {
-      pp <- ifelse(sg >= 0, p / 2, 1 - p / 2)
+      pp <- ifelse(s >= 0, p / 2, 1 - p / 2)
       pc <- min(1, 2 * min(stats::pchisq(-2 * sum(log(pp)), 2 * K, lower.tail = FALSE), stats::pchisq(-2 * sum(log(1 - pp)), 2 * K, lower.tail = FALSE)))
     }
-    np <- sum(sg > 0); nn <- sum(sg < 0)
-    rk <- x$rank[!is.na(x$rank)]
-    data.frame(feature = x$feature[1], rank = if (length(rk)) rk[1] else NA_character_, part = x$part[1], term = x$term[1], k = K,
-               n_pos = np, n_neg = nn, direction = if (nn == 0 && np > 0) "up" else if (np == 0 && nn > 0) "down" else "mixed",
-               sign_test_p = if (np + nn > 0) stats::binom.test(np, np + nn, 0.5)$p.value else NA_real_,
-               statistic = z, p_value = pc, stringsAsFactors = FALSE)
+    np <- sum(s > 0); nneg <- sum(s < 0)
+    rk <- rk_all[ii]; rk <- rk[!is.na(rk)]
+    list(feature = d$feature[ii[1]], rank = if (length(rk)) rk[1] else NA_character_, part = d$part[ii[1]], term = d$term[ii[1]], k = K,
+         n_pos = np, n_neg = nneg, direction = if (nneg == 0 && np > 0) "up" else if (np == 0 && nneg > 0) "down" else "mixed",
+         sign_test_p = if (np + nneg > 0) stats::binom.test(np, np + nneg, 0.5)$p.value else NA_real_, statistic = z, p_value = pc)
   })
-  out <- do.call(rbind, rows)
+  rows <- rows[!vapply(rows, is.null, logical(1))]
+  out <- if (length(rows)) {
+    cols <- names(rows[[1]])
+    as.data.frame(lapply(stats::setNames(cols, cols), function(cn) unlist(lapply(rows, `[[`, cn), use.names = FALSE)), stringsAsFactors = FALSE)
+  } else NULL
   if (is.null(out)) stop("No feature has estimates from at least ", min_studies, " studies.", call. = FALSE)
   fam <- do.call(paste, c(lapply(adjust_by, function(a) out[[a]]), sep = "\r")); out$p_adjust <- NA_real_
   for (g in unique(fam)) out$p_adjust[fam == g] <- if (p_adjust == "none") out$p_value[fam == g] else stats::p.adjust(out$p_value[fam == g], p_adjust)
