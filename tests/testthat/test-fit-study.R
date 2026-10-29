@@ -100,3 +100,49 @@ test_that("features unassigned at their own rank are excluded unless asked for",
   e2 <- suppressWarnings(fit_study(s2, ~ group, exclude_unassigned = FALSE))
   expect_true("F2" %in% e2$feature)
 })
+
+test_that("the lm_asin engine returns effects on the arcsine square root scale", {
+  s <- make_bezi_study()
+  e <- fit_study(s, ~ group + age, engine = "lm_asin")
+  expect_true(all(e$engine == "lm_asin" & e$effect_scale == "asin_sqrt_mean"))
+  expect_setequal(unique(e$term), c("groupb", "age"))
+  g1 <- e[e$feature == "F1" & e$term == "groupb", ]
+  expect_gt(g1$estimate, 0.05)
+  expect_lt(g1$p_value, 0.05)
+  expect_gt(g1$df, 0)                       # cross-sectional: lm with t-based p-values
+  s2 <- make_bezi_study(subject = "person")
+  e2 <- fit_study(s2, ~ group, engine = "lm_asin")
+  expect_true(all(is.na(e2$df)))            # mixed model: normal approximation, no df
+  expect_equal(e2$p_value, 2 * stats::pnorm(-abs(e2$estimate / e2$se)))
+  other <- suppressWarnings(fit_study(s, ~ group + age)); other$study <- "sim2"   # a different study, bezi engine
+  expect_error(bind_effects(e, other), "effect scales")
+})
+
+test_that("lm_asin reproduces taxa.compare() from 1.x (linear mixed and linear models)", {
+  skip_on_cran()
+  utils::data("taxtab6", package = "metamicrobiomeR", envir = environment())
+  tab <- as.data.frame(get("taxtab6", envir = environment()))
+  phyla <- paste0("k__bacteria.p__", c("actinobacteria", "bacteroidetes", "firmicutes", "proteobacteria"))
+  rel <- t(as.matrix(tab[, phyla])); colnames(rel) <- as.character(tab$x.sampleid)
+  smp <- tab[, c("bf", "age.sample", "personid")]; rownames(smp) <- colnames(rel)
+  s <- as_study(relabund = rel, samples = smp, study = list(id = "b", feature_type = "otu", subject = "personid"))
+  for (long in c(TRUE, FALSE)) {
+    new <- fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = long)
+    old <- suppressMessages(suppressWarnings(
+      taxa.compare(taxtab = tab[, c("personid", "bf", "age.sample", phyla)], propmed.rel = "lm", transform = "asin.sqrt",
+                   comvar = "bf", adjustvar = "age.sample", longitudinal = if (long) "yes" else "no")))
+    for (term in c("bfNon_exclusiveBF", "bfNo_BF", "age.sample")) {
+      n <- new[new$term == term, ]; n <- n[match(old$id, n$feature), ]
+      expect_equal(n$estimate, old[[paste0("Estimate.", term)]], tolerance = 1e-8)
+      expect_equal(n$se, old[[paste0("Std. Error.", term)]], tolerance = 1e-8)
+      expect_equal(n$p_value, old[[paste0("Pr(>|t|).", term)]], tolerance = 1e-8)
+    }
+  }
+})
+
+test_that("failed fits are reported, not silently dropped", {
+  s <- make_bezi_study()
+  d <- fit_study(s, ~ group, engine = "lm_asin", min_prevalence = 0.99999)   # nothing passes the filter
+  expect_equal(nrow(d), 0)
+  expect_s3_class(d, "mm_effects")
+})

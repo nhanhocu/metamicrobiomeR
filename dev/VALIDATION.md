@@ -1,9 +1,9 @@
 # Validation of the 2.0 engine against Ho et al. (2019)
 
-Status: first gate of the 2.0 plan, extended to the pooling step (section 4). The 2.0 `fit_study()` engine `bezi_gamlss`
+Status: first gate of the 2.0 plan, extended to the pooling step (section 4) and the LMAS engine (section 5). The 2.0 `fit_study()` engine `bezi_gamlss`
 (the 1.x GAMLSS-BEZI model) is compared with (a) the result objects stored in
 the original GitHub repository (`data-raw/legacy-1.1/results/`) and (b) the numbers
-printed in Tables 3 to 5 of the paper. Scripts: `data-raw/validate-2019-tables.R`, `data-raw/validate-2019-meta.R`,
+printed in Tables 3 to 5 of the paper. Scripts: `data-raw/validate-2019-tables.R`, `data-raw/validate-2019-meta.R`, `data-raw/validate-2019-lmas.R`, `data-raw/refit-sex-bangladesh.R`,
 `data-raw/convergence-sensitivity.R`, `data-raw/convergence-all-taxa.R`.
 Environment: R 4.3.3, gamlss 5.5-5 (the paper used gamlss 5.0-5).
 
@@ -16,9 +16,7 @@ Environment: R 4.3.3, gamlss 5.5-5 (the paper used gamlss 5.0-5).
 | New engine vs stored 1.x results, all 124 taxa of Example 1 | same 124 taxa; max absolute difference 2e-11 |
 | New engine vs 1.x `taxa.compare()`, same data (unit test) | equal to 1e-8 |
 
-Not yet reproduced: the LMAS (arcsin-sqrt linear model) columns, the simulation
-studies, and an end-to-end rerun of the four-study meta-analysis from the raw
-tables (section 4 pools the stored per-study results).
+Not yet reproduced: the simulation studies and the type I error analysis on real data.
 
 ## 2. Findings that matter for the paper and for 2.0
 
@@ -95,10 +93,44 @@ holds; the secondary hits do not survive more appropriate small-sample inference
 **F8. Unassigned lineages as "taxa".** Several apparent genus-level hits were pseudo-taxa
 such as `...o__clostridiales.other.other`, aggregates of unrelated organisms.
 
-Not yet done: an end-to-end rerun (refit the four studies with `fit_study()` and pool),
-which needs about 10 minutes of fitting and should be run in chunks.
+**F9. Only Bangladesh can be refitted from raw data.** The sample data (gender, feeding,
+subject) of the Haiti, CA/FL and NC studies are not in the repository (see
+`dev/LEGACY-DATA.md`). A hybrid end-to-end check refits Bangladesh and pools it with the stored
+results of the other three.
 
-## 5. How to rerun
+**F10. Unexplained standard-error differences.** Refitting the Bangladesh sex model
+(`~ gender + bf + age.sample`, longitudinal, 20 iterations, as documented) reproduces the
+stored estimates to 1e-13 for all 124 taxa, but not the standard errors: they differ in 77
+taxa (median ratio 1.02, up to about 18% larger in the refit; significance at 0.05 differs in
+4 taxa). This is not due to the GAMLSS version (5.0-5 and 5.5-5 give identical values) and not
+to the standard-error method (`vcov` falls back to `qr` in these fits and neither matches).
+The cause is unknown. The stored Bangladesh results of the other examples do reproduce exactly.
+It does not change the meta-analysis conclusions: with the stored or the refitted Bangladesh
+results, under the 1.x and the 2.0 settings, the same genera are found (only Coprococcus
+survives FDR; 4 genera at p < 0.05 with the 1.x settings, 1 with the 2.0 defaults).
+Scripts: `data-raw/refit-sex-bangladesh.R`, `data-raw/diagnose-se-discrepancy/`.
+
+## 5. LMAS (arcsine square root linear model)
+
+`fit_study(engine = "lm_asin")` equals `taxa.compare(propmed.rel = "lm", transform =
+"asin.sqrt")` for the mixed and the linear model (tested), and matches the stored results.
+Tables 3 and 4: all estimates, limits, p-values and FDR reproduce once the p-value error is
+accounted for.
+
+**F11. The published mixed-model p-values carry the `1.96 * pnorm` error.** Every stored
+LMAS p-value for a mixed model equals 0.98 times the correct two-sided p-value (ratio 0.98
+for all 124 taxa of Example 1). Published Table 3 values: 0.0088, 0.0292, 0.0668, 0.0103;
+correct: 0.0089, 0.0298, 0.0682, 0.0105. No conclusion changes; this is the bug fixed in 1.3.
+
+**F12. Errors in the printed Table 5 (LMAS columns).** Example 3a, Bacteroidetes: the table
+prints +0.06 with interval (-0.12, 0.01); the computed and stored value is -0.056, so the sign
+is wrong. Example 3b (EBF > 2 months): the Actinobacteria and Firmicutes rows are swapped
+(the printed "Actinobacteria 0.00, p 0.9626" is the computed Firmicutes row), and the printed
+FDR values (0.9989, 0.9707, 0.9707, 0.9191) cannot be obtained as Benjamini-Hochberg over
+the four displayed or all eight phylum-level features (all give 0.9626). No conclusion
+changes: nothing is significant in that block.
+
+## 6. How to rerun
 
 ```
 Rscript data-raw/validate-2019-tables.R           # phylum level, about 25 s
@@ -106,4 +138,6 @@ FULL=1 Rscript data-raw/validate-2019-tables.R    # plus all taxa of Example 1, 
 Rscript data-raw/convergence-sensitivity.R        # main phyla, 20 vs 500 iterations
 Rscript data-raw/convergence-all-taxa.R           # sample of non-converged taxa, about 3 min
 Rscript data-raw/validate-2019-meta.R             # pooling step, a few seconds
+Rscript data-raw/validate-2019-lmas.R             # LMAS columns, about 1 min
+Rscript data-raw/refit-sex-bangladesh.R           # Bangladesh refit plus pooling, about 3 min
 ```

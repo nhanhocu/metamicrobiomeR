@@ -19,6 +19,8 @@ release with the old interface. See `dev/SPEC.md` for the new data contracts.
   intervals, FDR within rank). It reproduces the 1.x pooled sex-difference result
   with `method = "DL", test = "z"`. 1.x also "pooled" taxa seen in only one study
   for terms missing from some studies; 2.0 requires estimates from at least two.
+* `fit_study(engine = "lm_asin")`: the arcsine-square-root linear (mixed) model of 1.x,
+  reproducing its results (the 1.x mixed-model p-values were 2% too small, see 1.3).
 * `fit_study()` defaults to `n_cycles = 100` and drops features unassigned at
   their own rank (`exclude_unassigned = TRUE`); both can be set to the 1.x behaviour.
 

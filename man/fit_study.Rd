@@ -22,7 +22,7 @@ fit_study(
 \item{formula}{One-sided formula with the covariates, e.g. `~ group + age`.
 Variables are looked up in the sample data.}
 
-\item{engine}{Model engine. Currently only `"bezi_gamlss"`.}
+\item{engine}{Model engine: `"bezi_gamlss"` (default) or `"lm_asin"`.}
 
 \item{rank}{Optional character vector of feature ranks to analyse (matched
 against the `rank` column of the feature data). `NULL` analyses all features.}
@@ -33,7 +33,7 @@ when `study$subject` is set. The subject is the sample-data column named in
 
 \item{min_prevalence, min_mean}{Feature filters (see Details).}
 
-\item{n_cycles}{Maximum number of outer iterations of the GAMLSS fitting
+\item{n_cycles}{(`bezi_gamlss` only) Maximum number of outer iterations of the GAMLSS fitting
 algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
 Version 1.x used the GAMLSS default of 20, at which most fits on real data
 did not converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce
@@ -47,18 +47,26 @@ organisms. Default `TRUE`; use `FALSE` to reproduce 1.x.}
 }
 \value{
 An `mm_effects` object with one row per feature and covariate term,
-  `part = "abundance"` and `effect_scale = "logit_mean"`. The attribute
+  `part = "abundance"` and the effect scale of the engine. The attribute
   `fit_info` is a data.frame with one row per fitted feature (samples used,
   convergence, number of warnings, and any error message).
 }
 \description{
 Fits the same model to each feature and returns the estimates as an effect
-table. The first engine, `"bezi_gamlss"`, is the model of metamicrobiomeR 1.x:
-a GAMLSS with a zero-inflated beta (BEZI) family on relative abundance, with a
-logit link for the mean. Only the mean (abundance) part depends on the
-covariates; the zero-inflation and dispersion parts are intercept-only, as in 1.x.
+table. Two engines from metamicrobiomeR 1.x are available.
 }
 \details{
+* `"bezi_gamlss"`: a GAMLSS with a zero-inflated beta (BEZI) family on relative
+  abundance, with a logit link for the mean. Only the mean (abundance) part
+  depends on the covariates; the zero-inflation and dispersion parts are
+  intercept-only, as in 1.x. Effects are on the logit scale (`"logit_mean"`).
+* `"lm_asin"`: a linear model on the arcsine square root of the relative
+  abundance (the transformation used by MaAsLin), a linear mixed model with a
+  subject random intercept when `longitudinal` (p-values from the normal
+  approximation, as in 1.x), otherwise `lm()` with t-based p-values. Effects are
+  on the arcsine-square-root scale (`"asin_sqrt_mean"`) and are not comparable
+  with `"bezi_gamlss"` estimates.
+
 Features are kept if they are present (abundance above zero) in at least
 `min_prevalence` of all samples and their mean relative abundance exceeds
 `min_mean`. Relative abundances of 1 or more are set to 0.9999 and samples with
