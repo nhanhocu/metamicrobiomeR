@@ -25,7 +25,7 @@
 fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank = NULL, seed = NULL,
                      longitudinal = NULL) {
   .need("vegan", "fit_beta()"); .need("permute", "fit_beta()")
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group.", call. = FALSE)
   info <- mm_study_info(study); sdat <- mm_samples(study)
   vars <- all.vars(formula); miss <- setdiff(vars, colnames(sdat))
@@ -83,7 +83,7 @@ pool_beta <- function(..., method = c("stouffer", "fisher")) {
   method <- match.arg(method)
   xs <- list(...)
   if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "data.frame")) xs <- xs[[1]]
-  if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_beta"))) stop("Supply mm_beta objects (see fit_beta()).", call. = FALSE)
+  .check_list_of(xs, "mm_beta", "fit_beta()")
   d <- do.call(rbind, lapply(xs, as.data.frame))
   if (length(unique(d$distance)) > 1) stop("All studies must use the same distance.", call. = FALSE)
   if (anyDuplicated(paste(d$study, d$term))) stop("Duplicate study and term.", call. = FALSE)

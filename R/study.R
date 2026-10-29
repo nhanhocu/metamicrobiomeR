@@ -6,7 +6,8 @@
 .as_assay <- function(x, what) {
   if (is.data.frame(x)) x <- as.matrix(x)
   if (!is.matrix(x) || !is.numeric(x)) {
-    stop("'", what, "' must be a numeric matrix or data.frame (features x samples).", call. = FALSE)
+    stop("'", what, "' must be a numeric matrix or data.frame with features in rows and samples in columns; got ",
+         if (is.matrix(x)) "a non-numeric matrix" else paste0("a ", class(x)[1]), ".", call. = FALSE)
   }
   if (is.null(rownames(x)) || is.null(colnames(x))) {
     stop("'", what, "' needs row names (feature IDs) and column names (sample IDs).", call. = FALSE)
@@ -16,10 +17,8 @@
 
 .align_rows <- function(x, ids, what) {
   if (is.null(rownames(x)) || !setequal(rownames(x), ids) || anyDuplicated(rownames(x))) {
-    missing_ids <- setdiff(ids, rownames(x))
-    stop("Row names of '", what, "' do not match the assay: ",
-         if (length(missing_ids)) paste0("missing ", paste(utils::head(missing_ids, 3), collapse = ", "), " ...")
-         else "unexpected or duplicated IDs", call. = FALSE)
+    stop(.id_mismatch("Feature IDs", "the assay", ids, paste0("'", what, "'"), rownames(x)) %||%
+           paste0("The row names of '", what, "' must be the feature IDs, each used once."), call. = FALSE)
   }
   x[ids, , drop = FALSE]
 }
@@ -58,7 +57,8 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
     stop("Supply 'counts' and/or 'relabund'.", call. = FALSE)
   }
   if (missing(samples) || !is.data.frame(samples)) {
-    stop("'samples' must be a data.frame with one row per sample.", call. = FALSE)
+    stop("'samples' must be a data.frame with one row per sample and the sample IDs as row names",
+         if (!missing(samples)) paste0("; got a ", class(samples)[1]), ".", call. = FALSE)
   }
   if (!is.list(study) || is.null(names(study)) && length(study) > 0) {
     stop("'study' must be a named list.", call. = FALSE)
@@ -66,11 +66,11 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
   study <- study[!vapply(study, is.null, logical(1))]  # NULL entries would delete the defaults
   for (req in c("id", "feature_type")) {
     if (is.null(study[[req]]) || is.na(study[[req]][1]) || !nzchar(study[[req]][1])) {
-      stop("study$", req, " is required.", call. = FALSE)
+      stop("study$", req, " is required; for example study = list(id = \"cohort1\", feature_type = \"asv\").", call. = FALSE)
     }
   }
   if (!study$feature_type %in% .mm_feature_types) {
-    stop("study$feature_type must be one of: ", paste(.mm_feature_types, collapse = ", "), ".", call. = FALSE)
+    stop("study$feature_type must be one of: ", paste(.mm_feature_types, collapse = ", "), "; got '", study$feature_type, "'.", call. = FALSE)
   }
 
   assays <- list()
@@ -81,20 +81,21 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
     assays$relabund <- r
   }
   ref <- assays[[1]]
-  if (anyDuplicated(rownames(ref)) || anyDuplicated(colnames(ref))) {
-    stop("Feature IDs and sample IDs must be unique.", call. = FALSE)
-  }
+  if (anyDuplicated(rownames(ref))) stop("Feature IDs must be unique; '", rownames(ref)[anyDuplicated(rownames(ref))], "' is repeated.", call. = FALSE)
+  if (anyDuplicated(colnames(ref))) stop("Sample IDs must be unique; '", colnames(ref)[anyDuplicated(colnames(ref))], "' is repeated.", call. = FALSE)
   if (length(assays) == 2) {
     r <- assays$relabund
-    if (!setequal(rownames(r), rownames(ref)) || !setequal(colnames(r), colnames(ref))) {
-      stop("'counts' and 'relabund' must have the same feature and sample IDs.", call. = FALSE)
-    }
+    msg <- c(.id_mismatch("Feature IDs", "'counts'", rownames(ref), "'relabund'", rownames(r)),
+             .id_mismatch("Sample IDs", "'counts'", colnames(ref), "'relabund'", colnames(r)))
+    if (length(msg)) stop(paste(msg, collapse = " "), call. = FALSE)
     assays$relabund <- r[rownames(ref), colnames(ref), drop = FALSE]
   }
 
   # samples: one row per assay column, aligned to the assay order
   if (!setequal(rownames(samples), colnames(ref)) || anyDuplicated(rownames(samples))) {
-    stop("Row names of 'samples' must match the assay column names (sample IDs).", call. = FALSE)
+    stop(.id_mismatch("Sample IDs", "the abundance table", colnames(ref), "'samples'", rownames(samples)) %||%
+           "The row names of 'samples' must be the sample IDs, each used once.",
+         " The row names of 'samples' must be the sample IDs.", call. = FALSE)
   }
   samples <- samples[colnames(ref), , drop = FALSE]
 
@@ -102,11 +103,18 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
   if (is.null(taxonomy)) {
     features <- data.frame(row.names = rownames(ref))
   } else {
-    if (!is.data.frame(taxonomy)) stop("'taxonomy' must be a data.frame.", call. = FALSE)
+    .check_class(taxonomy, "data.frame", "taxonomy")
     features <- .align_rows(taxonomy, rownames(ref), "taxonomy")
-    rank_cols <- match(.mm_ranks, tolower(colnames(features)))
+    lc <- tolower(colnames(features))
+    lc[lc %in% c("domain", "superkingdom") & !"kingdom" %in% lc] <- "kingdom"      # SILVA and others call the top rank 'domain'
+    rank_cols <- match(.mm_ranks, lc)
     names(features)[rank_cols[!is.na(rank_cols)]] <- .mm_ranks[!is.na(rank_cols)]
     present <- intersect(.mm_ranks, colnames(features))
+    other <- setdiff(colnames(features), c("sequence", "description", "rank"))      # columns that are not taxonomy by design
+    if (!length(present) && length(other) && !"rank" %in% colnames(features)) {
+      warning("'taxonomy' has no rank columns (kingdom, phylum, class, order, family, genus, species; any case, 'domain' counts as kingdom), ",
+              "so rank-based functions such as agglomerate() will not work.", call. = FALSE)
+    }
     for (rk in present) {
       v <- as.character(features[[rk]]); v[!nzchar(v)] <- NA_character_
       features[[rk]] <- v
@@ -131,18 +139,18 @@ as_study <- function(counts = NULL, relabund = NULL, taxonomy = NULL, samples,
 #' @return `x`, invisibly, if all checks pass.
 #' @export
 check_study <- function(x) {
-  if (!inherits(x, "mm_study")) stop("'x' must be an mm_study object.", call. = FALSE)
+  .check_class(x, "mm_study", "x", "as_study()")
   a <- x$assays
   if (length(a) == 0) stop("A study needs at least one assay.", call. = FALSE)
   ref <- a[[1]]
   for (nm in names(a)) {
     m <- a[[nm]]
-    if (anyNA(m)) stop("Assay '", nm, "' contains missing values.", call. = FALSE)
-    if (any(m < 0)) stop("Assay '", nm, "' contains negative values.", call. = FALSE)
+    if (anyNA(m)) stop("Assay '", nm, "' contains ", .plural(sum(is.na(m)), "missing value"), "; replace or remove them.", call. = FALSE)
+    if (any(m < 0)) stop("Assay '", nm, "' contains ", .plural(sum(m < 0), "negative value"), ".", call. = FALSE)
     if (!identical(dimnames(m), dimnames(ref))) stop("Assays must have identical dimnames.", call. = FALSE)
   }
   if (!is.null(a$counts) && any(abs(a$counts - round(a$counts)) > 1e-6)) {
-    stop("'counts' must be non-negative integers; use 'relabund' for proportions.", call. = FALSE)
+    stop("'counts' must be whole numbers (", .plural(sum(abs(a$counts - round(a$counts)) > 1e-6), "value"), " are not); use 'relabund' for proportions.", call. = FALSE)
   }
   if (!is.null(a$relabund)) {
     grp <- if ("rank" %in% colnames(x$features)) x$features$rank else rep(NA_character_, nrow(ref))
@@ -150,18 +158,19 @@ check_study <- function(x) {
     sums <- vapply(split(seq_len(nrow(ref)), grp),
                    function(i) max(colSums(a$relabund[i, , drop = FALSE])), numeric(1))
     if (any(a$relabund > 1 + 1e-6) || any(sums > 1 + 1e-3)) {
-      stop("'relabund' must be proportions in [0, 1] with sums <= 1 within each rank ",
-           "(percent data? use relabund_scale = \"percent\").", call. = FALSE)
+      stop("'relabund' must be proportions (0 to 1) that sum to at most 1 within each rank; the largest sum is ",
+           format(max(sums), digits = 4), ". Percent data? Use relabund_scale = \"percent\".", call. = FALSE)
     }
   }
   if (!identical(rownames(x$features), rownames(ref))) stop("'features' rows must match the assay rows.", call. = FALSE)
   if (!identical(rownames(x$samples), colnames(ref))) stop("'samples' rows must match the assay columns.", call. = FALSE)
   subj <- x$study$subject
   if (length(subj) == 1 && !is.na(subj) && !subj %in% colnames(x$samples)) {
-    stop("study$subject ('", subj, "') is not a column of 'samples'.", call. = FALSE)
+    stop("study$subject ('", subj, "') is not a column of 'samples'. Available: ", .show(colnames(x$samples), 6), ".", call. = FALSE)
   }
   zero <- if (!is.null(a$counts)) colSums(a$counts) == 0 else colSums(a$relabund) == 0
-  if (any(zero)) warning(sum(zero), " sample(s) have zero total abundance.", call. = FALSE)
+  if (any(zero)) warning(.plural(sum(zero), "sample"), " ", if (sum(zero) == 1) "has" else "have", " zero total abundance (",
+                         .show(colnames(ref)[zero]), "); kept, but left out of models.", call. = FALSE)
   invisible(x)
 }
 
@@ -237,7 +246,7 @@ print.mm_study <- function(x, ...) {
 study_table <- function(...) {
   xs <- list(...)
   if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "mm_study")) xs <- xs[[1]]
-  if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_study"))) stop("Supply mm_study objects.", call. = FALSE)
+  .check_list_of(xs, "mm_study", "as_study()")
   rows <- lapply(xs, function(x) {
     s <- x$study; a <- x$assays[[1]]
     data.frame(study = s$id, feature_type = s$feature_type, region = s$region, platform = s$platform,
@@ -245,6 +254,6 @@ study_table <- function(...) {
                measured = as.logical(s$measured), n_samples = ncol(a), n_features = nrow(a), stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
-  if (anyDuplicated(out$study)) stop("Study IDs must be unique.", call. = FALSE)
+  if (anyDuplicated(out$study)) stop("Study IDs must be unique; '", out$study[anyDuplicated(out$study)], "' is used twice.", call. = FALSE)
   out
 }

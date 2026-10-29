@@ -8,7 +8,7 @@ test_that("as_study accepts counts and proportions together and aligns them", {
   expect_equal(names(s$assays), c("counts", "relabund"))
   expect_identical(dimnames(s$assays$relabund), dimnames(s$assays$counts))
   expect_equal(unname(mm_relabund(s)["a", ]), unname(rel["a", ]))                       # reordered to match the counts
-  expect_error(as_study(counts = cn, relabund = rel[1:2, ], samples = smp4(), study = info), "same feature and sample IDs")
+  expect_error(as_study(counts = cn, relabund = rel[1:2, ], samples = smp4(), study = info), "IDs do not match between 'counts' and 'relabund'")
 })
 
 test_that("as_study rejects malformed input", {
@@ -21,7 +21,7 @@ test_that("as_study rejects malformed input", {
   expect_error(as_study(counts = cn, taxonomy = "x", samples = smp4(), study = info), "data.frame")
   expect_error(as_study(counts = cn, taxonomy = data.frame(phylum = "p", row.names = "zzz"), samples = smp4(), study = info), "do not match")
   na <- cn; na[1, 1] <- NA
-  expect_error(as_study(counts = na, samples = smp4(), study = info), "missing values")
+  expect_error(as_study(counts = na, samples = smp4(), study = info), "missing value")
 })
 
 test_that("check_study catches a study that was modified by hand", {
@@ -91,7 +91,7 @@ test_that("read_metaphlan reads a file with comment lines; read_dada2 works with
   expect_equal(unname(mm_relabund(s)[, "S1"]), c(0.6, 0.4)); expect_equal(mm_study_info(s)$feature_type, "taxon")
   writeLines(c("a\tb", "1\t2"), f)
   expect_error(read_metaphlan(f, data.frame(g = 1, row.names = "b"), list(id = "x")), "clade_name")
-  expect_error(read_metaphlan("no-such-file", data.frame(), list(id = "x")), "file path")
+  expect_error(read_metaphlan("no-such-file", data.frame(), list(id = "x")), "File not found")
   seqtab <- matrix(c(5, 6, 7, 8), 2, 2, dimnames = list(c("S1", "S2"), c("AAA", "CCC")))
   s2 <- read_dada2(seqtab, taxa = NULL, samples = data.frame(g = 1:2, row.names = c("S1", "S2")), study = list(id = "d"))
   expect_equal(rownames(mm_counts(s2)), c("ASV1", "ASV2")); expect_equal(mm_features(s2)$sequence, c("AAA", "CCC"))

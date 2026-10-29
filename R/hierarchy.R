@@ -10,7 +10,7 @@
 #'   features without a parent in the study.
 #' @export
 feature_parents <- function(study) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   f <- mm_features(study)
   if (!"rank" %in% colnames(f)) stop("The feature data has no 'rank' column.", call. = FALSE)
   cols <- intersect(.mm_ranks, colnames(f))
@@ -55,7 +55,7 @@ feature_parents <- function(study) {
 #'   not rejected) and `hier_rejected` (`p_hier <= q`).
 #' @export
 adjust_hierarchical <- function(pooled, parent, q = 0.05, p_col = "p_value") {
-  if (!inherits(pooled, "mm_pooled")) stop("'pooled' must be an mm_pooled object.", call. = FALSE)
+  .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   if (!is.numeric(q) || q <= 0 || q >= 1) stop("'q' must be between 0 and 1.", call. = FALSE)
   if (is.null(names(parent))) stop("'parent' must be a named vector (feature -> parent).", call. = FALSE)
   out <- as.data.frame(pooled)

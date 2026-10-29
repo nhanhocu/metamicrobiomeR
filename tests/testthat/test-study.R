@@ -38,7 +38,7 @@ test_that("a user-supplied rank groups features for the closure check", {
   tx <- data.frame(rank = c("phylum", "phylum", "genus", "genus"), row.names = rownames(rel))
   inf <- list(id = "ml", feature_type = "taxon")
   expect_s3_class(as_study(relabund = rel, taxonomy = tx, samples = smp, study = inf), "mm_study")
-  expect_error(as_study(relabund = rel, samples = smp, study = inf), "sums <= 1")
+  expect_error(as_study(relabund = rel, samples = smp, study = inf), "sum to at most 1")
 })
 
 test_that("samples and taxonomy are aligned to the assay order", {
@@ -74,7 +74,7 @@ test_that("invalid input is rejected with clear errors", {
   neg <- d$counts; neg[1, 1] <- -1
   expect_error(as_study(counts = neg, samples = d$samp, study = info), "negative")
   frac <- d$counts + 0.5
-  expect_error(as_study(counts = frac, samples = d$samp, study = info), "integers")
+  expect_error(as_study(counts = frac, samples = d$samp, study = info), "whole numbers")
   expect_error(as_study(counts = d$counts, samples = d$samp[-1, ], study = info), "samples")
   nn <- unname(d$counts)
   expect_error(as_study(counts = nn, samples = d$samp, study = info), "names")

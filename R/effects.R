@@ -41,7 +41,7 @@ new_effect_table <- function(study, feature, term, estimate, se,
 #' @return `x`, invisibly, if all checks pass.
 #' @export
 check_effects <- function(x) {
-  if (!inherits(x, "mm_effects")) stop("'x' must be an mm_effects object.", call. = FALSE)
+  .check_class(x, "mm_effects", "x", "fit_study() or bind_effects()")
   miss <- setdiff(.mm_effect_cols, colnames(x))
   if (length(miss)) stop("Effect table is missing column(s): ", paste(miss, collapse = ", "), ".", call. = FALSE)
   if (anyNA(x$study) || anyNA(x$feature) || anyNA(x$term) || anyNA(x$part)) {
@@ -75,9 +75,7 @@ check_effects <- function(x) {
 bind_effects <- function(..., allow_mixed_scale = FALSE, allow_mixed_engine = FALSE) {
   xs <- list(...)
   if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "data.frame")) xs <- xs[[1]]
-  if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_effects"))) {
-    stop("Supply mm_effects objects (see new_effect_table()).", call. = FALSE)
-  }
+  .check_list_of(xs, "mm_effects", "fit_study() or new_effect_table()")
   out <- do.call(rbind, lapply(xs, as.data.frame))
   class(out) <- c("mm_effects", "data.frame")
   check_effects(out)

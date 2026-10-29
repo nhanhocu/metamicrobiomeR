@@ -23,7 +23,7 @@
 plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, features = NULL, top = 25, order_by = c("p_value", "estimate"),
                          stars = TRUE, feature_labels = NULL) {
   order_by <- match.arg(order_by)
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   one <- function(x, what) { u <- unique(x); if (length(u) != 1) stop("Several ", what, "s available (", paste(u, collapse = ", "), "); choose one with '", what, "'.", call. = FALSE); u }
   if (is.null(term)) term <- one(effects$term, "term")
@@ -32,7 +32,7 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
   sel <- as.data.frame(sel[sel$part == part, , drop = FALSE])
   if (!nrow(sel)) stop("No estimates for that term and part.", call. = FALSE)
   if (is.null(pooled)) pooled <- tryCatch(suppressWarnings(pool_effects(effects, term = term, part = part)), error = function(e) NULL)
-  else if (!inherits(pooled, "mm_pooled")) stop("'pooled' must be an mm_pooled object (see pool_effects()).", call. = FALSE)
+  else .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   pl <- if (is.null(pooled)) NULL else as.data.frame(pooled)[pooled$term == term & pooled$part == part, , drop = FALSE]
   if (is.null(features)) {
     if (!is.null(pl) && nrow(pl)) {
@@ -86,7 +86,7 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
 #' @return A `ggplot` object.
 #' @export
 plot_volcano <- function(pooled, alpha = 0.05, label_top = 8, feature_labels = NULL, x_range = NULL) {
-  if (!inherits(pooled, "mm_pooled")) stop("'pooled' must be an mm_pooled object (see pool_effects()).", call. = FALSE)
+  .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   d <- as.data.frame(pooled)
   d <- d[!is.na(d$estimate) & !is.na(d$p_value), , drop = FALSE]
   if (!nrow(d)) stop("Nothing to plot.", call. = FALSE)

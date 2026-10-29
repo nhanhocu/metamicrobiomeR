@@ -2,7 +2,7 @@
 
 .as_study_list <- function(xs) {
   if (length(xs) == 1 && is.list(xs[[1]]) && !inherits(xs[[1]], "mm_study")) xs <- xs[[1]]
-  if (!length(xs) || !all(vapply(xs, inherits, logical(1), "mm_study"))) stop("Supply mm_study objects.", call. = FALSE)
+  .check_list_of(xs, "mm_study", "as_study()")
   xs
 }
 

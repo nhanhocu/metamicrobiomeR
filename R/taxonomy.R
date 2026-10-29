@@ -114,7 +114,7 @@ harmonise_names <- function(x, synonyms = NULL) {
 #'   columns down to the requested rank.
 #' @export
 agglomerate <- function(study, rank, key = c("lineage", "name"), unassigned = c("keep", "drop"), synonyms = NULL) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   key <- match.arg(key); unassigned <- match.arg(unassigned)
   rank <- match.arg(rank, .mm_ranks)
   feats <- mm_features(study)

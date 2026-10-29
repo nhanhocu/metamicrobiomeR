@@ -50,7 +50,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
                          adjust_by = c("part", "term", "rank")) {
   method <- match.arg(method)
   test <- match.arg(test)
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
   if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]
@@ -119,7 +119,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
 #'   absent from its rows.
 #' @export
 leave_one_out <- function(effects, feature = NULL, term = NULL, part = NULL, ...) {
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   if (!is.null(feature)) effects <- effects[effects$feature %in% feature, , drop = FALSE]
   studies <- unique(as.character(effects$study))
   if (length(studies) < 2) stop("Leave-one-out needs at least two studies.", call. = FALSE)

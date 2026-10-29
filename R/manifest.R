@@ -33,7 +33,7 @@ manifest <- function(x) {
     list(type = "pooled", settings = attr(x, "settings"), rows = nrow(x), features = length(unique(x$feature)),
          studies_per_feature = stats::setNames(range(x$k), c("min", "max")),
          features_dominated_by_one_study = sum(x$max_weight > 0.9, na.rm = TRUE))
-  } else stop("'x' must be an mm_study, mm_effects or mm_pooled object.", call. = FALSE)
+  } else stop("'x' must be an mm_study, mm_effects or mm_pooled object; got a ", class(x)[1], ".", call. = FALSE)
   structure(c(body, list(environment = env)), class = "mm_manifest")
 }
 

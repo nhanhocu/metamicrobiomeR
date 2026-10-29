@@ -26,7 +26,7 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
                          method = c("REML", "DL", "PM", "EB", "ML", "HE", "SJ"),
                          test = c("adhoc", "knha", "z"), p_adjust = "fdr") {
   method <- match.arg(method); test <- match.arg(test)
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (!is.data.frame(study_data) || !"study" %in% colnames(study_data)) {
     stop("'study_data' must be a data.frame with a column 'study'.", call. = FALSE)

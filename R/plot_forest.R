@@ -25,7 +25,7 @@
 #' @export
 plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NULL,
                         level = 0.95, show_pi = TRUE, feature_labels = NULL) {
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (missing(feature) || !length(feature)) stop("'feature' is required.", call. = FALSE)
   miss <- setdiff(feature, effects$feature)
@@ -47,7 +47,7 @@ plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NUL
 
   if (is.null(pooled)) {
     pooled <- tryCatch(suppressWarnings(pool_effects(effects, term = term, part = part)), error = function(e) NULL)
-  } else if (!inherits(pooled, "mm_pooled")) stop("'pooled' must be an mm_pooled object (see pool_effects()).", call. = FALSE)
+  } else .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   settings <- attr(pooled, "settings")
   pl <- if (is.null(pooled)) NULL else as.data.frame(pooled)[pooled$feature %in% feature & pooled$term == term & pooled$part == part, , drop = FALSE]
 

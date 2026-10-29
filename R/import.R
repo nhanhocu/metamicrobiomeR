@@ -1,12 +1,9 @@
 # Importers: bring data from current tools into a study object
 
-.need <- function(pkg, what) {
-  if (!requireNamespace(pkg, quietly = TRUE)) stop("Package '", pkg, "' is needed for ", what, ".", call. = FALSE)
-}
-
 .rank_columns <- function(tax) {
   tax <- as.data.frame(tax, stringsAsFactors = FALSE)
-  m <- match(.mm_ranks, tolower(colnames(tax)))
+  lc <- tolower(colnames(tax)); lc[lc %in% c("domain", "superkingdom") & !"kingdom" %in% lc] <- "kingdom"
+  m <- match(.mm_ranks, lc)
   out <- data.frame(row.names = rownames(tax))
   for (i in which(!is.na(m))) out[[.mm_ranks[i]]] <- .clean_taxon(as.character(tax[[m[i]]]))
   out
@@ -14,7 +11,8 @@
 
 .read_table <- function(x, ...) {
   if (is.data.frame(x) || is.matrix(x)) return(as.data.frame(x, stringsAsFactors = FALSE, check.names = FALSE))
-  if (!is.character(x) || length(x) != 1 || !file.exists(x)) stop("Supply a file path or a data.frame.", call. = FALSE)
+  if (!is.character(x) || length(x) != 1) stop("Supply a file path or a data.frame; got a ", class(x)[1], ".", call. = FALSE)
+  if (!file.exists(x)) stop("File not found: ", x, ".", call. = FALSE)
   utils::read.delim(x, check.names = FALSE, stringsAsFactors = FALSE, ...)
 }
 
@@ -266,7 +264,7 @@ read_function_table <- function(table, samples, study, measured, source = NULL) 
 #'   were stored (not derived from counts) are not renormalised.
 #' @export
 subset_samples <- function(study, keep) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   sel <- eval(substitute(keep), mm_samples(study), parent.frame())
   sel <- .as_selection(sel, ncol(study$assays[[1]]), "samples")
   as_study(counts = .sub(mm_counts(study), j = sel), relabund = .sub(study$assays$relabund, j = sel),
@@ -276,7 +274,7 @@ subset_samples <- function(study, keep) {
 #' @rdname subset_samples
 #' @export
 subset_features <- function(study, keep) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   sel <- eval(substitute(keep), mm_features(study), parent.frame())
   sel <- .as_selection(sel, nrow(study$assays[[1]]), "features")
   as_study(counts = .sub(mm_counts(study), i = sel), relabund = .sub(study$assays$relabund, i = sel),

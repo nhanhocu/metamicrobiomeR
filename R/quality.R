@@ -21,7 +21,7 @@
 #'   columns `flag_se`, `flag_converged`, `flag_estimate` and `flagged`).
 #' @export
 check_effects_quality <- function(effects, se_ratio = 0.1, max_abs_estimate = NULL, quantile = 0.05) {
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   d <- as.data.frame(effects)
   d$flag_se <- FALSE; d$flag_converged <- !d$converged
@@ -168,7 +168,7 @@ print.mm_poolcompare <- function(x, ...) {
 combine_pvalues <- function(effects, method = c("stouffer", "fisher"), weights = c("sqrt_n", "none"), term = NULL, part = NULL,
                             min_studies = 2, p_adjust = "fdr", adjust_by = c("part", "term", "rank")) {
   method <- match.arg(method); weights <- match.arg(weights); adjust_by <- match.arg(adjust_by, c("part", "term", "rank"), several.ok = TRUE)
-  if (!inherits(effects, "mm_effects")) stop("'effects' must be an mm_effects object.", call. = FALSE)
+  .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
   if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]

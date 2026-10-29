@@ -13,7 +13,7 @@
 #' @return A data.frame with one row per sample (row names are the sample IDs) and one column per metric.
 #' @export
 alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed"), rarefy = NULL, seed = NULL) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   metrics <- match.arg(metrics, c("shannon", "simpson", "inv_simpson", "pielou", "observed", "chao1"), several.ok = TRUE)
   cnt <- mm_counts(study)
   if (any(metrics %in% c("observed", "chao1")) && is.null(cnt)) stop("'observed' and 'chao1' need counts.", call. = FALSE)
@@ -57,7 +57,7 @@ alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed")
 #' @export
 fit_alpha <- function(study, formula, metrics = c("shannon", "simpson", "observed"), standardise = TRUE,
                       longitudinal = NULL, rarefy = NULL, seed = NULL) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
   info <- mm_study_info(study); sdat <- mm_samples(study)
   vars <- all.vars(formula); miss <- setdiff(vars, colnames(sdat))

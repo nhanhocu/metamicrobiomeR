@@ -72,7 +72,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
                       n_cycles = 100, exclude_unassigned = TRUE, prevalence = NULL,
                       zero_inflation = TRUE, pseudocount = NULL) {
-  if (!inherits(study, "mm_study")) stop("'study' must be an mm_study object.", call. = FALSE)
+  .check_class(study, "mm_study", "study", "as_study()")
   engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
     stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
