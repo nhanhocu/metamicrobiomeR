@@ -29,7 +29,7 @@ plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NUL
   check_effects(effects)
   if (missing(feature) || !length(feature)) stop("'feature' is required.", call. = FALSE)
   miss <- setdiff(feature, effects$feature)
-  if (length(miss)) stop("Feature(s) not in the effect table: ", paste(utils::head(miss, 3), collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) stop(.cap(.word(length(miss), "feature")), " not found in the effect table: ", .show(miss), ".", call. = FALSE)
   one <- function(x, what) {
     u <- unique(x)
     if (length(u) != 1) stop("Several ", what, "s available (", paste(u, collapse = ", "), "); choose one with '", what, "'.", call. = FALSE)

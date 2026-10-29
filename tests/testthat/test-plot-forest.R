@@ -89,7 +89,7 @@ test_that("a feature seen in too few studies is drawn without a pooled effect", 
 test_that("input is validated", {
   expect_error(plot_forest(data.frame(a = 1), feature = "g1"), "mm_effects")
   expect_error(plot_forest(eff), "feature")
-  expect_error(plot_forest(eff, feature = "nope"), "not in the effect table")
+  expect_error(plot_forest(eff, feature = "nope"), "not found in the effect table")
   two <- bind_effects(eff, mk("Bangladesh", "g1", 0.1, 0.1, term = "z"), mk("Haiti", "g1", 0.1, 0.1, term = "z"))
   expect_error(plot_forest(two, feature = "g1"), "choose one with 'term'")
   expect_s3_class(plot_forest(two, feature = "g1", term = "z"), "ggplot")

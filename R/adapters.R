@@ -34,7 +34,7 @@ effects_from <- function(x, tool = c("generic", "maaslin2", "ancombc2", "linda")
     stop("State the scale of the estimates with 'effect_scale' (for example \"log_fold_change\").", call. = FALSE)
   }
   d <- .read_table(x)
-  need <- function(cols) { m <- setdiff(cols, colnames(d)); if (length(m)) stop("The table for tool '", tool, "' lacks column(s): ", paste(m, collapse = ", "), ".", call. = FALSE) }
+  need <- function(cols) { m <- setdiff(cols, colnames(d)); if (length(m)) stop("The table for tool '", tool, "' lacks the ", .word(length(m), "column"), ": ", paste(m, collapse = ", "), ".", call. = FALSE) }
   out <- switch(tool,
     maaslin2 = {
       need(c("feature", "metadata", "value", "coef", "stderr", "pval"))

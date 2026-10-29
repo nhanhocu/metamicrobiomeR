@@ -51,8 +51,8 @@ fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank
   subject <- if (longitudinal) factor(sdat[ok, info$subject]) else NULL
   if (longitudinal) {
     varying <- vars[vapply(vars, function(v) any(tapply(d0[[v]], subject, function(x) length(unique(x))) > 1), logical(1))]
-    if (length(varying)) stop("Term(s) vary within subjects: ", paste(varying, collapse = ", "),
-                              ". Permuting whole subjects can only test between-subject terms. ",
+    if (length(varying)) stop(paste0("'", varying, "'", collapse = ", "), if (length(varying) == 1) " varies" else " vary", " within subjects. ",
+                              "Permuting whole subjects can only test between-subject terms. ",
                               "Use longitudinal = FALSE to ignore the repeated measures (p-values will be too small).", call. = FALSE)
   }
   perm <- if (is.null(subject)) permutations else

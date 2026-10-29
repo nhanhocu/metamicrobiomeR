@@ -56,7 +56,7 @@ test_that("a longitudinal model adds a subject random intercept", {
 test_that("fit_study validates its input", {
   s <- make_bezi_study()
   expect_error(fit_study(s, group ~ age), "one-sided")
-  expect_error(fit_study(s, ~ nope), "not in the sample data")
+  expect_error(fit_study(s, ~ nope), "not found in the sample data")
   expect_error(fit_study(s, ~ group, rank = "genus"), "rank")
   expect_error(fit_study(list(), ~ group), "mm_study")
 })

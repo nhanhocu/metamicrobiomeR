@@ -39,7 +39,7 @@ test_that("features with too few studies or a moderator without variation are sk
 test_that("input is validated", {
   expect_error(meta_regress(data.frame(a = 1), sd_, ~ region), "mm_effects")
   expect_error(meta_regress(eff, sd_[, "region", drop = FALSE], ~ region), "column 'study'")
-  expect_error(meta_regress(eff, sd_, ~ nope), "not in 'study_data'")
+  expect_error(meta_regress(eff, sd_, ~ nope), "not found in 'study_data'")
   expect_error(meta_regress(eff, sd_[1:3, ], ~ region), "No study_data")
   expect_error(meta_regress(eff, sd_, "region"), "one-sided")
 })

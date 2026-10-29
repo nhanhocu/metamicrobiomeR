@@ -105,7 +105,7 @@ pool_effects <- function(effects, term = NULL, part = NULL,
             " studies or in fewer than ", .pct(min_prop), " of the studies reporting the term).")
   }
   if (test != "z" && any(out$k == 2)) {
-    .inform(sum(out$k == 2), " feature(s) pooled from only 2 studies: the Hartung-Knapp test then has 1 degree of freedom and is very conservative (see ?pool_effects).",
+    .inform(.plural(sum(out$k == 2), "feature"), if (sum(out$k == 2) == 1) " was" else " were", " pooled from only 2 studies: the Hartung-Knapp test then has 1 degree of freedom and is very conservative (see ?pool_effects).",
             once = "k2-hk")
   }
   fam <- do.call(paste, c(lapply(adjust_by, function(a) out[[a]]), sep = "\r"))
@@ -158,7 +158,7 @@ print.mm_pooled <- function(x, n = 6, ...) {
   d <- as.data.frame(x); s <- attr(x, "settings")
   if (!all(c("feature", "part", "term", "k", "estimate", "p_value", "I2") %in% colnames(d)) || !nrow(d)) { print(d, ...); return(invisible(x)) }
   cat("<mm_pooled> ", .plural(nrow(d), "feature"), " pooled",
-      if (!is.null(s)) paste0(" (", s$method, ", ", s$test, " test)"), "; ", d$k[which.min(d$k)], " to ", max(d$k), " studies each\n", sep = "")
+      if (!is.null(s)) paste0(" (", s$method, ", ", s$test, " test)"), "; ", if (min(d$k) == max(d$k)) max(d$k) else paste(min(d$k), "to", max(d$k)), " studies each\n", sep = "")
   sig <- if ("p_adjust" %in% colnames(d)) sum(d$p_adjust <= 0.05, na.rm = TRUE) else NA
   one_pt <- length(unique(d$part)) == 1 && length(unique(d$term)) == 1
   cat("  ", if (one_pt) paste0("term ", d$term[1], " (", d$part[1], ") | "), "adjusted p <= 0.05: ", sig, " | median I2: ", format(round(stats::median(d$I2, na.rm = TRUE)), trim = TRUE), "%",

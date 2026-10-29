@@ -13,7 +13,7 @@ test_that("the helpers format messages consistently", {
   expect_equal(metamicrobiomeR:::.id_mismatch("Sample IDs", "A", c("a", "b"), "B", c("b", "c")), "Sample IDs do not match between A and B: 1 only in A (a); 1 only in B (c).")
   expect_null(metamicrobiomeR:::.id_mismatch("x", "A", "a", "B", "a"))
   expect_error(metamicrobiomeR:::.need("notARealPackage123", "testing"), "Install it with install.packages\\(\"notARealPackage123\"\\)")
-  expect_error(metamicrobiomeR:::.missing_vars("zz", c("a", "b")), "Variable\\(s\\) not in the sample data: zz. Available: a, b.")
+  expect_error(metamicrobiomeR:::.missing_vars("zz", c("a", "b")), "Variable not found in the sample data: zz. Available: a, b.")
   expect_error(metamicrobiomeR:::.check_list_of(list(1), "mm_study", "as_study()"), "Supply mm_study objects \\(see as_study\\(\\)\\); got a numeric")
 })
 
@@ -65,7 +65,7 @@ test_that("fit_study reports what it filtered, what it left out, and why nothing
   expect_equal(nrow(e), 0)
   expect_message(fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_mean = 0.2), "Fitting \\d of 8 features \\(\\d below the prevalence and abundance filters\\)")
   expect_silent(fit_q(s))                                                                             # nothing notable: nothing printed
-  expect_error(fit_study(s, ~ grp), "Variable\\(s\\) not in the sample data: grp. Available: group.")
+  expect_error(fit_study(s, ~ grp), "Variable not found in the sample data: grp. Available: group.")
   expect_error(fit_study(mm_counts(s), ~ group), "'study' must be an mm_study object \\(see as_study\\(\\)\\); got a matrix")
   expect_error(fit_study(s, ~ group, rank = "genus"), "no 'rank' column, so 'rank' cannot select features; agglomerate\\(\\) creates one")
 })
@@ -127,7 +127,7 @@ test_that("effect and pooled tables print a short header instead of a raw data f
   expect_match(testthat::capture_output(print(p0[0, ])), "feature")
   big <- bind_effects(mkq(paste0("s", 1:8), rep(.5, 8), rep(.1, 8), "g1")); expect_match(testthat::capture_output(print(big)), "# ... 2 more rows")
   p <- pool_effects(b, method = "DL", test = "z")
-  expect_match(testthat::capture_output(print(p)), "<mm_pooled> 1 feature pooled \\(DL, z test\\); 4 to 4 studies each")
+  expect_match(testthat::capture_output(print(p)), "<mm_pooled> 1 feature pooled \\(DL, z test\\); 4 studies each")
   expect_match(testthat::capture_output(print(p)), "adjusted p <= 0.05: 1 \\| median I2: 0%")
   dom <- bind_effects(mkq(c("a", "b", "c"), c(.4, .0, .5), c(.005, .4, .35)))
   expect_match(testthat::capture_output(print(pool_effects(dom, method = "DL", test = "z"))), "1 dominated by one study")

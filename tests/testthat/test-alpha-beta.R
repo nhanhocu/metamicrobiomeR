@@ -41,7 +41,7 @@ test_that("fit_alpha returns standardised effects equal to a direct linear model
   expect_equal(raw$estimate / stats::sd(al$observed), e$estimate[e$feature == "observed"], tolerance = 1e-8)
   m <- fit_alpha(mk_alpha(subject = TRUE), ~ group, metrics = "shannon")         # mixed model
   expect_true(all(is.na(m$df)) && nrow(m) == 1)
-  expect_error(fit_alpha(s, ~ nope), "not in the sample data"); expect_error(fit_alpha(s, ~ group, longitudinal = TRUE), "subject")
+  expect_error(fit_alpha(s, ~ nope), "not found in the sample data"); expect_error(fit_alpha(s, ~ group, longitudinal = TRUE), "subject")
   # the effects can be pooled across studies like any feature
   e2 <- as.data.frame(e); e2$study <- "al2"; class(e2) <- class(e)
   two <- bind_effects(e, e2)
@@ -67,7 +67,7 @@ test_that("fit_beta finds a composition difference and not a random one", {
   expect_lt(nul$R2, 0.1); expect_gt(nul$p_value, 0.05)
   a <- fit_beta(mk_beta(), ~ group, distance = "aitchison", permutations = 99, seed = 1)
   expect_gt(a$R2, 0.3); expect_equal(a$distance, "aitchison")
-  expect_error(fit_beta(mk_beta(), ~ nope), "not in the sample data")
+  expect_error(fit_beta(mk_beta(), ~ nope), "not found in the sample data")
 })
 
 test_that("with a subject, whole subjects are permuted and R2 is unchanged", {
@@ -83,7 +83,7 @@ test_that("with a subject, whole subjects are permuted and R2 is unchanged", {
 test_that("a term that varies within subjects is refused instead of returning p = 1", {
   skip_if_not_installed("vegan"); skip_if_not_installed("permute")
   s <- mk_beta(between = FALSE); s$study$subject <- "person"                    # group alternates within each person
-  expect_error(fit_beta(s, ~ group, permutations = 49), "vary within subjects")
+  expect_error(fit_beta(s, ~ group, permutations = 49), "within subjects")
   expect_s3_class(fit_beta(s, ~ group, permutations = 49, longitudinal = FALSE), "mm_beta")
   expect_error(fit_beta(mk_beta(), ~ group, longitudinal = TRUE), "needs study\\$subject")
 })

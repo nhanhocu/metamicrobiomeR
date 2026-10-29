@@ -31,6 +31,17 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
 * **Output and reporting:** `plot_forest()`, `manifest()`, `write_manifest()`.
 * **Simulation:** `simulate_study()`, `simulate_studies()`.
 
+## Messages
+
+* Informational messages say what the package decided or left out (samples with missing values, features
+  below the filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet
+  otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences them. Errors name the IDs and values involved and
+  say what to do. Third-party console output (lme4 singular fits, glmmTMB, GAMLSS) is captured and reported once.
+  `fit_info` gains `first_warning` and `singular`. Effect and pooled tables print a short header.
+  See `dev/MESSAGES.md`.
+* New guards: pooling or meta-regression of estimates from different engines or scales now fails with a clear
+  error (previously only `bind_effects()` checked); a `Domain` taxonomy column is read as the kingdom.
+
 ## Changed from 1.x
 
 * 1.x mixed-model p-values were 2% too small, adjusted p-value columns were truncated at the last

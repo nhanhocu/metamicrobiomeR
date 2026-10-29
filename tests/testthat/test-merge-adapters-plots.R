@@ -93,11 +93,11 @@ test_that("results from other tools pool, combine, and are kept apart from other
 test_that("effects_from validates its input", {
   expect_error(effects_from(mq, "maaslin2", "S1"), "effect_scale")
   expect_error(effects_from(mq, "maaslin2", effect_scale = "c"), "single study ID")
-  expect_error(effects_from(mq[, -4], "maaslin2", "S1", effect_scale = "c"), "lacks column")
+  expect_error(effects_from(mq[, -4], "maaslin2", "S1", effect_scale = "c"), "lacks the column")
   expect_error(effects_from(mq, "maaslin2", "S1", effect_scale = "c", term = "nope"), "No rows")
   expect_error(effects_from(mq, "generic", "S1", effect_scale = "c"), "columns")
   expect_error(effects_from(data.frame(taxon = "a"), "ancombc2", "S1", effect_scale = "c"), "lfc")
-  expect_error(effects_from(data.frame(a = 1), "generic", "S1", effect_scale = "c", columns = list(feature = "x", term = "y", estimate = "z", se = "w", p_value = "v")), "lacks column")
+  expect_error(effects_from(data.frame(a = 1), "generic", "S1", effect_scale = "c", columns = list(feature = "x", term = "y", estimate = "z", se = "w", p_value = "v")), "lacks the column")
 })
 
 # ---------- overview plots ----------
@@ -129,7 +129,7 @@ test_that("plot_heatmap shows every feature in every study plus the pooled colum
 
 test_that("plot_heatmap and plot_volcano validate input and use the pooled table", {
   expect_error(plot_heatmap(data.frame(a = 1)), "mm_effects")
-  expect_error(plot_heatmap(effp, features = "zzz"), "not in the effect table")
+  expect_error(plot_heatmap(effp, features = "zzz"), "not found in the effect table")
   expect_error(plot_heatmap(effp, pooled = data.frame(a = 1)), "mm_pooled")
   expect_s3_class(plot_heatmap(effp, features = "g1"), "ggplot")                            # pooled computed when not supplied
   pl <- pool_effects(effp, term = "x", min_prop = 0)

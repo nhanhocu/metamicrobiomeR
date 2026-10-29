@@ -43,7 +43,7 @@ new_effect_table <- function(study, feature, term, estimate, se,
 check_effects <- function(x) {
   .check_class(x, "mm_effects", "x", "fit_study() or bind_effects()")
   miss <- setdiff(.mm_effect_cols, colnames(x))
-  if (length(miss)) stop("Effect table is missing column(s): ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) stop(.cap(.word(length(miss), "column")), " missing from the effect table: ", paste(miss, collapse = ", "), ".", call. = FALSE)
   if (anyNA(x$study) || anyNA(x$feature) || anyNA(x$term) || anyNA(x$part)) {
     stop("'study', 'feature', 'part' and 'term' must not be missing.", call. = FALSE)
   }

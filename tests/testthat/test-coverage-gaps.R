@@ -109,7 +109,7 @@ test_that("a phyloseq object with samples in rows converts", {
 test_that("effect-table validation reports what is wrong", {
   e <- new_effect_table("s", c("f1", "f2"), "x", c(0.1, 0.2), c(0.1, 0.1))
   expect_error(check_effects(data.frame(a = 1)), "mm_effects")
-  bad <- as.data.frame(e)[, -1]; class(bad) <- class(e); expect_error(check_effects(bad), "missing column")
+  bad <- as.data.frame(e)[, -1]; class(bad) <- class(e); expect_error(check_effects(bad), "missing from the effect table")
   bad <- as.data.frame(e); bad$study[1] <- NA; class(bad) <- class(e); expect_error(check_effects(bad), "must not be missing")
   bad <- as.data.frame(e); bad$converged[1] <- NA; class(bad) <- class(e); expect_error(check_effects(bad), "converged")
   na <- bind_effects(new_effect_table("s1", "f", "x", NA, 0.1), new_effect_table("s2", "f", "x", NA, 0.1))

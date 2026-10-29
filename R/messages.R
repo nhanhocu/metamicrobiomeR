@@ -22,6 +22,10 @@
 
 .plural <- function(n, one, many = paste0(one, "s")) paste(format(n, big.mark = ","), if (n == 1) one else many)
 
+# a noun in the right number, and capitalised
+.word <- function(n, one, many = paste0(one, "s")) if (n == 1) one else many
+.cap <- function(x) paste0(toupper(substr(x, 1, 1)), substr(x, 2, nchar(x)))
+
 .pct <- function(x) paste0(format(round(100 * x), trim = TRUE), "%")
 
 # Wrong type of argument: say what was expected, where to get one, and what was received
@@ -43,7 +47,7 @@
 
 # Variables missing from a data frame, with what is available
 .missing_vars <- function(miss, avail, where = "the sample data") {
-  stop("Variable(s) not in ", where, ": ", paste(miss, collapse = ", "), ". Available: ", .show(avail, 6), ".", call. = FALSE)
+  stop(.cap(.word(length(miss), "variable")), " not found in ", where, ": ", paste(miss, collapse = ", "), ". Available: ", .show(avail, 6), ".", call. = FALSE)
 }
 
 # Package needed for an optional feature, with how to install it

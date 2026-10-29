@@ -30,6 +30,9 @@ leave_one_out(bound, feature = "g__Blautia", term = "groupb")
 write_manifest(genus, "cohort1-manifest.txt")
 ```
 
+Functions say what they decided or left out (for example "6 of 40 samples have missing values and are left
+out") and stay quiet otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences the messages, not the warnings.
+
 See `vignette("getting-started")` for a runnable example and `vignette("migrating-from-1x")`
 for the changes from 1.x.
 

@@ -41,7 +41,7 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
     } else {
       mx <- tapply(abs(sel$estimate), sel$feature, max, na.rm = TRUE); features <- names(sort(mx, decreasing = TRUE))[seq_len(min(top, length(mx)))]
     }
-  } else if (length(setdiff(features, sel$feature))) stop("Feature(s) not in the effect table: ", paste(utils::head(setdiff(features, sel$feature), 3), collapse = ", "), ".", call. = FALSE)
+  } else if (length(setdiff(features, sel$feature))) stop(.cap(.word(length(setdiff(features, sel$feature)), "feature")), " not found in the effect table: ", .show(setdiff(features, sel$feature)), ".", call. = FALSE)
   studies <- unique(sel$study); cols <- c(studies, "Pooled")
   lab <- function(f) if (!is.null(feature_labels) && !is.na(feature_labels[f])) unname(feature_labels[f]) else f
   grid <- expand.grid(feature = features, column = cols, stringsAsFactors = FALSE)
@@ -107,5 +107,5 @@ plot_volcano <- function(pooled, alpha = 0.05, label_top = 8, feature_labels = N
     ggplot2::scale_colour_manual(values = c("not significant" = "grey55", "significant" = "#B2182B"), drop = FALSE, name = NULL) +
     ggplot2::facet_wrap(~panel, scales = "free") +
     ggplot2::labs(x = "Pooled estimate", y = expression(-log[10](p)),
-                  caption = if (any(d$beyond)) paste0(sum(d$beyond), " estimate(s) beyond the plotted range are drawn at the edge (triangles).")) + ggplot2::theme_minimal(base_size = 11) + ggplot2::theme(legend.position = "bottom")
+                  caption = if (any(d$beyond)) paste0(.plural(sum(d$beyond), "estimate"), " beyond the plotted range ", if (sum(d$beyond) == 1) "is" else "are", " drawn at the edge (triangles).")) + ggplot2::theme_minimal(base_size = 11) + ggplot2::theme(legend.position = "bottom")
 }

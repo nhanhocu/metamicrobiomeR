@@ -34,7 +34,7 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
   if (!inherits(moderators, "formula") || length(moderators) != 2) stop("'moderators' must be a one-sided formula, e.g. ~ region.", call. = FALSE)
   mv <- all.vars(moderators)
   miss <- setdiff(mv, colnames(study_data))
-  if (length(miss)) stop("Moderator(s) not in 'study_data': ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) stop(.cap(.word(length(miss), "moderator")), " not found in 'study_data': ", paste(miss, collapse = ", "), ". Available: ", .show(setdiff(colnames(study_data), "study"), 6), ".", call. = FALSE)
   if (anyDuplicated(study_data$study)) stop("'study_data' must have one row per study.", call. = FALSE)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
   if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]
