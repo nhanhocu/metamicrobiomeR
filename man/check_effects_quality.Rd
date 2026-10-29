@@ -20,7 +20,7 @@ small standard error.}
 \item{max_abs_estimate}{Optionally flag estimates with a larger absolute value (only
 meaningful on scales with a natural range, such as logits).}
 
-\item{quantile}{The quantile used as a study's "small standard error" (default 5%).}
+\item{quantile}{The quantile used as a study's "small standard error" (default 5 per cent).}
 }
 \value{
 An object of class `mm_quality`: `studies` (per study, part and term: the number of

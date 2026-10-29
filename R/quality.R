@@ -14,7 +14,7 @@
 #'   small standard error.
 #' @param max_abs_estimate Optionally flag estimates with a larger absolute value (only
 #'   meaningful on scales with a natural range, such as logits).
-#' @param quantile The quantile used as a study's "small standard error" (default 5%).
+#' @param quantile The quantile used as a study's "small standard error" (default 5 per cent).
 #' @return An object of class `mm_quality`: `studies` (per study, part and term: the number of
 #'   estimates, the proportion converged, the minimum, the chosen quantile and the median of
 #'   the standard errors, and how many were flagged) and `rows` (the effect rows with the flag
