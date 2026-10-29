@@ -166,6 +166,11 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                           effect_scale = tab$effect_scale, converged = tab$converged)
   fit_info <- do.call(rbind, log)
   attr(out, "fit_info") <- fit_info
+  attr(out, "fit_settings") <- list(formula = deparse(formula), engine = engine, rank = rank, longitudinal = longitudinal,
+                                    min_prevalence = min_prevalence, min_mean = min_mean, exclude_unassigned = exclude_unassigned,
+                                    n_cycles = if (engine == "bezi_gamlss") n_cycles else NULL,
+                                    prevalence = if (!is.null(prevalence)) deparse(prevalence), zero_inflation = if (engine == "zibb_glmmtmb") zero_inflation,
+                                    pseudocount = pseudocount)
   if (!is.null(fit_info) && any(!is.na(fit_info$error))) {
     warning(sum(!is.na(fit_info$error)), " of ", nrow(fit_info), " fits failed (first error: ",
             fit_info$error[!is.na(fit_info$error)][1], ").", call. = FALSE)
