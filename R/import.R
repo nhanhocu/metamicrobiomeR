@@ -41,7 +41,8 @@ read_dada2 <- function(seqtab, taxa = NULL, samples, study) {
   if (!is.null(taxa)) {
     taxa <- as.data.frame(taxa, stringsAsFactors = FALSE)
     if (is.null(rownames(taxa)) || !all(colnames(seqtab) %in% rownames(taxa))) {
-      if (nrow(taxa) != ncol(seqtab)) stop("'taxa' must have one row per sequence of 'seqtab'.", call. = FALSE)
+      if (nrow(taxa) != ncol(seqtab)) stop("'taxa' must have one row per sequence of 'seqtab' (", nrow(taxa), " rows for ", ncol(seqtab), " sequences).", call. = FALSE)
+      if (.row_names_info(taxa) > 0) warning("The row names of 'taxa' do not match the sequences of 'seqtab'; assuming the rows are in the same order.", call. = FALSE)
       rownames(taxa) <- colnames(seqtab)
     }
     tax <- .rank_columns(taxa[colnames(seqtab), , drop = FALSE]); rownames(tax) <- ids
@@ -74,6 +75,8 @@ read_qiime2 <- function(feature_table, taxonomy = NULL, samples, study) {
   if (!is.null(taxonomy)) {
     tt <- .read_table(taxonomy)
     if (!all(c("Feature ID", "Taxon") %in% colnames(tt))) stop("'taxonomy' needs the columns 'Feature ID' and 'Taxon'.", call. = FALSE)
+    n_no_tax <- sum(!ids %in% tt[["Feature ID"]])
+    if (n_no_tax) .inform(n_no_tax, " of ", length(ids), " features have no row in the taxonomy table and are left unassigned.")
     p <- parse_taxonomy(tt$Taxon)[match(ids, tt[["Feature ID"]]), , drop = FALSE]
     tax <- p[, .mm_ranks, drop = FALSE]; rownames(tax) <- ids
     tax <- tax[, colSums(!is.na(tax)) > 0, drop = FALSE]
@@ -108,7 +111,8 @@ read_metaphlan <- function(profile, samples, study, level = "species") {
   if (!"clade_name" %in% colnames(pt)) stop("'profile' needs a 'clade_name' column.", call. = FALSE)
   p <- parse_taxonomy(pt$clade_name, sep = "|")
   keep <- !is.na(p$deepest) & p$deepest == level & !grepl("t__", pt$clade_name, fixed = TRUE)
-  if (!any(keep)) stop("No clades at level '", level, "'.", call. = FALSE)
+  if (!any(keep)) stop("No clades at level '", level, "' in the profile (deepest levels found: ", .show(unique(na.omit(p$deepest)), 4), ").", call. = FALSE)
+  .inform("Kept ", sum(keep), " of ", length(keep), " rows: the clades at level '", level, "'.")
   pt <- pt[keep, , drop = FALSE]; p <- p[keep, , drop = FALSE]
   vals <- as.matrix(pt[, !colnames(pt) %in% c("clade_name", "NCBI_tax_id"), drop = FALSE]); mode(vals) <- "numeric"
   rownames(vals) <- pt$clade_name
@@ -246,6 +250,7 @@ read_function_table <- function(table, samples, study, measured, source = NULL) 
     j <- which(tolower(colnames(tt)) == "description"); desc <- as.character(tt[[j]]); tt <- tt[, -j, drop = FALSE]
   }
   m <- as.matrix(tt); mode(m) <- "numeric"; rownames(m) <- ids
+  .inform("Each sample is normalised to proportions, so functions are analysed as relative abundances.", once = "function-normalise")
   tot <- colSums(m)
   rel <- sweep(m, 2, tot, "/"); rel[, tot == 0] <- 0
   feats <- if (is.null(desc)) NULL else data.frame(description = desc, row.names = ids, stringsAsFactors = FALSE)

@@ -38,6 +38,7 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
   if (anyDuplicated(study_data$study)) stop("'study_data' must have one row per study.", call. = FALSE)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
   if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]
+  .check_comparable(effects)
   effects <- as.data.frame(effects)
   unknown <- setdiff(unique(effects$study), study_data$study)
   if (length(unknown)) stop("No study_data for: ", paste(unknown, collapse = ", "), ".", call. = FALSE)
@@ -63,7 +64,9 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
                QM = fit$QM, QM_p = fit$QMp, tau2 = fit$tau2, I2 = fit$I2, stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
-  if (is.null(out)) stop("No feature has enough studies for this meta-regression (it needs more studies than coefficients).", call. = FALSE)
+  n_skip <- sum(vapply(rows, is.null, logical(1)))
+  if (is.null(out)) stop("No feature has enough studies for this meta-regression: it needs more studies than model coefficients and a moderator that varies between them. Check 'study_data' and the formula.", call. = FALSE)
+  if (n_skip) .inform(n_skip, " of ", length(rows), " features skipped (fewer studies than model coefficients, or a moderator without variation).")
   one <- !duplicated(paste(out$part, out$term, out$feature, sep = "\r"))
   fam <- paste(out$rank, out$part, out$term, sep = "\r")
   out$QM_p_adjust <- NA_real_

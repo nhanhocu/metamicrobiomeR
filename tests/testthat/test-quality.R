@@ -25,7 +25,7 @@ test_that("check_effects_quality flags implausibly small standard errors of one 
 })
 
 test_that("filter_effects removes the flagged estimates, records why, and changes the pooled result", {
-  expect_message(f <- filter_effects(eff), "3 of 30 estimates dropped")
+  expect_message(f <- filter_effects(eff), "Dropped 3 of 30 estimates")
   expect_s3_class(f, "mm_effects"); expect_equal(nrow(f), 27)
   dr <- attr(f, "dropped"); expect_equal(nrow(dr), 3); expect_true(all(grepl("implausible standard error", dr$reason)))
   # one feature whose pooled result depends on the degenerate study

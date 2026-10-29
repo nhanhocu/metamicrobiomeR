@@ -29,16 +29,17 @@ fit_beta <- function(study, formula, distance = "bray", permutations = 999, rank
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group.", call. = FALSE)
   info <- mm_study_info(study); sdat <- mm_samples(study)
   vars <- all.vars(formula); miss <- setdiff(vars, colnames(sdat))
-  if (length(miss)) stop("Variable(s) not in the sample data: ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) .missing_vars(miss, colnames(sdat))
   ra <- mm_relabund(study); feats <- mm_features(study)
   if (!is.null(rank)) {
-    if (!"rank" %in% colnames(feats)) stop("The feature data has no 'rank' column.", call. = FALSE)
+    if (!"rank" %in% colnames(feats)) stop("The feature data has no 'rank' column, so 'rank' cannot select features; agglomerate() creates one.", call. = FALSE)
     ra <- ra[feats$rank %in% rank, , drop = FALSE]
-    if (!nrow(ra)) stop("No features with rank: ", paste(rank, collapse = ", "), ".", call. = FALSE)
+    if (!nrow(ra)) stop("No features with rank ", paste0("'", rank, "'", collapse = ", "), "; the study has: ", .show(sort(unique(feats$rank)), 6), ".", call. = FALSE)
   }
   d0 <- sdat[, vars, drop = FALSE]
   ok <- stats::complete.cases(d0) & colSums(is.na(ra)) == 0 & colSums(ra) > 0
-  if (sum(ok) < 4) stop("Too few complete samples.", call. = FALSE)
+  if (sum(ok) < 4) stop("Too few usable samples: ", sum(ok), " of ", length(ok), " have complete model variables and some abundance, but at least 4 are needed.", call. = FALSE)
+  if (!all(ok)) .inform(sum(!ok), " of ", length(ok), " samples are left out (missing model variables or no abundance).")
   d0 <- d0[ok, , drop = FALSE]; ra <- ra[, ok, drop = FALSE]
   for (v in vars) if (is.factor(d0[[v]])) d0[[v]] <- droplevels(d0[[v]])
   X <- t(ra)
@@ -86,7 +87,9 @@ pool_beta <- function(..., method = c("stouffer", "fisher")) {
   .check_list_of(xs, "mm_beta", "fit_beta()")
   d <- do.call(rbind, lapply(xs, as.data.frame))
   if (length(unique(d$distance)) > 1) stop("All studies must use the same distance.", call. = FALSE)
-  if (anyDuplicated(paste(d$study, d$term))) stop("Duplicate study and term.", call. = FALSE)
+  if (anyDuplicated(paste(d$study, d$term))) {
+    i <- anyDuplicated(paste(d$study, d$term)); stop("Study '", d$study[i], "' has term '", d$term[i], "' more than once.", call. = FALSE)
+  }
   rows <- lapply(unique(d$term), function(tm) {
     x <- d[d$term == tm, ]; k <- nrow(x)
     p <- pmin(pmax(x$p_value, 1e-12), 1 - 1e-12)

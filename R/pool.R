@@ -54,15 +54,19 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   check_effects(effects)
   if (!is.null(term)) effects <- effects[effects$term %in% term, , drop = FALSE]
   if (!is.null(part)) effects <- effects[effects$part %in% part, , drop = FALSE]
-  if (!nrow(effects)) stop("No effects left after selecting term and part.", call. = FALSE)
+  if (!nrow(effects)) stop("No effects left after selecting term", if (!is.null(term)) paste0(" '", paste(term, collapse = "', '"), "'"), " and part",
+                           if (!is.null(part)) paste0(" '", paste(part, collapse = "', '"), "'"), ".", call. = FALSE)
+  .check_comparable(effects)
   adjust_by <- match.arg(adjust_by, c("part", "term", "rank"), several.ok = TRUE)
   effects <- as.data.frame(effects)
-  bad <- is.na(effects$estimate) | is.na(effects$se) | effects$se <= 0
+  miss <- is.na(effects$estimate) | is.na(effects$se); bad <- miss | effects$se <= 0
   if (any(bad)) {
-    warning(sum(bad), " estimate(s) with a missing value or non-positive standard error were dropped.", call. = FALSE)
+    why <- c(if (any(miss)) paste(sum(miss), "with a missing estimate or standard error"),
+             if (any(bad & !miss)) paste(sum(bad & !miss), "with a standard error that is not positive"))
+    warning(.plural(sum(bad), "estimate"), " not used: ", paste(why, collapse = ", "), ".", call. = FALSE)
     effects <- effects[!bad, , drop = FALSE]
   }
-  if (!nrow(effects)) stop("No usable estimates to pool.", call. = FALSE)
+  if (!nrow(effects)) stop("No usable estimates to pool: every estimate has a missing value or a standard error that is missing or not positive.", call. = FALSE)
 
   effects$.group <- paste(effects$part, effects$term, sep = "\r")
   n_studies <- tapply(effects$study, effects$.group, function(s) length(unique(s)))
@@ -90,7 +94,20 @@ pool_effects <- function(effects, term = NULL, part = NULL,
                stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows)
-  if (is.null(out)) stop("No feature met the requirements for pooling (min_studies, min_prop).", call. = FALSE)
+  if (is.null(out)) {
+    kmax <- max(table(effects$.key))
+    stop("No feature was estimated in enough studies to pool: it needs at least ", min_studies, " studies and ", .pct(min_prop),
+         " of the studies reporting the term, but the most any feature has is ", kmax, ". Lower 'min_studies' or 'min_prop'.", call. = FALSE)
+  }
+  n_total <- length(keys)
+  if (nrow(out) < n_total) {
+    .inform(.plural(n_total - nrow(out), "feature"), " of ", n_total, " not pooled (estimated in fewer than ", min_studies,
+            " studies or in fewer than ", .pct(min_prop), " of the studies reporting the term).")
+  }
+  if (test != "z" && any(out$k == 2)) {
+    .inform(sum(out$k == 2), " feature(s) pooled from only 2 studies: the Hartung-Knapp test then has 1 degree of freedom and is very conservative (see ?pool_effects).",
+            once = "k2-hk")
+  }
   fam <- do.call(paste, c(lapply(adjust_by, function(a) out[[a]]), sep = "\r"))
   out$p_adjust <- NA_real_
   if (p_adjust == "none") out$p_adjust <- out$p_value else {
@@ -131,7 +148,21 @@ leave_one_out <- function(effects, feature = NULL, term = NULL, part = NULL, ...
     p
   })
   out <- do.call(rbind, res)
-  if (is.null(out)) stop("No feature could be pooled after omitting any single study.", call. = FALSE)
+  if (is.null(out)) stop("No feature could be pooled after omitting any single study; each needs at least 'min_studies' studies left (default 2).", call. = FALSE)
   rownames(out) <- NULL
   out
+}
+
+#' @export
+print.mm_pooled <- function(x, n = 6, ...) {
+  d <- as.data.frame(x); s <- attr(x, "settings")
+  cat("<mm_pooled> ", .plural(nrow(d), "feature"), " pooled",
+      if (!is.null(s)) paste0(" (", s$method, ", ", s$test, " test)"), "; ", d$k[which.min(d$k)], " to ", max(d$k), " studies each\n", sep = "")
+  sig <- if ("p_adjust" %in% colnames(d)) sum(d$p_adjust <= 0.05, na.rm = TRUE) else NA
+  cat("  adjusted p <= 0.05: ", sig, " | median I2: ", format(round(stats::median(d$I2, na.rm = TRUE)), trim = TRUE), "%",
+      if ("max_weight" %in% colnames(d) && any(d$max_weight > 0.9, na.rm = TRUE)) paste0(" | ", sum(d$max_weight > 0.9, na.rm = TRUE), " dominated by one study (max_weight > 0.9)"), "\n", sep = "")
+  show <- d[seq_len(min(n, nrow(d))), intersect(c("feature", "part", "term", "k", "estimate", "ci_lo", "ci_hi", "p_value", "p_adjust", "I2", "max_weight"), colnames(d)), drop = FALSE]
+  print(show, row.names = FALSE, digits = 3)
+  if (nrow(d) > n) cat("# ... ", nrow(d) - n, " more rows\n", sep = "")
+  invisible(x)
 }

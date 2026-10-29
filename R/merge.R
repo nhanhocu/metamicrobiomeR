@@ -28,9 +28,9 @@
 merge_studies <- function(studies, rank = NULL, key = c("name", "lineage"), features = c("intersection", "union"), study_var = "study") {
   key <- match.arg(key); features <- match.arg(features)
   xs <- .as_study_list(list(studies))
-  if (length(xs) < 2) stop("Merging needs at least two studies.", call. = FALSE)
+  if (length(xs) < 2) stop("Merging needs at least two studies; got ", length(xs), ".", call. = FALSE)
   ids <- vapply(xs, function(x) x$study$id, character(1))
-  if (anyDuplicated(ids)) stop("Study IDs must be unique.", call. = FALSE)
+  if (anyDuplicated(ids)) stop("Study IDs must be unique; '", ids[anyDuplicated(ids)], "' is used twice.", call. = FALSE)
   if (!is.null(rank)) {
     xs <- lapply(xs, function(x) {
       f <- mm_features(x)
@@ -39,7 +39,11 @@ merge_studies <- function(studies, rank = NULL, key = c("name", "lineage"), feat
   }
   fid <- lapply(xs, function(x) rownames(x$assays[[1]]))
   keep <- if (features == "intersection") Reduce(intersect, fid) else unique(unlist(fid))
-  if (!length(keep)) stop("No feature is shared by all studies; use features = \"union\" or check the taxonomies.", call. = FALSE)
+  n_all <- length(unique(unlist(fid)))
+  if (!length(keep)) stop("No feature is shared by all studies; use features = \"union\", or match the taxa by name with rank = and key = \"name\".", call. = FALSE)
+  if (features == "intersection" && length(keep) < 0.5 * n_all) {
+    warning("Only ", length(keep), " of ", n_all, " features (", .pct(length(keep) / n_all), ") are present in all studies; consider features = \"union\" or harmonising the taxonomy.", call. = FALSE)
+  }
   all_counts <- all(vapply(xs, function(x) !is.null(mm_counts(x)), logical(1)))
   if (!all_counts && any(vapply(xs, function(x) !is.null(mm_counts(x)), logical(1)))) {
     warning("Only some studies have counts: merging relative abundances.", call. = FALSE)
@@ -79,6 +83,9 @@ merge_studies <- function(studies, rank = NULL, key = c("name", "lineage"), feat
     for (cc in colnames(f)) feat[have, cc] <- as.character(f[have, cc])
   }
   feat <- feat[, colSums(!is.na(feat)) > 0, drop = FALSE]
-  as_study(counts = if (all_counts) big else NULL, relabund = if (!all_counts) big else NULL,
-           taxonomy = if (ncol(feat)) feat else NULL, samples = smp, study = info)
+  out <- as_study(counts = if (all_counts) big else NULL, relabund = if (!all_counts) big else NULL,
+                  taxonomy = if (ncol(feat)) feat else NULL, samples = smp, study = info)
+  .inform("Merged ", length(xs), " studies: ", .plural(length(keep), "feature"), if (features == "intersection") paste0(" (of ", n_all, ", those present in all studies)")
+          else " (missing ones filled with zero)", " in ", .plural(ncol(big), "sample"), ".")
+  out
 }

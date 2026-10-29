@@ -21,7 +21,8 @@ alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed")
     if (is.null(cnt)) stop("Rarefaction needs counts.", call. = FALSE)
     if (!is.null(seed)) set.seed(seed)
     ok <- colSums(cnt) >= rarefy
-    if (!any(ok)) stop("No sample has at least ", rarefy, " reads.", call. = FALSE)
+    if (!any(ok)) stop("No sample has at least ", format(rarefy, big.mark = ","), " reads; the deepest has ", format(max(colSums(cnt)), big.mark = ","), ".", call. = FALSE)
+    if (!all(ok)) .inform("Rarefying to ", format(rarefy, big.mark = ","), " reads: ", sum(!ok), " of ", length(ok), " samples with fewer reads are dropped.")
     cnt <- cnt[, ok, drop = FALSE]
     cnt <- apply(cnt, 2, function(x) tabulate(sample(rep.int(seq_along(x), x), rarefy), nbins = length(x)))
     rownames(cnt) <- rownames(mm_counts(study))
@@ -61,9 +62,9 @@ fit_alpha <- function(study, formula, metrics = c("shannon", "simpson", "observe
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
   info <- mm_study_info(study); sdat <- mm_samples(study)
   vars <- all.vars(formula); miss <- setdiff(vars, colnames(sdat))
-  if (length(miss)) stop("Variable(s) not in the sample data: ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) .missing_vars(miss, colnames(sdat))
   if (is.null(longitudinal)) longitudinal <- !is.na(info$subject)
-  if (longitudinal && is.na(info$subject)) stop("A longitudinal model needs study$subject.", call. = FALSE)
+  if (longitudinal && is.na(info$subject)) stop("A longitudinal model needs study$subject, the sample column that identifies the subject (see as_study()).", call. = FALSE)
   al <- alpha_diversity(study, metrics, rarefy, seed)
   d0 <- sdat[rownames(al), vars, drop = FALSE]
   for (v in vars) if (is.factor(d0[[v]])) d0[[v]] <- droplevels(d0[[v]])

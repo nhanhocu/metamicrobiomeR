@@ -100,5 +100,5 @@ test_that("pool_beta combines permutation p-values by Fisher or weighted Stouffe
   expect_lt(s$p_value, 0.01)                                         # two supportive studies combine to stronger evidence
   bj <- as.data.frame(b); bj$distance <- "jaccard"; class(bj) <- class(a)
   expect_error(pool_beta(a, bj), "same distance")
-  expect_error(pool_beta(a, a), "Duplicate"); expect_error(pool_beta(data.frame(a = 1)), "mm_beta")
+  expect_error(pool_beta(a, a), "more than once"); expect_error(pool_beta(data.frame(a = 1)), "mm_beta")
 })

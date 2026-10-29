@@ -84,11 +84,15 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   sdat <- mm_samples(study)
   vars <- unique(c(all.vars(formula), if (!is.null(prevalence)) all.vars(prevalence)))
   miss <- setdiff(vars, colnames(sdat))
-  if (length(miss)) stop("Variable(s) not in the sample data: ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) .missing_vars(miss, colnames(sdat))
   subject <- info$subject
-  if (is.null(longitudinal)) longitudinal <- !is.na(subject)
+  defaulted <- is.null(longitudinal)
+  if (defaulted) longitudinal <- !is.na(subject)
+  if (defaulted && longitudinal) {
+    .inform("Using '", subject, "' as a subject random intercept (set longitudinal = FALSE to ignore it).", once = "longitudinal-default")
+  }
   if (longitudinal && is.na(subject)) {
-    stop("A longitudinal model needs study$subject (the repeated-measures ID column).", call. = FALSE)
+    stop("A longitudinal model needs study$subject, the sample column that identifies the subject (see as_study()).", call. = FALSE)
   }
   switch(engine, bezi_gamlss = .need("gamlss", "the 'bezi_gamlss' engine"),
          zibb_glmmtmb = .need("glmmTMB", "the 'zibb_glmmtmb' engine"))
@@ -105,15 +109,17 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   feats <- mm_features(study)
   idx <- seq_len(nrow(ra))
   if (!is.null(rank)) {
-    if (!"rank" %in% colnames(feats)) stop("The feature data has no 'rank' column.", call. = FALSE)
+    if (!"rank" %in% colnames(feats)) stop("The feature data has no 'rank' column, so 'rank' cannot select features; agglomerate() creates one.", call. = FALSE)
     idx <- which(feats$rank %in% rank)
-    if (!length(idx)) stop("No features with rank: ", paste(rank, collapse = ", "), ".", call. = FALSE)
+    if (!length(idx)) stop("No features with rank ", paste0("'", rank, "'", collapse = ", "), "; the study has: ", .show(sort(unique(feats$rank)), 6), ".", call. = FALSE)
   }
+  n_rank <- length(idx); n_unassigned <- 0L
   if (exclude_unassigned && "rank" %in% colnames(feats)) {
     unassigned <- vapply(idx, function(i) {
       r <- feats$rank[i]
       !is.na(r) && r %in% colnames(feats) && is.na(feats[[r]][i])
     }, logical(1))
+    n_unassigned <- sum(unassigned)
     idx <- idx[!unassigned]
   }
   composition <- idx                                   # the features that make up the composition (for CLR)
@@ -122,7 +128,17 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     x <- ra[i, ]
     sum(!is.na(x) & x > 0) >= min_prevalence * n_all && mean(x, na.rm = TRUE) > min_mean
   }, logical(1))
+  n_filtered <- sum(!keep)
   idx <- idx[keep]
+  if (!length(idx)) {
+    warning("No feature passed the filters (present in at least ", .pct(min_prevalence), " of the samples and mean relative abundance above ",
+            format(min_mean), "); lower 'min_prevalence' or 'min_mean'.", call. = FALSE)
+  } else if (n_unassigned + n_filtered > 0) {
+    why <- c(if (n_unassigned) paste(n_unassigned, "unassigned"), if (n_filtered) paste(n_filtered, "below the prevalence and abundance filters"))
+    .inform("Fitting ", length(idx), " of ", n_rank, " features (", paste(why, collapse = ", "), ").")
+  }
+  n_cc <- sum(stats::complete.cases(d0))
+  if (n_cc < nrow(d0)) .inform(nrow(d0) - n_cc, " of ", nrow(d0), " samples have missing values in the model variables and are left out.")
 
   Y <- switch(engine,
     bezi_gamlss = ra,
@@ -153,8 +169,9 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
       lm_asin = .fit_lm(f, d, longitudinal, .mm_engine_scale[["lm_asin"]]),
       lm_clr = .fit_lm(f, d, longitudinal, .mm_engine_scale[["lm_clr"]]),
       zibb_glmmtmb = .fit_zibb(terms_f, d, longitudinal, prevalence, zero_inflation))
-    log[[k]] <- data.frame(feature = fid, n = nrow(d), converged = res$converged,
-                           n_warnings = length(res$warnings), error = res$error, stringsAsFactors = FALSE)
+    log[[k]] <- data.frame(feature = fid, n = nrow(d), converged = res$converged, n_warnings = length(res$warnings),
+                           first_warning = if (length(res$warnings)) res$warnings[1] else NA_character_,
+                           singular = isTRUE(res$singular), error = res$error, stringsAsFactors = FALSE)
     if (!is.null(res$rows) && nrow(res$rows)) {
       rk <- if ("rank" %in% colnames(feats)) feats$rank[i] else NA_character_
       rows[[k]] <- cbind(feature = fid, rank = rk, res$rows, n = nrow(d), stringsAsFactors = FALSE)
@@ -176,13 +193,17 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                                     prevalence = if (!is.null(prevalence)) deparse(prevalence), zero_inflation = if (engine == "zibb_glmmtmb") zero_inflation,
                                     pseudocount = pseudocount)
   if (!is.null(fit_info) && any(!is.na(fit_info$error))) {
-    warning(sum(!is.na(fit_info$error)), " of ", nrow(fit_info), " fits failed (first error: ",
-            fit_info$error[!is.na(fit_info$error)][1], ").", call. = FALSE)
+    warning(sum(!is.na(fit_info$error)), " of ", nrow(fit_info), " fits failed (first error: ", fit_info$error[!is.na(fit_info$error)][1],
+            "); see attr(, \"fit_info\").", call. = FALSE)
   }
-  if (!is.null(fit_info) && any(!fit_info$converged)) {
-    warning(sum(!fit_info$converged), " of ", nrow(fit_info), " fits did not converge",
-            if (engine == "bezi_gamlss") paste0(" within ", n_cycles, " iterations"),
-            " (see attr(, \"fit_info\")).", call. = FALSE)
+  if (!is.null(fit_info) && any(!fit_info$converged & is.na(fit_info$error))) {
+    nc <- sum(!fit_info$converged & is.na(fit_info$error))
+    warning(nc, " of ", nrow(fit_info), " fits did not converge",
+            if (engine == "bezi_gamlss") paste0(" within ", n_cycles, " iterations; try a larger 'n_cycles'"), "; see attr(, \"fit_info\").", call. = FALSE)
+  }
+  if (!is.null(fit_info) && any(fit_info$singular)) {
+    .inform(sum(fit_info$singular), " of ", nrow(fit_info), " mixed-model fits were singular (the subject variance is estimated as zero), ",
+            "so those estimates equal a model without the subject effect.")
   }
   out
 }
@@ -210,38 +231,42 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
 
 # One GAMLSS-BEZI fit; mean-part coefficients without the intercept
 .fit_bezi_gamlss <- function(f, d, n_cycles = 100) {
-  warns <- character()
+  warns <- character(); msgs <- character()
   catch <- function(expr) withCallingHandlers(expr, warning = function(w) {
     warns <<- c(warns, conditionMessage(w)); invokeRestart("muffleWarning")
+  }, message = function(m) {
+    msgs <<- c(msgs, trimws(conditionMessage(m))); invokeRestart("muffleMessage")
   })
   fit <- tryCatch(catch(gamlss::gamlss(f, family = "BEZI", data = d, trace = FALSE,
                                        control = gamlss::gamlss.control(n.cyc = n_cycles, trace = FALSE))),
                   error = function(e) e)
   if (inherits(fit, "error")) {
-    return(list(rows = NULL, converged = FALSE, warnings = warns, error = conditionMessage(fit)))
+    return(list(rows = NULL, converged = FALSE, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(fit)))
   }
   sm <- NULL
   utils::capture.output(sm <- tryCatch(catch(summary(fit, save = TRUE)), error = function(e) e))
   if (inherits(sm, "error")) {
-    return(list(rows = NULL, converged = isTRUE(fit$converged), warnings = warns, error = conditionMessage(sm)))
+    return(list(rows = NULL, converged = isTRUE(fit$converged), warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(sm)))
   }
   k <- length(stats::coef(fit, "mu"))
   conv <- isTRUE(fit$converged)
   list(rows = .coef_rows(sm$coef.table[seq_len(k), , drop = FALSE], "abundance", .mm_engine_scale[["bezi_gamlss"]], conv),
-       converged = conv, warnings = warns, error = NA_character_)
+       converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = NA_character_)
 }
 
 # One linear (mixed) model on a transformed scale
 .fit_lm <- function(f, d, longitudinal, scale) {
-  warns <- character()
+  warns <- character(); msgs <- character()
   catch <- function(expr) withCallingHandlers(expr, warning = function(w) {
     warns <<- c(warns, conditionMessage(w)); invokeRestart("muffleWarning")
+  }, message = function(m) {
+    msgs <<- c(msgs, trimws(conditionMessage(m))); invokeRestart("muffleMessage")
   })
   fit <- tryCatch(
     if (longitudinal) catch(lme4::lmer(f, data = d)) else catch(stats::lm(f, data = d)),
     error = function(e) e)
   if (inherits(fit, "error")) {
-    return(list(rows = NULL, converged = FALSE, warnings = warns, error = conditionMessage(fit)))
+    return(list(rows = NULL, converged = FALSE, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(fit)))
   }
   ct <- catch(summary(fit))$coefficients
   if (longitudinal) {
@@ -256,14 +281,16 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   }
   rows <- .coef_rows(ct, "abundance", scale, conv)
   if (!is.null(rows)) rows$df <- df
-  list(rows = rows, converged = conv, warnings = warns, error = NA_character_)
+  list(rows = rows, converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = NA_character_)
 }
 
 # One zero-inflated beta-binomial fit (glmmTMB)
 .fit_zibb <- function(terms_f, d, longitudinal, prevalence, zero_inflation) {
-  warns <- character()
+  warns <- character(); msgs <- character()
   catch <- function(expr) withCallingHandlers(expr, warning = function(w) {
     warns <<- c(warns, conditionMessage(w)); invokeRestart("muffleWarning")
+  }, message = function(m) {
+    msgs <<- c(msgs, trimws(conditionMessage(m))); invokeRestart("muffleMessage")
   })
   use_zi <- isTRUE(zero_inflation) && any(d$.y == 0)
   f <- stats::reformulate(c(terms_f, if (longitudinal) "(1 | .subject)"), response = "cbind(.y, .fail)")
@@ -271,12 +298,12 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   fit <- tryCatch(catch(glmmTMB::glmmTMB(f, ziformula = zif, family = glmmTMB::betabinomial(), data = d)),
                   error = function(e) e)
   if (inherits(fit, "error")) {
-    return(list(rows = NULL, converged = FALSE, warnings = warns, error = conditionMessage(fit)))
+    return(list(rows = NULL, converged = FALSE, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(fit)))
   }
   conv <- isTRUE(fit$fit$convergence == 0) && isTRUE(fit$sdr$pdHess)
   sm <- tryCatch(catch(summary(fit))$coefficients, error = function(e) e)
   if (inherits(sm, "error")) {
-    return(list(rows = NULL, converged = conv, warnings = warns, error = conditionMessage(sm)))
+    return(list(rows = NULL, converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(sm)))
   }
   rows <- .coef_rows(sm$cond, "abundance", .mm_engine_scale[["zibb_glmmtmb"]], conv, "Pr(>|z|)")
   if (use_zi && !is.null(prevalence) && !is.null(sm$zi)) {
@@ -286,5 +313,5 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
       rows <- rbind(rows, zr)
     }
   }
-  list(rows = rows, converged = conv, warnings = warns, error = NA_character_)
+  list(rows = rows, converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = NA_character_)
 }

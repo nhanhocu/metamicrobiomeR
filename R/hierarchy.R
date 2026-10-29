@@ -57,7 +57,7 @@ feature_parents <- function(study) {
 adjust_hierarchical <- function(pooled, parent, q = 0.05, p_col = "p_value") {
   .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   if (!is.numeric(q) || q <= 0 || q >= 1) stop("'q' must be between 0 and 1.", call. = FALSE)
-  if (is.null(names(parent))) stop("'parent' must be a named vector (feature -> parent).", call. = FALSE)
+  if (is.null(names(parent))) stop("'parent' must be a named vector mapping each feature ID to its parent ID; feature_parents() makes one.", call. = FALSE)
   out <- as.data.frame(pooled)
   out$level <- NA_integer_; out$p_hier <- NA_real_; out$hier_rejected <- FALSE
   fam <- paste(out$part, out$term, sep = "\r")
@@ -92,6 +92,8 @@ adjust_hierarchical <- function(pooled, parent, q = 0.05, p_col = "p_value") {
     }
   }
   out$hier_rejected <- !is.na(out$p_hier) & out$p_hier <= q
+  .inform(sum(!is.na(out$p_hier)), " of ", nrow(out), " features were tested; ", sum(is.na(out$p_hier)),
+          " were not because their parent was not rejected. ", sum(out$hier_rejected), " rejected at q = ", q, ".")
   class(out) <- c("mm_pooled", "data.frame")
   attr(out, "settings") <- c(attr(pooled, "settings"), list(hierarchical_q = q))
   out

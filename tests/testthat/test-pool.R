@@ -83,7 +83,7 @@ test_that("terms and parts are pooled separately and can be selected", {
 test_that("invalid input and unusable estimates are handled", {
   expect_error(pool_effects(data.frame(a = 1)), "mm_effects")
   b <- bind_effects(eff("s1", 0.5, 0.2), eff("s2", NA, 0.2), eff("s3", 0.4, 0.2))
-  expect_warning(p <- pool_effects(b, method = "DL"), "dropped")
+  expect_warning(p <- pool_effects(b, method = "DL"), "not used")
   expect_equal(p$k, 2)
   expect_error(pool_effects(bind_effects(eff("s1", 0.5, 0.2)), min_studies = 2), "No feature")
 })

@@ -118,9 +118,12 @@ agglomerate <- function(study, rank, key = c("lineage", "name"), unassigned = c(
   key <- match.arg(key); unassigned <- match.arg(unassigned)
   rank <- match.arg(rank, .mm_ranks)
   feats <- mm_features(study)
-  if (!rank %in% colnames(feats)) stop("The feature data has no '", rank, "' column.", call. = FALSE)
+  if (!rank %in% colnames(feats)) {
+    stop("The feature data has no '", rank, "' column (it has: ", .show(intersect(.mm_ranks, colnames(feats)), 7) %||% "no rank columns",
+         "); agglomerate() needs taxonomy ranks, see parse_taxonomy() or the importers.", call. = FALSE)
+  }
   if ("rank" %in% colnames(feats) && any(!is.na(feats$rank) & feats$rank != "leaf")) {
-    stop("The study is already agglomerated (its features have ranks); choose a rank in fit_study() instead.", call. = FALSE)
+    stop("The study is already agglomerated (its features are at rank ", .show(unique(feats$rank), 3), "); pick a rank with fit_study(rank = ...) instead.", call. = FALSE)
   }
   cols <- intersect(.mm_ranks[seq_len(match(rank, .mm_ranks))], colnames(feats))
   tax <- feats[, cols, drop = FALSE]
@@ -129,10 +132,20 @@ agglomerate <- function(study, rank, key = c("lineage", "name"), unassigned = c(
     ifelse(is.na(nm), NA_character_, apply(tax, 1, function(r) paste(r[!is.na(r)], collapse = ";")))
   }
   un <- is.na(id)
+  if (any(un)) {
+    share <- mean(colSums(mm_relabund(study)[un, , drop = FALSE]), na.rm = TRUE)
+    if (unassigned == "keep") {
+      .inform(sum(un), " of ", length(un), " features (", .pct(share), " of the abundance) have no assignment at '", rank,
+              "'; kept as 'unassigned_", rank, "' and left out of models.")
+    } else {
+      .inform("Dropped ", sum(un), " of ", length(un), " features (", .pct(share), " of the abundance) that are unassigned at '", rank,
+              "'; sample totals now cover assigned features only.")
+    }
+  }
   id[un] <- paste0("unassigned_", rank)
   if (unassigned == "drop") {
     keep <- !un
-    if (!any(keep)) stop("No feature is assigned at rank '", rank, "'.", call. = FALSE)
+    if (!any(keep)) stop("No feature is assigned at rank '", rank, "'; check the taxonomy or use unassigned = \"keep\".", call. = FALSE)
   } else keep <- rep(TRUE, length(id))
   agg <- function(m) if (is.null(m)) NULL else rowsum(m[keep, , drop = FALSE], group = id[keep], reorder = FALSE)
   counts <- agg(mm_counts(study)); rel <- agg(study$assays$relabund)

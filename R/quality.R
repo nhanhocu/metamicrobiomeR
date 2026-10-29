@@ -79,7 +79,12 @@ filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_s
   dropped$reason <- apply(dropped[, c("flag_converged", "flag_se", "flag_estimate")], 1, function(f) paste(c("not converged", "implausible standard error", "large estimate")[f], collapse = ", "))
   attr(out, "dropped") <- dropped[, c("study", "feature", "part", "term", "estimate", "se", "reason")]
   for (a in c("fit_info", "fit_settings")) if (!is.null(attr(effects, a))) attr(out, a) <- attr(effects, a)
-  if (nrow(dropped)) message(nrow(dropped), " of ", nrow(r), " estimates dropped before pooling (see attr(, \"dropped\")).")
+  if (nrow(dropped)) {
+    why <- c(if (sum(dropped$flag_converged)) paste(sum(dropped$flag_converged), "not converged"),
+             if (sum(dropped$flag_se)) paste(sum(dropped$flag_se), "with an implausibly small standard error"),
+             if (sum(dropped$flag_estimate)) paste(sum(dropped$flag_estimate), "with a very large estimate"))
+    .inform("Dropped ", nrow(dropped), " of ", nrow(r), " estimates before pooling: ", paste(why, collapse = ", "), " (see attr(, \"dropped\")).")
+  }
   out
 }
 

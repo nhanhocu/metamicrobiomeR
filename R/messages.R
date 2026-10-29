@@ -28,7 +28,7 @@
 .check_class <- function(x, cls, arg, how = NULL) {
   if (inherits(x, cls)) return(invisible(x))
   got <- if (is.null(x)) "NULL" else class(x)[1]
-  stop("'", arg, "' must be ", if (grepl("^[aeiou]", cls)) "an " else "a ", cls, " object",
+  stop("'", arg, "' must be ", if (grepl("^(mm_|[aeiou])", cls)) "an " else "a ", cls, " object",
        if (!is.null(how)) paste0(" (see ", how, ")"), "; got ", if (grepl("^[aeiou]", got)) "an " else "a ", got, ".", call. = FALSE)
 }
 

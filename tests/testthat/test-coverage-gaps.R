@@ -58,7 +58,7 @@ test_that("fit_study, fit_beta and subset functions can select a rank; clr works
   b <- fit_beta(s, ~ grp, rank = "genus", permutations = 49, seed = 1)
   expect_equal(b$term, "grp")
   expect_error(fit_beta(s, ~ grp, rank = "family"), "No features with rank")
-  expect_error(fit_beta(subset_samples(s, c(1, 2, 3)), ~ grp), "Too few complete samples")
+  expect_error(fit_beta(subset_samples(s, c(1, 2, 3)), ~ grp), "Too few usable samples")
   expect_error(fit_beta(list(), ~ grp), "mm_study"); expect_error(fit_beta(s, "grp"), "one-sided")
   expect_equal(colnames(mm_relabund(subset_samples(s, c(1, 3)))), c("S1", "S3"))                             # numeric selection
   expect_error(subset_samples(s, c(TRUE, FALSE)), "logical vector of length"); expect_error(subset_samples(list(), TRUE), "mm_study")

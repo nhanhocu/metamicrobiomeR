@@ -52,10 +52,16 @@ check_effects <- function(x) {
   }
   if (anyNA(x$converged)) stop("'converged' must not be missing.", call. = FALSE)
   if (any(x$se < 0, na.rm = TRUE)) stop("'se' must not be negative.", call. = FALSE)
-  if (any(x$se == 0, na.rm = TRUE)) warning("Some standard errors are exactly zero.", call. = FALSE)
+  if (any(x$se == 0, na.rm = TRUE)) {
+    warning(sum(x$se == 0, na.rm = TRUE), " standard error(s) are exactly zero; such estimates cannot be weighted and are not used when pooling.", call. = FALSE)
+  }
   if (any(is.infinite(x$estimate)) || any(is.infinite(x$se))) stop("'estimate' and 'se' must be finite or NA.", call. = FALSE)
   key <- paste(x$study, x$feature, x$part, x$term, sep = "\r")
-  if (anyDuplicated(key)) stop("Duplicate study/feature/part/term rows in the effect table.", call. = FALSE)
+  if (anyDuplicated(key)) {
+    i <- anyDuplicated(key)
+    stop("Duplicate rows in the effect table: study '", x$study[i], "', feature '", x$feature[i], "', part '", x$part[i], "', term '", x$term[i],
+         "' appears more than once.", call. = FALSE)
+  }
   invisible(x)
 }
 
@@ -79,24 +85,41 @@ bind_effects <- function(..., allow_mixed_scale = FALSE, allow_mixed_engine = FA
   out <- do.call(rbind, lapply(xs, as.data.frame))
   class(out) <- c("mm_effects", "data.frame")
   check_effects(out)
-  if (!allow_mixed_scale) {
-    grp <- paste(out$part, out$term, sep = " / ")
-    nscale <- tapply(out$effect_scale, grp, function(s) length(unique(s[!is.na(s)])))
-    bad <- names(nscale)[nscale > 1]
-    if (length(bad)) {
-      stop("Studies report different effect scales for: ", paste(bad, collapse = "; "),
-           ". Pooling needs one scale per term (set allow_mixed_scale = TRUE to override).", call. = FALSE)
-    }
-  }
-  if (!allow_mixed_engine) {
-    grp <- paste(out$part, out$term, sep = " / ")
-    neng <- tapply(out$engine, grp, function(s) length(unique(s[!is.na(s)])))
-    bad <- names(neng)[neng > 1]
-    if (length(bad)) {
-      stop("Studies were fitted with different engines for: ", paste(bad, collapse = "; "),
-           ". Fit all studies with the same engine (or set allow_mixed_engine = TRUE).", call. = FALSE)
-    }
-  }
+  .check_comparable(out, allow_mixed_scale, allow_mixed_engine)
   rownames(out) <- NULL
   out
+}
+
+# Estimates can only be pooled or combined if they come from one engine and one scale for each part and term
+.check_comparable <- function(x, allow_mixed_scale = FALSE, allow_mixed_engine = FALSE) {
+  grp <- paste0(x$part, " / ", x$term)
+  report <- function(col) {
+    u <- tapply(x[[col]], grp, function(s) sort(unique(s[!is.na(s)])))
+    bad <- u[lengths(u) > 1]
+    if (!length(bad)) return(NULL)
+    paste(vapply(names(bad), function(g) paste0(g, " (", paste(bad[[g]], collapse = " vs "), ")"), character(1)), collapse = "; ")
+  }
+  if (!allow_mixed_scale && !is.null(m <- report("effect_scale"))) {
+    stop("Studies report different effect scales for ", m, ". Fit every study with the same engine, or set allow_mixed_scale = TRUE.", call. = FALSE)
+  }
+  if (!allow_mixed_engine && !is.null(m <- report("engine"))) {
+    stop("Studies were fitted with different engines for ", m, ". Fit every study with the same engine, or set allow_mixed_engine = TRUE.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' @export
+print.mm_effects <- function(x, n = 6, ...) {
+  d <- as.data.frame(x)
+  cat("<mm_effects> ", .plural(length(unique(d$study)), "study", "studies"), " (", .show(sort(unique(d$study)), 4), "), ",
+      .plural(length(unique(d$feature)), "feature"), ", ", .plural(nrow(d), "row"), "\n", sep = "")
+  cat("  engine: ", paste(sort(unique(d$engine)), collapse = ", "), " | scale: ", paste(sort(unique(d$effect_scale)), collapse = ", "),
+      " | parts: ", paste(sort(unique(d$part)), collapse = ", "), " | terms: ", .show(sort(unique(d$term)), 4), "\n", sep = "")
+  cat("  converged: ", sum(d$converged), " of ", nrow(d), if (any(!d$converged)) "  (see the 'converged' column)", "\n", sep = "")
+  if (nrow(d)) {
+    show <- d[seq_len(min(n, nrow(d))), c("study", "feature", "part", "term", "estimate", "se", "p_value"), drop = FALSE]
+    print(show, row.names = FALSE, digits = 3)
+    if (nrow(d) > n) cat("# ... ", nrow(d) - n, " more rows\n", sep = "")
+  }
+  invisible(x)
 }
