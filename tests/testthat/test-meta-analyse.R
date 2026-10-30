@@ -111,3 +111,35 @@ test_that("meta_analyse validates its input", {
   expect_error(meta_analyse(list(1, 2), ~ group), "Supply mm_study objects")
   expect_error(meta_analyse(s, ~ group, engine = "nonsense"))
 })
+
+test_that("summary describes between-study variation, replicability and what can explain it", {
+  mk <- function(study, est, se, feature) new_effect_table(study, feature, "x", est, se, rank = "genus", part = "abundance", n = 30L, engine = "t", effect_scale = "s")
+  eff <- bind_effects(mk(paste0("s", 1:5), c(0.1, 0.9, 0.5, 0.4, 0.6), rep(0.05, 5), "het"),      # present on average, studies disagree
+                      mk(paste0("s", 1:5), c(0.50, 0.52, 0.49, 0.51, 0.50), rep(0.05, 5), "same"),  # studies agree
+                      mk(paste0("s", 1:5), c(0.00, 0.02, -0.01, 0.01, 0.00), rep(0.05, 5), "null"))
+  pooled <- pool_effects(eff)
+  fake <- structure(list(pooled = pooled, effects = eff, studies = data.frame(study = paste0("s", 1:5)), checks = NULL, quality = NULL,
+                         settings = list(formula = "~x", engine = "t", rank = NULL, term = NULL, method = "REML", test = "adhoc", quality = "off")), class = "mm_meta")
+  s <- summary(fake)
+  expect_s3_class(s, "summary.mm_meta")
+  p <- as.data.frame(pooled)
+  expect_equal(s$I2[2], stats::median(p$I2)); expect_equal(s$n_features, 3)
+  expect_equal(s$n_excl0, 2); expect_equal(s$n_not_replicable, 1)                         # "het" and "same" excluded zero; only "het" has a prediction interval that includes it
+  expect_equal(as.character(s$top$feature[1]), "het")
+  out <- testthat::capture_output(print(s))
+  expect_match(out, "I2 \\(share of variation beyond sampling error\\): median")
+  expect_match(out, "for 1 the prediction interval still includes zero: present on average, but a new study could show no effect")
+  expect_match(out, "Most heterogeneous:"); expect_match(out, "meta_regress\\(\\)"); expect_match(out, "~ group \\+ batch")
+})
+
+test_that("a high-heterogeneity hint appears in the printed summary", {
+  s <- simulate_studies(n_studies = 5, n_samples = 60, n_features = 10, n_diff = 3, effect = 1.5, tau = 1.5, seed = 8)$studies
+  res <- suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "off", check = FALSE, fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  hi <- stats::median(as.data.frame(res)$I2)
+  out <- testthat::capture_output(print(res))
+  if (hi > 50) expect_match(out, "Heterogeneity is high \\(median I2 \\d+%\\): the studies disagree. summary\\(x\\) shows how much") else expect_false(grepl("Heterogeneity is high", out))
+  quiet <- suppressMessages(meta_analyse(simulate_studies(n_studies = 4, n_samples = 40, n_features = 6, n_diff = 2, effect = 1.5, tau = 0, seed = 3)$studies, ~ group, term = "groupb",
+                                         engine = "lm_asin", quality = "off", check = FALSE, fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_false(grepl("Heterogeneity is high", testthat::capture_output(print(quiet))))
+  expect_match(testthat::capture_output(print(quiet)), "summary\\(x\\) describes the between-study variation")
+})

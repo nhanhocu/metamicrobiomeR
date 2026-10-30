@@ -2,6 +2,7 @@
 % Please edit documentation in R/meta_analyse.R
 \name{meta_analyse}
 \alias{meta_analyse}
+\alias{summary.mm_meta}
 \alias{plot.mm_meta}
 \title{Meta-analysis of several studies in one call}
 \usage{
@@ -19,6 +20,8 @@ meta_analyse(
   pool_args = list(),
   cores = getOption("metamicrobiomeR.cores", 1L)
 )
+
+\method{summary}{mm_meta}(object, top = 5, ...)
 
 \method{plot}{mm_meta}(
   x,
@@ -53,15 +56,17 @@ not converge): `"warn"` (default) only warns, `"filter"` drops them before pooli
 
 \item{cores}{Cores for fitting, see [fit_study()].}
 
+\item{object}{An `mm_meta` object.}
+
+\item{top}{Number of features to draw in a forest plot.}
+
+\item{...}{Further arguments for the plot function ([plot_forest()], [plot_heatmap()] or [plot_volcano()]).}
+
 \item{x}{An `mm_meta` object.}
 
 \item{type}{`"forest"` (default), `"heatmap"` or `"volcano"`.}
 
 \item{feature}{For forest plots: the features to draw (default: the `top` features with the smallest p-value).}
-
-\item{top}{Number of features to draw in a forest plot.}
-
-\item{...}{Further arguments for the plot function ([plot_forest()], [plot_heatmap()] or [plot_volcano()]).}
 }
 \value{
 An object of class `mm_meta` with the pooled table (`$pooled`), the per-study effects
@@ -74,7 +79,8 @@ Runs the whole workflow with safe defaults: checks that the studies can be poole
 name across databases), fits the same model to every study ([fit_study()]), checks the estimates
 ([check_effects_quality()]) and pools them ([pool_effects()]). Messages and warnings are labelled
 with the study they come from. The steps remain available separately for full control; the
-returned object holds every intermediate result.
+returned object holds every intermediate result. `summary()` describes how much the studies differ
+(heterogeneity), whether conclusions would hold in a new study, and what can explain differences.
 }
 \examples{
 sim <- simulate_studies(n_studies = 3, n_samples = 30, n_features = 6,

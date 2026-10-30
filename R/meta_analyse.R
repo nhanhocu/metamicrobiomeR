@@ -14,7 +14,8 @@
 #' name across databases), fits the same model to every study ([fit_study()]), checks the estimates
 #' ([check_effects_quality()]) and pools them ([pool_effects()]). Messages and warnings are labelled
 #' with the study they come from. The steps remain available separately for full control; the
-#' returned object holds every intermediate result.
+#' returned object holds every intermediate result. `summary()` describes how much the studies differ
+#' (heterogeneity), whether conclusions would hold in a new study, and what can explain differences.
 #'
 #' @param studies A list of `mm_study` objects.
 #' @param formula One-sided model formula, e.g. `~ group + age`.
@@ -112,7 +113,50 @@ print.mm_meta <- function(x, n = 6, ...) {
     cat("No feature reaches adjusted p <= 0.05; the table is ordered by p-value. With ", max(p$k), " studies there is little power to pass the correction",
         "(see pool_sensitivity(x$effects) for how the result depends on the test).\n", sep = "")
   }
-  cat("plot(x) draws a forest plot; as.data.frame(x) is the pooled table; x$effects holds the per-study estimates.\n")
+  hi <- stats::median(p$I2, na.rm = TRUE)
+  if (!is.na(hi) && hi > 50) cat("Heterogeneity is high (median I2 ", round(hi), "%): the studies disagree. summary(x) shows how much and what can explain it.\n", sep = "")
+  cat("plot(x) draws a forest plot; summary(x) describes the between-study variation; as.data.frame(x) is the pooled table.\n")
+  invisible(x)
+}
+
+#' @param object An `mm_meta` object.
+#' @param top Number of most heterogeneous features to list.
+#' @rdname meta_analyse
+#' @export
+summary.mm_meta <- function(object, top = 5, ...) {
+  p <- as.data.frame(object$pooled)
+  excl0 <- !is.na(p$ci_lo) & (p$ci_lo > 0 | p$ci_hi < 0)
+  pi_ok <- !is.na(p$pi_lo)
+  pi0 <- pi_ok & p$pi_lo <= 0 & p$pi_hi >= 0
+  ord <- order(-p$I2)
+  structure(list(n_features = nrow(p), k = range(p$k), I2 = stats::quantile(p$I2, c(0.25, 0.5, 0.75), na.rm = TRUE, names = FALSE),
+                 tau2_median = stats::median(p$tau2, na.rm = TRUE), share_Q = mean(p$Q_p < 0.05, na.rm = TRUE),
+                 n_excl0 = sum(excl0), n_not_replicable = sum(excl0 & pi0), n_pi = sum(excl0 & pi_ok),
+                 top = p[ord[seq_len(min(top, nrow(p)))], intersect(c("feature", "term", "k", "estimate", "I2", "tau2"), colnames(p)), drop = FALSE],
+                 influential = sum(p$max_weight > 0.9, na.rm = TRUE), settings = object$settings),
+            class = "summary.mm_meta")
+}
+
+#' @export
+print.summary.mm_meta <- function(x, ...) {
+  cat("<summary of mm_meta> ", .plural(x$n_features, "feature"), ", ", if (x$k[1] == x$k[2]) x$k[1] else paste(x$k, collapse = " to "), " studies each\n\n", sep = "")
+  cat("How much do the studies differ?\n")
+  cat("  I2 (share of variation beyond sampling error): median ", round(x$I2[2]), "% (middle half ", round(x$I2[1]), "% to ", round(x$I2[3]), "%)\n", sep = "")
+  cat("  ", .pct(x$share_Q), " of features have a significant heterogeneity test (Q p < 0.05); median between-study variance tau2 = ", format(signif(x$tau2_median, 2)), "\n", sep = "")
+  cat("  Rough convention: below 25% low, 25 to 50% moderate, above 50% substantial. With few studies I2 is imprecise.\n\n")
+  cat("Do the conclusions hold in a new study?\n")
+  if (x$n_pi > 0) {
+    cat("  ", x$n_excl0, " features have a pooled interval that excludes zero; for ", x$n_not_replicable,
+        " the prediction interval still includes zero: present on average, but a new study could show no effect.\n", sep = "")
+  } else cat("  No feature has a pooled interval that excludes zero, or there are too few studies for prediction intervals.\n")
+  if (x$influential > 0) cat("  ", .plural(x$influential, "feature"), " dominated by one study (weight above 90%): see check_effects_quality().\n", sep = "")
+  cat("\nMost heterogeneous:\n"); print(x$top, row.names = FALSE, digits = 3)
+  cat("\nWhat can explain differences between studies:\n")
+  cat("  * Population, protocol or platform: test it with meta_regress() and study characteristics.\n")
+  cat("  * One influential study: leave_one_out().\n")
+  cat("  * Batch effects that differ between groups within a study (study-wide shifts cancel and do not raise I2):\n")
+  cat("    add the batch as a covariate (~ group + batch) in fit_study(), or investigate with other packages and re-run.\n")
+  cat("  * Different methods or databases: check_poolable().\n")
   invisible(x)
 }
 

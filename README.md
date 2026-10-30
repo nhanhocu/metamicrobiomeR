@@ -52,6 +52,33 @@ write_manifest(genus, "cohort1-manifest.txt")
 `study_from_se()` (SummarizedExperiment / TreeSummarizedExperiment), or `as_study()` from plain matrices.
 Results from other tools (MaAsLin2, ANCOM-BC2, LinDA) can be pooled too: `effects_from()`.
 
+## How much do the studies differ, and why?
+
+A meta-analysis shows how much the evidence differs between studies, which is often the most useful result.
+`summary(res)` reports the between-study variation (I2, tau2, the heterogeneity test), whether a pooled effect would
+hold in a new study (prediction intervals), the most heterogeneous features, and what can explain the differences:
+study characteristics (`meta_regress()`), one influential study (`leave_one_out()`), or batch effects within studies.
+
+Batch effects show up in a meta-analysis only when they matter for the group comparison. In a simulation (mock data,
+5 studies, 6 truly different features; one run, simple per-feature multiplicative batch effects):
+
+| Batch effect planted | Median I2 | Features with significant heterogeneity |
+|---|---|---|
+| None | 4% | 8% |
+| Same distortion for every sample of a study | 0% | 10% |
+| Distortion on one group only, in 3 of 5 studies | 43% | 44% |
+
+A shift that affects every sample of a study equally cancels in the within-study comparison, so it does not bias the
+pooled effect and does not raise I2. A batch effect that differs between the groups does bias the effect, and the
+heterogeneity is the warning. Heterogeneity does not say *why*: batch, population and protocol differences look alike,
+and with a handful of studies I2 is imprecise.
+
+What to do about it: for batches *within* a study (plates, runs), add the batch as a covariate (`~ group + batch`) in
+`fit_study()`. To estimate or correct batch effects in the abundance data, use a dedicated package (for example
+ComBat-seq or MMUPHin, as far as we know the main ones), then re-run. This package does not correct batch effects: it
+does not remove them from the data, and data corrected elsewhere is tested as if it were raw, which makes p-values
+over-confident. Adjusting with a covariate in the model is preferred.
+
 ## Scope: what this package is and is not
 
 It is the **meta-analysis layer for microbiome studies**: it takes per-study abundance tables, fits comparable

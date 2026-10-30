@@ -42,6 +42,10 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
   gains `cores` for parallel fitting. See `dev/PERFORMANCE.md`.
 * Help pages are grouped into families and the package help page lists where to start.
 
+* `summary()` of a `meta_analyse()` result describes the between-study variation (I2, tau2, heterogeneity test), whether
+  conclusions would hold in a new study (prediction intervals), the most heterogeneous features, and what can explain
+  the differences, including batch effects within studies. The printed summary hints when heterogeneity is high.
+
 ## Messages
 
 * Informational messages say what the package decided or left out (samples with missing values, features
