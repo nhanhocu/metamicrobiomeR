@@ -187,3 +187,15 @@ test_that("filtering, hierarchical testing and meta-regression report what they 
   mixed <- bind_effects(mkq(paste0("s", 1:4), c(.5, .6, .4, .5), rep(.1, 4), "g1"), mkq(c("s1", "s2"), c(.5, .6), c(.1, .1), "g2"))
   expect_message(meta_regress(mixed, data.frame(study = paste0("s", 1:4), r = c("u", "u", "v", "v")), ~ r, test = "z"), "1 of 2 features skipped")
 })
+
+test_that("notes are not repeated per setting and never mention a 0% rule", {
+  b <- bind_effects(mkq(paste0("s", 1:4), c(.5, .6, .4, .5), rep(.1, 4), "g1"), mkq("s1", .2, .1, "g2"))
+  m <- testthat::capture_messages(pool_sensitivity(b, min_prop = 0.5))
+  expect_equal(sum(grepl("not pooled", m)), 1)                                           # four settings, one note
+  m0 <- testthat::capture_messages(pool_effects(b, min_prop = 0, min_studies = 2))
+  expect_match(m0, "1 feature of 2 not pooled \\(estimated in fewer than 2 studies\\)\\.")
+  expect_false(any(grepl("0%", m0)))
+  res <- suppressMessages(meta_analyse(simulate_studies(n_studies = 3, n_samples = 14, n_features = 6, n_diff = 1, effect = 0.2, tau = 0.5, seed = 2)$studies, ~ group, term = "groupb",
+                                       engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_match(testthat::capture_output(print(res)), "pass the correction \\(see pool_sensitivity")
+})

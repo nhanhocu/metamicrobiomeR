@@ -108,7 +108,7 @@ print.mm_meta <- function(x, n = 6, ...) {
   print(top[seq_len(min(n, nrow(top))), intersect(cols, colnames(top)), drop = FALSE], row.names = FALSE, digits = 3)
   if (nrow(top) > n) cat("# ... ", nrow(top) - n, " more features\n", sep = "")
   if (!is.na(sig) && sig == 0) {
-    cat("No feature reaches adjusted p <= 0.05; the table is ordered by p-value. With ", max(p$k), " studies there is little power to pass the correction",
+    cat("No feature reaches adjusted p <= 0.05; the table is ordered by p-value. With ", max(p$k), " studies there is little power to pass the correction ",
         "(see pool_sensitivity(x$effects) for how the result depends on the test).\n", sep = "")
   }
   hi <- stats::median(p$I2, na.rm = TRUE)

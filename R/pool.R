@@ -104,8 +104,8 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   }
   n_total <- length(keys)
   if (nrow(out) < n_total) {
-    .inform(.plural(n_total - nrow(out), "feature"), " of ", n_total, " not pooled (estimated in fewer than ", min_studies,
-            " studies or in fewer than ", .pct(min_prop), " of the studies reporting the term).")
+    .inform(.plural(n_total - nrow(out), "feature"), " of ", n_total, " not pooled (estimated in fewer than ", min_studies, " studies",
+            if (min_prop > 0) paste0(" or in fewer than ", .pct(min_prop), " of the studies reporting the term"), ").")
   }
   if (test != "z" && any(out$k == 2)) {
     .inform(.plural(sum(out$k == 2), "feature"), if (sum(out$k == 2) == 1) " was" else " were", " pooled from only 2 studies: the Hartung-Knapp test then has 1 degree of freedom and is very conservative (see ?pool_effects).",
