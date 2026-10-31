@@ -20,6 +20,7 @@ for a pooled table, the pooling settings. Software versions and the date are inc
 }
 \seealso{
 Other reporting: 
-\code{\link{write_manifest}()}
+\code{\link{write_manifest}()},
+\code{\link{write_report}()}
 }
 \concept{reporting}

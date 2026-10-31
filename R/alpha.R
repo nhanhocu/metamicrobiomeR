@@ -67,6 +67,7 @@ fit_alpha <- function(study, formula, metrics = c("shannon", "simpson", "observe
   if (length(miss)) .missing_vars(miss, colnames(sdat))
   if (is.null(longitudinal)) longitudinal <- !is.na(info$subject)
   if (longitudinal && is.na(info$subject)) stop("A longitudinal model needs study$subject, the sample column that identifies the subject (see as_study()).", call. = FALSE)
+  if (longitudinal) .need("lme4", "a subject random effect (longitudinal = FALSE avoids it)")
   al <- alpha_diversity(study, metrics, rarefy, seed)
   d0 <- sdat[rownames(al), vars, drop = FALSE]
   for (v in vars) if (is.factor(d0[[v]])) d0[[v]] <- droplevels(d0[[v]])

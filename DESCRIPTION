@@ -23,8 +23,8 @@ License: GPL (>= 2)
 URL: https://github.com/paytonyau/metamicrobiomeR
 BugReports: https://github.com/paytonyau/metamicrobiomeR/issues
 Depends: R (>= 4.1.0)
-Imports: ggplot2, lme4, metafor (>= 4.0-0), methods, parallel, stats, utils
-Suggests: biomformat, covr, gamlss, gamlss.dist, glmmTMB, jsonlite, knitr, permute,
+Imports: ggplot2, metafor (>= 4.0-0), methods, parallel, stats, utils
+Suggests: biomformat, covr, gamlss, gamlss.dist, glmmTMB, jsonlite, knitr, lme4, permute,
         phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan
 VignetteBuilder: knitr
 Encoding: UTF-8

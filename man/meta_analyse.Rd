@@ -18,7 +18,11 @@ meta_analyse(
   check = TRUE,
   fit_args = list(),
   pool_args = list(),
-  cores = getOption("metamicrobiomeR.cores", 1L)
+  cores = getOption("metamicrobiomeR.cores", 1L),
+  alpha = FALSE,
+  beta = FALSE,
+  alpha_args = list(),
+  beta_args = list()
 )
 
 \method{summary}{mm_meta}(object, top = 5, ...)
@@ -55,6 +59,13 @@ not converge): `"warn"` (default) only warns, `"filter"` drops them before pooli
 \item{fit_args, pool_args}{Further arguments for [fit_study()] and [pool_effects()] as named lists.}
 
 \item{cores}{Cores for fitting, see [fit_study()].}
+
+\item{alpha, beta}{Also analyse alpha diversity ([fit_alpha()]) or beta diversity ([fit_beta()] and
+[pool_beta()]) with the same model? Diversity is computed at the analysed level (the `rank`, if given).
+Beta diversity needs the `vegan` package and does not allow terms that vary within a subject.}
+
+\item{alpha_args, beta_args}{Further arguments for [fit_alpha()] and [fit_beta()] as named lists
+(for example `list(distance = "aitchison", permutations = 999)`).}
 
 \item{object}{An `mm_meta` object.}
 

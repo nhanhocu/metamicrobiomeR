@@ -1,3 +1,6 @@
+# Tests for the meta-analyse family; merged from several smaller files (see git history).
+
+# ================ meta_analyse ================
 sims <- function(n = 3, ...) simulate_studies(n_studies = n, n_samples = 30, n_features = 8, n_diff = 3, effect = 1.5, tau = 0.2, seed = 4, ...)$studies
 run <- function(s, ...) suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0), ...))
 
@@ -41,7 +44,7 @@ test_that("the engine is chosen automatically and the choice is reported", {
   s <- sims()
   skip_if_not_installed("glmmTMB")
   m1 <- testthat::capture_messages(meta_analyse(s, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0.5)))
-  expect_true(any(grepl("Using the 'zibb_glmmtmb' engine \\(every study has counts\\)", m1)))
+  expect_true(any(grepl("Using the 'zibb_glmmtmb' engine \\(every study has counts; about a second per feature and study", m1)))
   rel <- lapply(s, function(x) as_study(relabund = mm_relabund(x), samples = mm_samples(x), study = list(id = x$study$id, feature_type = "taxon")))
   m2 <- testthat::capture_messages(meta_analyse(rel, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
   expect_true(any(grepl("Using the 'lm_asin' engine \\(not every study has counts\\)", m2)))
@@ -142,4 +145,63 @@ test_that("a high-heterogeneity hint appears in the printed summary", {
                                          engine = "lm_asin", quality = "off", check = FALSE, fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
   expect_false(grepl("Heterogeneity is high", testthat::capture_output(print(quiet))))
   expect_match(testthat::capture_output(print(quiet)), "summary\\(x\\) describes the between-study variation")
+})
+
+# ================ diversity and report ================
+sims <- function(n = 3) simulate_studies(n_studies = n, n_samples = 30, n_features = 8, n_diff = 3, effect = 1.5, tau = 0.2, seed = 4)$studies
+quiet <- function(...) suppressMessages(meta_analyse(..., engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+
+test_that("meta_analyse says which study it is on", {
+  m <- testthat::capture_messages(meta_analyse(sims(), ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_true(all(c("Study 1 of 3: sim1", "Study 2 of 3: sim2", "Study 3 of 3: sim3") %in% trimws(m)))
+  old <- options(metamicrobiomeR.quiet = TRUE); on.exit(options(old))
+  expect_silent(meta_analyse(sims(), ~ group, term = "groupb", engine = "lm_asin", quality = "off", check = FALSE, fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+})
+
+test_that("alpha and beta diversity are available from meta_analyse and equal the step-by-step results", {
+  skip_if_not_installed("vegan")
+  s <- sims()
+  res <- quiet(s, ~ group, term = "groupb", alpha = TRUE, beta = TRUE, beta_args = list(permutations = 99, seed = 1))
+  alpha_manual <- pool_effects(bind_effects(lapply(s, fit_alpha, ~ group, longitudinal = FALSE)), term = "groupb", min_prop = 0)
+  expect_equal(as.data.frame(res$alpha), as.data.frame(alpha_manual)); expect_setequal(res$alpha$feature, c("shannon", "simpson", "observed"))
+  beta_manual <- pool_beta(lapply(s, fit_beta, ~ group, permutations = 99, seed = 1))
+  expect_equal(res$beta, beta_manual); expect_s3_class(res$alpha_effects, "mm_effects")
+  out <- testthat::capture_output(print(res))
+  expect_match(out, "Alpha diversity \\(pooled standardised difference\\): .*shannon"); expect_match(out, "Beta diversity \\(PERMANOVA, combined across studies\\): group R2")
+  plain <- quiet(s, ~ group, term = "groupb"); expect_null(plain$alpha); expect_null(plain$beta)
+  expect_false(grepl("Alpha diversity|Beta diversity", testthat::capture_output(print(plain))))
+  bad <- sims(); bad[[2]]$study$subject <- "person"; bad[[2]]$samples$person <- rep(1:15, each = 2)
+  expect_error(quiet(bad, ~ group, term = "groupb", beta = TRUE, beta_args = list(permutations = 9)), "Study 'sim2' \\(beta diversity\\)")
+})
+
+test_that("write_report writes a readable report with figures", {
+  skip_if_not_installed("vegan")
+  res <- quiet(sims(), ~ group, term = "groupb", alpha = TRUE, beta = TRUE, beta_args = list(permutations = 49, seed = 1))
+  f <- file.path(tempfile(fileext = ".dir"), "report.md"); dir.create(dirname(f))
+  expect_identical(write_report(res, f, top = 3), f)
+  r <- readLines(f)
+  expect_true(all(c("# Meta-analysis report", "## Analysis", "## Studies", "## Checks before pooling", "## Between-study variation", "## Alpha diversity", "## Beta diversity", "## Figures", "## Software") %in% r))
+  expect_true(any(grepl("^## Pooled results \\(top 3 of 8 features", r))); expect_true(any(grepl("^- Model: `~group`; engine: `lm_asin`", r)))
+  expect_true(any(grepl("^\\| sim1 \\|", r)))                                                      # the studies table
+  p <- as.data.frame(res); top <- p$feature[which.min(p$p_value)]; expect_true(any(grepl(paste0("^\\| ", top, " \\|"), r)))
+  expect_true(any(grepl("!\\[forest\\]\\(report_files/forest.png\\)", r)))
+  expect_true(all(file.exists(file.path(dirname(f), "report_files", c("forest.png", "volcano.png", "heatmap.png")))))
+  expect_true(any(grepl("Significant under all settings", r))); expect_true(any(grepl("metafor: ", r)))
+  g <- file.path(dirname(f), "nofig.md"); write_report(res, g, figures = FALSE); expect_false(any(grepl("## Figures", readLines(g))))
+  expect_error(write_report(1), "'x' must be an mm_meta object")
+})
+
+test_that("write_report copes with several pooled terms", {
+  with_x <- lapply(sims(), function(st) { set.seed(1); st$samples$x <- rnorm(nrow(st$samples)); st })
+  res <- quiet(with_x, ~ group + x)
+  f <- tempfile(fileext = ".md"); expect_silent(write_report(res, f))
+  r <- readLines(f)
+  expect_true(any(grepl("Not drawn: forest, heatmap\\. This happens when several terms were pooled", r)))     # the volcano plot does not need a single term
+  expect_true(any(grepl("!\\[volcano\\]", r))); expect_false(any(grepl("!\\[forest\\]", r)))
+})
+
+test_that("lme4 is optional and the install hint says how to get it", {
+  d <- utils::packageDescription("metamicrobiomeR")
+  expect_false(grepl("lme4", d$Imports)); expect_true(grepl("lme4", d$Suggests))
+  expect_error(metamicrobiomeR:::.need("notARealPackage123", "a subject random effect"), "Package 'notARealPackage123' is needed for a subject random effect. Install it with install.packages")
 })

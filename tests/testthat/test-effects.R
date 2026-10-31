@@ -1,3 +1,6 @@
+# Tests for the effects family; merged from several smaller files (see git history).
+
+# ================ effect table ================
 eff <- function(study, scale = "logit_mean", feature = c("g1", "g2"), est = c(0.5, -0.2)) {
   new_effect_table(study = study, feature = feature, term = "groupy", estimate = est,
                    se = c(0.1, 0.2), part = "abundance", n = 20L, engine = "test",
@@ -30,4 +33,19 @@ test_that("bind_effects stacks studies and refuses mixed effect scales", {
   expect_equal(nrow(bind_effects(eff("s1"), eff("s2", scale = "smd"), allow_mixed_scale = TRUE)), 4)
   expect_error(bind_effects(eff("s1"), eff("s1")), "Duplicate")
   expect_error(bind_effects(data.frame(a = 1)), "mm_effects")
+})
+
+# ================ effect-table validation ================
+cnt3 <- function() matrix(c(10, 5, 3, 2, 8, 6, 4, 9, 7, 1, 12, 5), 3, 4, dimnames = list(c("a", "b", "c"), paste0("S", 1:4)))
+smp4 <- function() data.frame(group = factor(c("x", "y", "x", "y")), row.names = paste0("S", 1:4))
+info <- list(id = "g", feature_type = "asv")
+
+test_that("effect-table validation reports what is wrong", {
+  e <- new_effect_table("s", c("f1", "f2"), "x", c(0.1, 0.2), c(0.1, 0.1))
+  expect_error(check_effects(data.frame(a = 1)), "mm_effects")
+  bad <- as.data.frame(e)[, -1]; class(bad) <- class(e); expect_error(check_effects(bad), "missing from the effect table")
+  bad <- as.data.frame(e); bad$study[1] <- NA; class(bad) <- class(e); expect_error(check_effects(bad), "must not be missing")
+  bad <- as.data.frame(e); bad$converged[1] <- NA; class(bad) <- class(e); expect_error(check_effects(bad), "converged")
+  na <- bind_effects(new_effect_table("s1", "f", "x", NA, 0.1), new_effect_table("s2", "f", "x", NA, 0.1))
+  expect_error(suppressWarnings(pool_effects(na)), "No usable estimates")
 })

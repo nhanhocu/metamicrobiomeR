@@ -102,6 +102,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (defaulted && longitudinal) {
     .inform("Using '", subject, "' as a subject random intercept (set longitudinal = FALSE to ignore it).", once = "longitudinal-default")
   }
+  if (longitudinal && engine %in% c("lm_asin", "lm_clr")) .need("lme4", "a subject random effect with the linear engines (longitudinal = FALSE avoids it)")
   if (longitudinal && is.na(subject)) {
     stop("A longitudinal model needs study$subject, the sample column that identifies the subject (see as_study()).", call. = FALSE)
   }

@@ -1,3 +1,6 @@
+# Tests for the importers family; merged from several smaller files (see git history).
+
+# ================ importers ================
 smp3 <- function(ids) data.frame(group = rep(c("a", "b"), length.out = length(ids)), row.names = ids)
 
 test_that("read_dada2 builds a counts study with taxonomy and sequences", {
@@ -95,4 +98,74 @@ test_that("subset_samples and subset_features work on counts and proportions", {
   expect_equal(colnames(mm_relabund(subset_samples(rel, g == "y"))), c("S2", "S4"))
   expect_equal(colnames(mm_relabund(subset_samples(s, c(TRUE, FALSE, FALSE, FALSE)))), "S1")
   expect_error(subset_samples(s, g == "z"), "No samples"); expect_error(subset_features(list(), TRUE), "mm_study")
+})
+
+# ================ importer edge cases ================
+cnt3 <- function() matrix(c(10, 5, 3, 2, 8, 6, 4, 9, 7, 1, 12, 5), 3, 4, dimnames = list(c("a", "b", "c"), paste0("S", 1:4)))
+smp4 <- function() data.frame(group = factor(c("x", "y", "x", "y")), row.names = paste0("S", 1:4))
+info <- list(id = "g", feature_type = "asv")
+
+test_that("read_metaphlan reads a file with comment lines; read_dada2 works without taxonomy", {
+  f <- tempfile(fileext = ".txt")
+  writeLines(c("#mpa_vJan21_CHOCOPhlAnSGB", "clade_name\tS1\tS2", "k__Bacteria|p__Firmicutes|c__C|o__O|f__F|g__G|s__G_a\t60\t30",
+               "k__Bacteria|p__Bacteroidota|c__C|o__O|f__F|g__H|s__H_b\t40\t70"), f)
+  s <- read_metaphlan(f, data.frame(g = 1:2, row.names = c("S1", "S2")), list(id = "mf"))
+  expect_equal(unname(mm_relabund(s)[, "S1"]), c(0.6, 0.4)); expect_equal(mm_study_info(s)$feature_type, "taxon")
+  writeLines(c("a\tb", "1\t2"), f)
+  expect_error(read_metaphlan(f, data.frame(g = 1, row.names = "b"), list(id = "x")), "clade_name")
+  expect_error(read_metaphlan("no-such-file", data.frame(), list(id = "x")), "File not found")
+  seqtab <- matrix(c(5, 6, 7, 8), 2, 2, dimnames = list(c("S1", "S2"), c("AAA", "CCC")))
+  s2 <- read_dada2(seqtab, taxa = NULL, samples = data.frame(g = 1:2, row.names = c("S1", "S2")), study = list(id = "d"))
+  expect_equal(rownames(mm_counts(s2)), c("ASV1", "ASV2")); expect_equal(mm_features(s2)$sequence, c("AAA", "CCC"))
+  s3 <- read_dada2(seqtab, taxa = cbind(Kingdom = c("B", "B"), Genus = c("x", "y")), samples = data.frame(g = 1:2, row.names = c("S1", "S2")), study = list(id = "d"))
+  expect_equal(mm_features(s3)$genus, c("x", "y"))                                              # taxa given by position
+})
+
+test_that("a phyloseq object with samples in rows converts", {
+  skip_if_not_installed("phyloseq")
+  m <- cnt3(); ps <- phyloseq::phyloseq(phyloseq::otu_table(t(m), taxa_are_rows = FALSE))
+  s <- study_from_phyloseq(ps, list(id = "p"))
+  expect_equal(unname(mm_counts(s)), unname(m)); expect_equal(nrow(mm_samples(s)), 4)
+})
+
+# ================ results from other tools ================
+# ---------- effects_from ----------
+mq <- data.frame(feature = rep(c("g1", "g2", "g3"), 2), metadata = "group", value = rep(c("b", "c"), each = 3), coef = c(.5, -.2, .1, .8, .0, -.4),
+                 stderr = c(.1, .2, .1, .2, .2, .1), pval = c(1e-5, .3, .4, 1e-4, 1, 1e-3), name = rep(c("groupb", "groupc"), each = 3), qval = 0.01, N = 40, N.not.0 = 30, stringsAsFactors = FALSE)
+test_that("effects_from reads MaAsLin2, ANCOM-BC2, LinDA and generic tables", {
+  e <- effects_from(mq, "maaslin2", "S1", effect_scale = "maaslin2_coef")
+  expect_s3_class(e, "mm_effects"); expect_equal(nrow(e), 6); expect_setequal(e$term, c("groupb", "groupc")); expect_true(all(e$engine == "maaslin2"))
+  expect_equal(e$estimate[e$feature == "g1" & e$term == "groupb"], 0.5); expect_equal(e$se[e$feature == "g3" & e$term == "groupc"], 0.1)
+  expect_equal(e$p_value[e$feature == "g2" & e$term == "groupb"], 0.3); expect_equal(unique(e$n), 40L); expect_equal(unique(e$effect_scale), "maaslin2_coef")
+  expect_equal(nrow(effects_from(mq, "maaslin2", "S1", effect_scale = "c", term = "groupb")), 3)
+  ab <- data.frame(taxon = c("g1", "g2"), `lfc_(Intercept)` = 1, lfc_groupb = c(.4, -.3), `se_(Intercept)` = .1, se_groupb = c(.1, .2), `p_(Intercept)` = .5, p_groupb = c(.001, .2), q_groupb = .1, check.names = FALSE)
+  ea <- effects_from(ab, "ancombc2", "S2", effect_scale = "lfc")
+  expect_equal(unique(ea$term), "groupb"); expect_equal(ea$estimate, c(.4, -.3)); expect_equal(ea$engine[1], "ancombc2")
+  li <- data.frame(baseMean = c(10, 20), log2FoldChange = c(1, -.5), lfcSE = c(.2, .3), stat = 1, pvalue = c(1e-4, .1), padj = .2, row.names = c("g1", "g2"))
+  el <- effects_from(li, "linda", "S3", effect_scale = "log2fc", term = "groupb")
+  expect_equal(el$feature, c("g1", "g2")); expect_equal(el$se, c(.2, .3)); expect_error(effects_from(li, "linda", "S3", effect_scale = "log2fc"), "give it with 'term'")
+  gen <- data.frame(taxon = c("a", "b"), var = "x", beta = c(.2, .3), sd = c(.1, .1), pp = c(.04, .01), nn = c(10, 12))
+  eg <- effects_from(gen, "generic", "S4", effect_scale = "s", columns = list(feature = "taxon", term = "var", estimate = "beta", se = "sd", p_value = "pp", n = "nn"))
+  expect_equal(eg$estimate, c(.2, .3)); expect_equal(eg$n, c(10L, 12L))
+})
+
+test_that("results from other tools pool, combine, and are kept apart from other engines", {
+  mq2 <- mq; mq2$coef <- mq2$coef * 0.9; mq2$stderr <- mq2$stderr * 1.1
+  b <- bind_effects(effects_from(mq, "maaslin2", "S1", effect_scale = "coef", term = "groupb"), effects_from(mq2, "maaslin2", "S2", effect_scale = "coef", term = "groupb"))
+  p <- pool_effects(b, method = "DL", test = "z", min_prop = 0); expect_equal(nrow(p), 3)
+  expect_equal(combine_pvalues(b)$k, c(2, 2, 2))
+  other <- new_effect_table("S3", "g1", "groupb", 0.2, 0.1, part = "abundance", engine = "lm_asin", effect_scale = "coef")
+  expect_error(bind_effects(b, other), "different engines")
+  f <- tempfile(fileext = ".tsv"); utils::write.table(mq, f, sep = "\t", row.names = FALSE, quote = FALSE)
+  expect_equal(nrow(effects_from(f, "maaslin2", "S1", effect_scale = "coef")), 6)
+})
+
+test_that("effects_from validates its input", {
+  expect_error(effects_from(mq, "maaslin2", "S1"), "effect_scale")
+  expect_error(effects_from(mq, "maaslin2", effect_scale = "c"), "single study ID")
+  expect_error(effects_from(mq[, -4], "maaslin2", "S1", effect_scale = "c"), "lacks the column")
+  expect_error(effects_from(mq, "maaslin2", "S1", effect_scale = "c", term = "nope"), "No rows")
+  expect_error(effects_from(mq, "generic", "S1", effect_scale = "c"), "columns")
+  expect_error(effects_from(data.frame(taxon = "a"), "ancombc2", "S1", effect_scale = "c"), "lfc")
+  expect_error(effects_from(data.frame(a = 1), "generic", "S1", effect_scale = "c", columns = list(feature = "x", term = "y", estimate = "z", se = "w", p_value = "v")), "lacks the column")
 })

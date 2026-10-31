@@ -21,6 +21,7 @@ Write a manifest to a file
 }
 \seealso{
 Other reporting: 
-\code{\link{manifest}()}
+\code{\link{manifest}()},
+\code{\link{write_report}()}
 }
 \concept{reporting}

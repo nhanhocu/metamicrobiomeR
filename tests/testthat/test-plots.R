@@ -1,3 +1,6 @@
+# Tests for the plots family; merged from several smaller files (see git history).
+
+# ================ forest plot ================
 mk <- function(study, feature, est, se, term = "x", part = "abundance", scale = "logit_mean") {
   new_effect_table(study = study, feature = feature, term = term, estimate = est, se = se, rank = "genus",
                    part = part, n = 30L, engine = "test", effect_scale = scale)
@@ -107,4 +110,57 @@ test_that("the plot can be rendered to a file", {
   f <- tempfile(fileext = ".png")
   suppressWarnings(ggplot2::ggsave(f, plot_forest(eff, feature = c("g1", "g2")), width = 6, height = 6, dpi = 72))
   expect_true(file.exists(f) && file.size(f) > 1000)
+})
+
+# ================ heatmap and volcano plots ================
+# ---------- overview plots ----------
+mkp <- function(study, est, se, feature, p = NA_real_) new_effect_table(study = study, feature = feature, term = "x", estimate = est, se = se, rank = "genus", part = "abundance",
+                                                                        p_value = p, n = 20L, engine = "t", effect_scale = "logit_mean")
+fe <- paste0("g", 1:6)
+set.seed(3)
+effp <- bind_effects(mkp("A", c(0.9, 0.5, 0.1, -0.2, 0.0, 0.3), rep(0.1, 6), fe, c(1e-9, 1e-4, 0.4, 0.04, 1, 0.01)), mkp("B", c(0.8, 0.6, 0.0, -0.1, 0.1), rep(0.12, 5), fe[1:5], c(1e-8, 1e-3, 1, 0.3, 0.5)),
+                     mkp("C", c(1.0, 0.4, 0.2, -0.3, 0.2, 0.2), rep(0.15, 6), fe, c(1e-6, 0.01, 0.2, 0.05, 0.3, 0.2)))
+geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[1], character(1))
+layer <- function(p, geom, nth = 1) ggplot2::ggplot_build(p)$data[[which(geoms(p) == geom)[nth]]]
+
+test_that("plot_heatmap shows every feature in every study plus the pooled column", {
+  pl <- pool_effects(effp, term = "x", min_prop = 0)
+  h <- plot_heatmap(effp, pl)
+  expect_s3_class(h, "ggplot")
+  tiles <- layer(h, "GeomTile"); expect_equal(nrow(tiles), 6 * 4)                          # 6 features x (3 studies + pooled)
+  expect_equal(sum(is.na(tiles$fill) | tiles$fill == "grey88"), 1)                         # g6 was not estimated in study B
+  lab <- layer(h, "GeomText")$label
+  expect_true(all(c("***", "*", "") %in% lab)); expect_gt(sum(lab == "***"), 2)
+  ord <- levels(h$data$y); expect_equal(rev(ord)[1], pl$feature[which.min(pl$p_value)])    # ordered by pooled p-value
+  expect_equal(length(levels(plot_heatmap(effp, pl, top = 3)$data$y)), 3)
+  expect_equal(levels(plot_heatmap(effp, pl, features = c("g2", "g4"))$data$y), c("g4", "g2"))
+  expect_equal(nrow(layer(plot_heatmap(effp, pl, stars = FALSE), "GeomTile")), 24); expect_false("GeomText" %in% geoms(plot_heatmap(effp, pl, stars = FALSE)))
+  expect_equal(levels(plot_heatmap(effp, pl, features = "g1", feature_labels = c(g1 = "Blautia"))$data$y), "Blautia")
+  dup <- plot_heatmap(effp, pl, features = c("g1", "g2", "g3"), feature_labels = c(g1 = "same", g2 = "same", g3 = "other"))   # equal labels must not break the plot
+  expect_equal(levels(dup$data$y), c("other", "same.1", "same"))
+})
+
+test_that("plot_heatmap and plot_volcano validate input and use the pooled table", {
+  expect_error(plot_heatmap(data.frame(a = 1)), "mm_effects")
+  expect_error(plot_heatmap(effp, features = "zzz"), "not found in the effect table")
+  expect_error(plot_heatmap(effp, pooled = data.frame(a = 1)), "mm_pooled")
+  expect_s3_class(plot_heatmap(effp, features = "g1"), "ggplot")                            # pooled computed when not supplied
+  pl <- pool_effects(effp, term = "x", min_prop = 0)
+  v <- plot_volcano(pl, alpha = 0.05, label_top = 2)
+  expect_s3_class(v, "ggplot")
+  pts <- layer(v, "GeomPoint"); expect_equal(nrow(pts), nrow(pl))
+  expect_equal(sort(pts$y), sort(-log10(pl$p_value)), tolerance = 1e-8)
+  expect_equal(sum(layer(v, "GeomText")$label != ""), 2)
+  expect_error(plot_volcano(data.frame(a = 1)), "mm_pooled")
+  ext <- bind_effects(effp, mkp("A", -40, 0.1, "zz"), mkp("B", -40, 0.1, "zz"), mkp("C", -40, 0.1, "zz"))        # a degenerate fit with an extreme estimate
+  pe <- pool_effects(ext, term = "x", min_prop = 0, method = "DL", test = "z")
+  ve <- plot_volcano(pe); pts <- layer(ve, "GeomPoint")
+  expect_equal(sum(pts$shape == 17), 1); expect_lt(max(abs(pts$x)), 10)                                           # clamped to the plotted range, marked
+  expect_match(ve$labels$caption, "beyond the plotted range")
+  all_ <- layer(plot_volcano(pe, x_range = Inf), "GeomPoint"); expect_equal(min(all_$x), pe$estimate[pe$feature == "zz"], tolerance = 1e-8)
+  expect_null(plot_volcano(pool_effects(effp, term = "x", min_prop = 0))$labels$caption)
+  prev <- as.data.frame(mkp("A", c(0.2, 0.3, 0.1), rep(0.1, 3), fe[1:3])); prev$part <- "prevalence"; class(prev) <- class(effp)
+  prev2 <- prev; prev2$study <- "B"
+  two <- pool_effects(bind_effects(effp, prev, prev2), min_prop = 0, term = "x")
+  expect_equal(length(unique(ggplot2::ggplot_build(plot_volcano(two))$layout$layout$PANEL)), 2)
 })

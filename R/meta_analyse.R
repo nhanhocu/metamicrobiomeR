@@ -30,6 +30,11 @@
 #' @param check Run [check_poolable()] first? Problems are reported as warnings, notes as messages.
 #' @param fit_args,pool_args Further arguments for [fit_study()] and [pool_effects()] as named lists.
 #' @param cores Cores for fitting, see [fit_study()].
+#' @param alpha,beta Also analyse alpha diversity ([fit_alpha()]) or beta diversity ([fit_beta()] and
+#'   [pool_beta()]) with the same model? Diversity is computed at the analysed level (the `rank`, if given).
+#'   Beta diversity needs the `vegan` package and does not allow terms that vary within a subject.
+#' @param alpha_args,beta_args Further arguments for [fit_alpha()] and [fit_beta()] as named lists
+#'   (for example `list(distance = "aitchison", permutations = 999)`).
 #' @return An object of class `mm_meta` with the pooled table (`$pooled`), the per-study effects
 #'   (`$effects`), the study table, the checks and the settings. It prints a summary,
 #'   `plot()` draws a forest plot (or a heatmap or volcano plot), and `as.data.frame()` gives the pooled table.
@@ -41,7 +46,7 @@
 #' @export
 meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_engines), rank = NULL, method = "REML", test = "adhoc",
                          quality = c("warn", "filter", "off"), check = TRUE, fit_args = list(), pool_args = list(),
-                         cores = getOption("metamicrobiomeR.cores", 1L)) {
+                         cores = getOption("metamicrobiomeR.cores", 1L), alpha = FALSE, beta = FALSE, alpha_args = list(), beta_args = list()) {
   engine <- match.arg(engine); quality <- match.arg(quality)
   xs <- .as_study_list(list(studies))
   if (length(xs) < 2) stop("Meta-analysis needs at least two studies; got ", length(xs), ". Use fit_study() for a single study.", call. = FALSE)
@@ -52,7 +57,7 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     all_counts <- all(vapply(xs, function(x) !is.null(mm_counts(x)), logical(1)))
     ok <- all_counts && requireNamespace("glmmTMB", quietly = TRUE)
     engine <- if (ok) "zibb_glmmtmb" else "lm_asin"
-    .inform("Using the '", engine, "' engine (", if (ok) "every study has counts" else if (!all_counts) "not every study has counts" else "glmmTMB is not installed", ").")
+    .inform("Using the '", engine, "' engine (", if (ok) "every study has counts; about a second per feature and study, engine = \"lm_asin\" is much faster for a first look" else if (!all_counts) "not every study has counts" else "glmmTMB is not installed", ").")
   }
   pc <- NULL
   if (check) {
@@ -61,14 +66,16 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     if (nrow(w)) warning("The studies may not be safe to pool: ", paste0(w$issue, " (", w$detail, ")", collapse = "; "), ". See check_poolable().", call. = FALSE)
     if (nrow(nt)) .inform("Note: ", paste(nt$issue, collapse = "; "), ". See check_poolable().")
   }
-  fits <- vector("list", length(xs))
+  fits <- vector("list", length(xs)); prep <- xs
   for (i in seq_along(xs)) {
     x <- xs[[i]]
+    .inform("Study ", i, " of ", length(xs), ": ", ids[i])
     fits[[i]] <- tryCatch(.with_study(ids[i], {
       if (!is.null(rank)) {
         f <- mm_features(x)
         if (!("rank" %in% colnames(f) && any(f$rank %in% rank))) x <- agglomerate(x, rank, key = "name")
       }
+      prep[[i]] <- x
       do.call(fit_study, c(list(study = x, formula = formula, engine = engine, rank = rank, cores = cores), fit_args))
     }), error = function(e) stop("Study '", ids[i], "': ", conditionMessage(e), call. = FALSE))
   }
@@ -85,8 +92,20 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     } else if (n_flag && quality == "filter") bound <- filter_effects(bound)
   }
   pooled <- do.call(pool_effects, c(list(effects = bound, term = term, method = method, test = test), pool_args))
-  structure(list(pooled = pooled, effects = bound, studies = study_table(xs), checks = pc, quality = q,
-                 settings = list(formula = deparse(formula), engine = engine, rank = rank, term = term, method = method, test = test, quality = quality)),
+  per_study <- function(fun, what, args) lapply(seq_along(prep), function(i) tryCatch(.with_study(ids[i], do.call(fun, c(list(study = prep[[i]], formula = formula), args))),
+                                                                                   error = function(e) stop("Study '", ids[i], "' (", what, "): ", conditionMessage(e), call. = FALSE)))
+  alpha_effects <- alpha_pooled <- beta_pooled <- NULL
+  if (alpha) {
+    a_args <- utils::modifyList(if (!is.null(fit_args$longitudinal)) list(longitudinal = fit_args$longitudinal) else list(), alpha_args)
+    alpha_effects <- bind_effects(per_study(fit_alpha, "alpha diversity", a_args))
+    alpha_pooled <- do.call(pool_effects, c(list(effects = alpha_effects, term = term, method = method, test = test), pool_args[setdiff(names(pool_args), "min_prop")], list(min_prop = 0)))
+  }
+  if (beta) {
+    .need("vegan", "beta diversity (PERMANOVA)")
+    beta_pooled <- do.call(pool_beta, per_study(fit_beta, "beta diversity", utils::modifyList(list(permutations = 499), beta_args)))
+  }
+  structure(list(pooled = pooled, effects = bound, alpha = alpha_pooled, alpha_effects = alpha_effects, beta = beta_pooled, studies = study_table(xs), checks = pc, quality = q,
+                 settings = list(formula = deparse(formula), engine = engine, rank = rank, term = term, method = method, test = test, quality = quality, alpha = alpha, beta = beta)),
             class = "mm_meta")
 }
 
@@ -113,6 +132,14 @@ print.mm_meta <- function(x, n = 6, ...) {
   }
   hi <- stats::median(p$I2, na.rm = TRUE)
   if (!is.na(hi) && hi > 50) cat("Heterogeneity is high (median I2 ", round(hi), "%): the studies disagree. summary(x) shows how much and what can explain it.\n", sep = "")
+  if (!is.null(x$alpha)) {
+    a <- as.data.frame(x$alpha)
+    cat("Alpha diversity (pooled standardised difference): ", paste0(a$feature, " ", sprintf("%+.2f", a$estimate), " (p ", format.pval(a$p_value, digits = 2), ")", collapse = "; "), "\n", sep = "")
+  }
+  if (!is.null(x$beta)) {
+    b <- x$beta
+    cat("Beta diversity (PERMANOVA, combined across studies): ", paste0(b$term, " R2 ", sprintf("%.2f", b$R2), ", p ", format.pval(b$p_value, digits = 2), collapse = "; "), "\n", sep = "")
+  }
   cat("plot(x) draws a forest plot; summary(x) describes the between-study variation; as.data.frame(x) is the pooled table.\n")
   invisible(x)
 }
