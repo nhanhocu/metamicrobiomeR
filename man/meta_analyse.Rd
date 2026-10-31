@@ -29,9 +29,9 @@ meta_analyse(
 
 \method{plot}{mm_meta}(
   x,
-  type = c("forest", "heatmap", "volcano"),
+  type = c("forest", "heatmap", "volcano", "alpha", "beta", "influence"),
   feature = NULL,
-  top = 3,
+  top = NULL,
   term = NULL,
   ...
 )
@@ -69,15 +69,18 @@ Beta diversity needs the `vegan` package and does not allow terms that vary with
 
 \item{object}{An `mm_meta` object.}
 
-\item{top}{Number of features to draw in a forest plot.}
+\item{top}{Number of features to draw: the strongest ones by p-value (default 3 for forest and influence plots, 25 for the heatmap).}
 
 \item{...}{Further arguments for the plot function ([plot_forest()], [plot_heatmap()] or [plot_volcano()]).}
 
 \item{x}{An `mm_meta` object.}
 
-\item{type}{`"forest"` (default), `"heatmap"` or `"volcano"`.}
+\item{type}{What to draw. `"forest"` (default): the studies and the pooled effect of the strongest features;
+`"heatmap"`: studies by features; `"volcano"`: pooled estimate against evidence; `"alpha"`: forest plot of the
+alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn.
+`"alpha"` and `"beta"` need `alpha = TRUE` or `beta = TRUE` in the analysis.}
 
-\item{feature}{For forest plots: the features to draw (default: the `top` features with the smallest p-value).}
+\item{feature}{The features to draw in a forest, influence or heatmap plot (default: the `top` features with the smallest p-value).}
 }
 \value{
 An object of class `mm_meta` with the pooled table (`$pooled`), the per-study effects

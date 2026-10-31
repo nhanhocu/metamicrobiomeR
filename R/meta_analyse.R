@@ -94,7 +94,7 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
   pooled <- do.call(pool_effects, c(list(effects = bound, term = term, method = method, test = test), pool_args))
   per_study <- function(fun, what, args) lapply(seq_along(prep), function(i) tryCatch(.with_study(ids[i], do.call(fun, c(list(study = prep[[i]], formula = formula), args))),
                                                                                    error = function(e) stop("Study '", ids[i], "' (", what, "): ", conditionMessage(e), call. = FALSE)))
-  alpha_effects <- alpha_pooled <- beta_pooled <- NULL
+  alpha_effects <- alpha_pooled <- beta_pooled <- beta_fits <- NULL
   if (alpha) {
     a_args <- utils::modifyList(if (!is.null(fit_args$longitudinal)) list(longitudinal = fit_args$longitudinal) else list(), alpha_args)
     alpha_effects <- bind_effects(per_study(fit_alpha, "alpha diversity", a_args))
@@ -102,9 +102,10 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
   }
   if (beta) {
     .need("vegan", "beta diversity (PERMANOVA)")
-    beta_pooled <- do.call(pool_beta, per_study(fit_beta, "beta diversity", utils::modifyList(list(permutations = 499), beta_args)))
+    beta_fits <- per_study(fit_beta, "beta diversity", utils::modifyList(list(permutations = 499), beta_args))
+    beta_pooled <- do.call(pool_beta, beta_fits)
   }
-  structure(list(pooled = pooled, effects = bound, alpha = alpha_pooled, alpha_effects = alpha_effects, beta = beta_pooled, studies = study_table(xs), checks = pc, quality = q,
+  structure(list(pooled = pooled, effects = bound, alpha = alpha_pooled, alpha_effects = alpha_effects, beta = beta_pooled, beta_fits = beta_fits, studies = study_table(xs), checks = pc, quality = q,
                  settings = list(formula = deparse(formula), engine = engine, rank = rank, term = term, method = method, test = test, quality = quality, alpha = alpha, beta = beta)),
             class = "mm_meta")
 }
@@ -189,26 +190,37 @@ print.summary.mm_meta <- function(x, ...) {
 as.data.frame.mm_meta <- function(x, ...) as.data.frame(x$pooled, ...)
 
 #' @param x An `mm_meta` object.
-#' @param type `"forest"` (default), `"heatmap"` or `"volcano"`.
-#' @param feature For forest plots: the features to draw (default: the `top` features with the smallest p-value).
-#' @param top Number of features to draw in a forest plot.
+#' @param type What to draw. `"forest"` (default): the studies and the pooled effect of the strongest features;
+#'   `"heatmap"`: studies by features; `"volcano"`: pooled estimate against evidence; `"alpha"`: forest plot of the
+#'   alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn.
+#'   `"alpha"` and `"beta"` need `alpha = TRUE` or `beta = TRUE` in the analysis.
+#' @param feature The features to draw in a forest, influence or heatmap plot (default: the `top` features with the smallest p-value).
+#' @param top Number of features to draw: the strongest ones by p-value (default 3 for forest and influence plots, 25 for the heatmap).
 #' @param ... Further arguments for the plot function ([plot_forest()], [plot_heatmap()] or [plot_volcano()]).
 #' @rdname meta_analyse
 #' @export
-plot.mm_meta <- function(x, type = c("forest", "heatmap", "volcano"), feature = NULL, top = 3, term = NULL, ...) {
+plot.mm_meta <- function(x, type = c("forest", "heatmap", "volcano", "alpha", "beta", "influence"), feature = NULL, top = NULL, term = NULL, ...) {
   type <- match.arg(type)
-  p <- as.data.frame(x$pooled)
-  terms <- unique(p$term)
-  if (type != "volcano" && is.null(term)) {
-    if (length(terms) != 1) stop("Several terms were pooled (", paste(terms, collapse = ", "), "); choose one with 'term'.", call. = FALSE)
-    term <- terms
+  one_term <- function(tab) {
+    terms <- unique(tab$term)
+    if (is.null(term)) { if (length(terms) != 1) stop("Several terms were pooled (", paste(terms, collapse = ", "), "); choose one with 'term'.", call. = FALSE); terms } else term
   }
+  if (type == "alpha") {
+    if (is.null(x$alpha)) stop("Alpha diversity was not analysed; use meta_analyse(..., alpha = TRUE).", call. = FALSE)
+    a <- as.data.frame(x$alpha); tm <- one_term(a)
+    return(plot_forest(x$alpha_effects, x$alpha, feature = unique(a$feature[a$term == tm]), term = tm, ...))
+  }
+  if (type == "beta") {
+    if (is.null(x$beta_fits)) stop("Beta diversity was not analysed; use meta_analyse(..., beta = TRUE).", call. = FALSE)
+    return(.plot_beta(x$beta_fits, x$beta))
+  }
+  p <- as.data.frame(x$pooled)
+  if (type == "volcano") return(plot_volcano(x$pooled, ...))
+  term <- one_term(p)
+  pt <- p[p$term == term, , drop = FALSE]
+  if (type == "heatmap") return(plot_heatmap(x$effects, x$pooled, term = term, features = feature, top = if (is.null(top)) 25 else top, ...))
+  if (is.null(feature)) feature <- utils::head(pt$feature[order(pt$p_value)], if (is.null(top)) 3 else top)
   switch(type,
-    forest = {
-      pt <- p[p$term == term, , drop = FALSE]
-      if (is.null(feature)) feature <- utils::head(pt$feature[order(pt$p_value)], top)
-      plot_forest(x$effects, x$pooled, feature = feature, term = term, ...)
-    },
-    heatmap = plot_heatmap(x$effects, x$pooled, term = term, ...),
-    volcano = plot_volcano(x$pooled, ...))
+    forest = plot_forest(x$effects, x$pooled, feature = feature, term = term, ...),
+    influence = .plot_influence(x, feature, term))
 }

@@ -74,8 +74,8 @@ res
 With four studies the default test is conservative, so no genus passes the 5% line here, but the four strongest
 are planted differences (see below for how this depends on the test).
 
-Add `alpha = TRUE, beta = TRUE` for diversity and `write_report(res)` for a shareable report. `summary(res)` describes how much the studies differ and what could explain it. `plot(res)` draws a forest plot of the strongest features (`plot(res, "heatmap")` and `plot(res, "volcano")` give
-overviews), and `as.data.frame(res)` is the pooled table. The rest of this vignette goes through the same steps one at
+Add `alpha = TRUE, beta = TRUE` for diversity and `write_report(res)` for a shareable report. `summary(res)` describes how much the studies differ and what could explain it. `plot(res)` draws a forest plot of the strongest features (`plot(res, "heatmap")`, `"volcano"`, `"alpha"`, `"beta"` and
+`"influence"` give the others), and `as.data.frame(res)` is the pooled table. The rest of this vignette goes through the same steps one at
 a time, which gives you full control over each.
 
 ## 2. One model per feature

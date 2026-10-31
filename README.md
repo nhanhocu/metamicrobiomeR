@@ -58,6 +58,23 @@ leave_one_out(bound, feature = "g__Blautia", term = "groupb")
 write_manifest(genus, "cohort1-manifest.txt")
 ```
 
+## Graphs
+
+All graphs are `ggplot2` objects in one style, so you can adjust them with `+ theme(...)`, `+ labs(...)` and so on. From the result of
+`meta_analyse()`, `plot(res, type)` draws:
+
+| `type` | Shows | Notes |
+|---|---|---|
+| `"forest"` (default) | each study and the pooled effect, with the prediction interval, for the strongest features | `top = 3`, or `feature = "Blautia"` |
+| `"heatmap"` | studies by features, with a pooled column and significance stars | `top = 25` |
+| `"volcano"` | pooled estimate against evidence, for all features | extreme estimates are drawn at the edge |
+| `"alpha"` | forest plot of the alpha-diversity metrics | needs `alpha = TRUE` |
+| `"beta"` | PERMANOVA R2 of each study and the combined result | needs `beta = TRUE` |
+| `"influence"` | the pooled effect with each study left out in turn | shows whether one study drives a result |
+
+With several terms in the model, choose one with `term = "groupcase"`. The functions behind them (`plot_forest()`, `plot_heatmap()`,
+`plot_volcano()`) take effect tables from the step-by-step workflow.
+
 ## Getting your data in
 
 `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
@@ -138,21 +155,17 @@ Version 2.0 is not published yet. Until it is, install it from the source file y
 install.packages("metamicrobiomeR_2.0.0.9000.tar.gz", repos = NULL, type = "source")
 ```
 
-**The core needs nothing but base R** (a full analysis, including alpha diversity, summaries, sensitivity checks and
-reports, runs in a library with none of the packages below). Everything else is optional, and a function that needs
-a package says which one and how to install it:
+`ggplot2` is the only required package (for the plots, which are part of every result). Everything else is optional, and a function
+that needs a package says which one and how to install it:
 
 | Package | Needed for |
 |---|---|
-| `ggplot2` | plots (`plot_forest()`, `plot_heatmap()`, `plot_volcano()`, `plot()` on a result, figures in reports); the tables work without it |
 | `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice when every study has counts) |
 | `gamlss`, `gamlss.dist` | the GAMLSS-BEZI model of the 2019 paper |
 | `lme4` | a subject random effect (repeated measures) with the linear models |
 | `vegan` | beta diversity |
 | `metafor` | the pooling estimators EB, ML, HE and SJ (REML, DL and Paule-Mandel need nothing) |
 | `phyloseq`, `SummarizedExperiment`, `biomformat` | the matching importers |
-
-The first `plot()` on a fresh install asks for `ggplot2`, one `install.packages("ggplot2")` away.
 
 ## Validation and benchmark
 

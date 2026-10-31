@@ -65,8 +65,9 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
   that `lm()` would warn about (a perfect fit), data with missing values, rank-deficient designs and one-level variables are left to the
   per-feature path, so the output is the same row for row (tests compare both paths, `options(metamicrobiomeR.batch_lm = FALSE)` switches the fast path off).
 * **Pooling:** half the time was generic matrix algebra for a one-number problem; the intercept-only case now uses plain arithmetic (tested against the matrix version to 1e-9 and against `metafor`).
-* **Dependencies:** the hard dependencies are now `methods`, `parallel`, `stats`, `utils`. Footprints of the removed ones (recursive, installed
-  package database): `ggplot2` 28 packages, `metafor` 8, both together 33 (they share three), and `lme4` 24 more before that.
-  Checked in a library without `ggplot2`, `metafor`, `lme4` and `glmmTMB`: a full analysis ran and loaded no package beyond base R.
+* **Dependencies:** `metafor` and `lme4` are optional. Footprints (recursive, installed package database): `ggplot2` 28 packages, `metafor` 8,
+  both together 33 (they share three), and `lme4` 24 more; the hard dependencies went from 57 packages to 28 (`ggplot2` and its dependencies).
+  `ggplot2` was made optional for a while and checked in a library without it, `metafor`, `lme4` and `glmmTMB` (a full analysis ran and loaded no package
+  beyond base R), and then made required again because the plots are part of every result.
 * **Not done:** the count model (about a second per feature) and GAMLSS are limited by the model fits themselves; `cores` has only been
   tested for identical results on one core. The number of exports (53) is unchanged.

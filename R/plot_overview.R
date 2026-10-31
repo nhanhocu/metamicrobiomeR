@@ -23,7 +23,6 @@
 #' @export
 plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, features = NULL, top = 25, order_by = c("p_value", "estimate"),
                          stars = TRUE, feature_labels = NULL) {
-  .need("ggplot2", "drawing plots (the tables are available without it)")
   order_by <- match.arg(order_by)
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
@@ -57,15 +56,16 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
   if (stars) grid$label <- ifelse(is.na(grid$p), "", ifelse(grid$p < 0.001, "***", ifelse(grid$p < 0.01, "**", ifelse(grid$p < 0.05, "*", ""))))
   lim <- stats::quantile(abs(grid$estimate), 0.95, na.rm = TRUE); lim <- max(lim, 1e-6)
   lbl <- stats::setNames(make.unique(vapply(features, lab, character(1))), features)        # labels must be unique
+  grid$star_col <- ifelse(!is.na(grid$estimate) & abs(grid$estimate) > 0.6 * lim, "white", "grey10")      # readable on the darkest tiles
   grid$x <- factor(grid$column, levels = cols); grid$y <- factor(unname(lbl[grid$feature]), levels = rev(unname(lbl)))
   p <- ggplot2::ggplot(grid, ggplot2::aes(x = x, y = y, fill = estimate)) +
     ggplot2::geom_tile(colour = "white") +
     ggplot2::geom_vline(xintercept = length(studies) + 0.5, colour = "grey30") +
     ggplot2::scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0, limits = c(-lim, lim), na.value = "grey88",
                                   oob = function(x, range) pmin(pmax(x, range[1]), range[2]), name = "Estimate")
-  if (stars) p <- p + ggplot2::geom_text(ggplot2::aes(label = label), size = 3.2, vjust = 0.75)
+  if (stars) p <- p + ggplot2::geom_text(ggplot2::aes(label = label, colour = star_col), size = 3.2, vjust = 0.75) + ggplot2::scale_colour_identity()
   effect_scale <- unique(sel$effect_scale[!is.na(sel$effect_scale)])
-  p + ggplot2::labs(x = NULL, y = NULL, title = paste0(term, " (", part, "): ", paste(effect_scale, collapse = ", ")),
+  p + ggplot2::labs(x = NULL, y = NULL, title = paste0(term, " (", part, "): ", paste(.scale_label(effect_scale), collapse = ", ")),
                     caption = "Stars: p < 0.05, 0.01, 0.001 (pooled column: adjusted p). Grey: not estimated.") +
     ggplot2::theme_minimal(base_size = 11) + ggplot2::theme(panel.grid = ggplot2::element_blank(), plot.title = ggplot2::element_text(size = 10), plot.caption = ggplot2::element_text(size = 8))
 }
@@ -89,7 +89,6 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
 #' @family plots
 #' @export
 plot_volcano <- function(pooled, alpha = 0.05, label_top = 8, feature_labels = NULL, x_range = NULL) {
-  .need("ggplot2", "drawing plots (the tables are available without it)")
   .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   d <- as.data.frame(pooled)
   d <- d[!is.na(d$estimate) & !is.na(d$p_value), , drop = FALSE]

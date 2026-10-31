@@ -26,7 +26,6 @@
 #' @export
 plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NULL,
                         level = 0.95, show_pi = TRUE, feature_labels = NULL) {
-  .need("ggplot2", "drawing plots (the tables are available without it)")
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (missing(feature) || !length(feature)) stop("'feature' is required.", call. = FALSE)
@@ -107,8 +106,9 @@ plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NUL
   if (!is.null(pis)) p <- p + ggplot2::geom_segment(data = pis, ggplot2::aes(x = x, xend = xend, y = y, yend = y), colour = "#1B4F72", linetype = "dotted", linewidth = 0.7)
   p +
     ggplot2::scale_y_continuous(breaks = c(unname(ypos), 0), labels = c(studies, "Pooled"), limits = c(-0.9, m + 1.1)) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0.04, 0.2))) +          # room on the right for the weights
     ggplot2::facet_wrap(~panel, ncol = 1, scales = "free_x") +
-    ggplot2::labs(x = paste0("Effect (", paste(scale_lab, collapse = ", "), "); ", round(100 * level), "% intervals"), y = NULL) +
+    ggplot2::labs(x = paste0("Effect (", paste(.scale_label(scale_lab), collapse = ", "), "); ", round(100 * level), "% intervals"), y = NULL) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
                    strip.text = ggplot2::element_text(hjust = 0, size = 9.5), axis.text.y = ggplot2::element_text(size = 9.5))

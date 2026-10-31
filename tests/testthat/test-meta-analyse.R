@@ -203,7 +203,72 @@ test_that("write_report copes with several pooled terms", {
 test_that("lme4 is optional and the install hint says how to get it", {
   d <- utils::packageDescription("metamicrobiomeR")
   imports <- trimws(strsplit(gsub("\\s+", " ", d$Imports), ",")[[1]])
-  expect_equal(sort(imports), c("methods", "parallel", "stats", "utils"))                         # the core needs base R only
-  expect_true(all(c("lme4", "ggplot2", "metafor") %in% trimws(sub("\\(.*\\)", "", strsplit(gsub("\\s+", " ", d$Suggests), ",")[[1]]))))
+  expect_equal(sort(imports), c("ggplot2", "methods", "parallel", "stats", "utils"))               # ggplot2 for the plots; everything else optional
+  expect_true(all(c("lme4", "metafor") %in% trimws(sub("\\(.*\\)", "", strsplit(gsub("\\s+", " ", d$Suggests), ",")[[1]]))))
   expect_error(metamicrobiomeR:::.need("notARealPackage123", "a subject random effect"), "Package 'notARealPackage123' is needed for a subject random effect. Install it with install.packages")
+})
+
+# ---- plots reached through plot(<result>, type)
+plot_res <- function(...) suppressWarnings(suppressMessages(meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                                                                          fit_args = list(longitudinal = FALSE), ...)))
+n_panels <- function(p) length(unique(ggplot2::ggplot_build(p)$layout$layout$PANEL))
+n_rows <- function(p) length(levels(p$data$y))
+
+test_that("every plot type honours top and feature instead of ignoring them", {
+  res <- plot_res()
+  expect_equal(c(n_panels(plot(res)), n_panels(plot(res, top = 5)), n_panels(plot(res, feature = "Escherichia"))), c(3, 5, 1))
+  expect_equal(c(n_panels(plot(res, "influence")), n_panels(plot(res, "influence", top = 2)), n_panels(plot(res, "influence", feature = c("Escherichia", "Roseburia")))), c(3, 2, 2))
+  expect_equal(c(n_rows(plot(res, "heatmap")), n_rows(plot(res, "heatmap", top = 12)), n_rows(plot(res, "heatmap", feature = c("Escherichia", "Roseburia")))), c(25, 12, 2))
+  expect_s3_class(plot(res, "volcano"), "ggplot")
+  expect_error(plot(res, "nonsense"), "should be one of")
+})
+
+test_that("plot(result, 'alpha') draws the diversity metrics and says what is missing", {
+  expect_error(plot(plot_res(), "alpha"), "Alpha diversity was not analysed; use meta_analyse\\(\\.\\.\\., alpha = TRUE\\)")
+  res <- plot_res(alpha = TRUE)
+  p <- plot(res, "alpha"); expect_s3_class(p, "ggplot"); expect_equal(n_panels(p), 3)                         # shannon, simpson, observed
+  expect_match(p$labels$x, "standard deviations")
+})
+
+test_that("plot(result, 'beta') shows each study's R2 and the combined result", {
+  skip_if_not_installed("vegan")
+  expect_error(plot(plot_res(), "beta"), "Beta diversity was not analysed; use meta_analyse\\(\\.\\.\\., beta = TRUE\\)")
+  res <- plot_res(beta = TRUE, beta_args = list(permutations = 49, seed = 1))
+  expect_length(res$beta_fits, 4)
+  p <- plot(res, "beta"); expect_s3_class(p, "ggplot"); expect_equal(n_panels(p), 2)                         # terms: group and age
+  d <- p$data; expect_equal(nrow(d), 8); expect_setequal(as.character(d$study), names(example_studies))
+  expect_true(all(grepl("^(group|age): combined p = .*mean R2 = \\d\\.\\d\\d \\(k = 4\\)$", unique(d$panel))))
+  expect_match(p$labels$caption, "cannot be smaller than 1 / \\(permutations \\+ 1\\)")
+})
+
+test_that("the influence plot starts from the full result and leaves each study out", {
+  res <- plot_res(); p <- plot(res, "influence", feature = "Enterococcus")
+  d <- p$data; expect_equal(nrow(d), 5)                                                                       # all studies + four omissions
+  expect_equal(as.character(d$label[d$all]), "All studies")
+  pooled <- as.data.frame(res$pooled); pe <- pooled$estimate[pooled$feature == "Enterococcus" & pooled$term == "groupcase"]
+  expect_equal(d$estimate[d$all], pe)
+  expect_setequal(as.character(d$label[!d$all]), paste("Without", names(example_studies)))
+  expect_match(p$labels$x, "arcsine square-root proportion")
+})
+
+test_that("the plots are readable: scale names in words, stars legible on dark tiles, room for the weights", {
+  expect_equal(metamicrobiomeR:::.scale_label(c("logit_mean", "asin_sqrt_mean", "clr_mean", "sd_units", "something_else")),
+               c("log-odds", "arcsine square-root proportion", "centred log-ratio", "standard deviations", "something_else"))
+  res <- plot_res()
+  expect_match(plot(res, "heatmap")$labels$title, "arcsine square-root proportion")
+  txt <- ggplot2::ggplot_build(plot(res, "heatmap"))$data[[which(vapply(plot(res, "heatmap")$layers, function(l) class(l$geom)[1], "") == "GeomText")]]
+  expect_true(all(c("white", "grey10") %in% txt$colour))                                                      # white stars on the darkest tiles
+  f <- plot(res, feature = "Faecalibacterium")                                                                # all intervals negative: zero is the right-hand end of the data
+  b <- ggplot2::ggplot_build(f); xr <- b$layout$panel_params[[1]]$x.range
+  seg <- b$data[[2]]; span <- max(0, seg$xend) - min(seg$x)
+  expect_gt(xr[2] - max(0, seg$xend), 0.1 * span)                                                             # blank room on the right for the weights
+  expect_match(f$labels$x, "Effect \\(arcsine square-root proportion\\)")
+})
+
+test_that("the report includes the diversity figures when they were analysed", {
+  skip_if_not_installed("vegan")
+  res <- plot_res(alpha = TRUE, beta = TRUE, beta_args = list(permutations = 49, seed = 1))
+  f <- file.path(tempfile(fileext = ".dir"), "r.md"); dir.create(dirname(f)); write_report(res, f)
+  expect_true(all(file.exists(file.path(dirname(f), "r_files", c("alpha.png", "beta.png")))))
+  expect_true(any(grepl("!\\[alpha\\]\\(r_files/alpha.png\\)", readLines(f)))); expect_true(any(grepl("!\\[beta\\]\\(r_files/beta.png\\)", readLines(f))))
 })
