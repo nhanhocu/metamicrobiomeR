@@ -196,3 +196,24 @@ test_that("one-stage and two-stage analyses agree on simulated studies with a co
   dif <- sim$truth$feature[sim$truth$diff]
   expect_true(all(one$p_value[one$feature %in% dif] < 0.01)); expect_equal(unique(one$study), "sim1+sim2+sim3")
 })
+
+test_that("merge_studies keeps the order of factor levels, so the reference level and the sign of effects do not change", {
+  mk <- function(id, seed) {
+    set.seed(seed); cn <- matrix(rpois(6 * 40, 30), 6, 40, dimnames = list(paste0("g", 1:6), paste0("S", 1:40)))
+    grp <- factor(rep(c("control", "case"), each = 20), levels = c("control", "case")); cn[1, grp == "case"] <- cn[1, grp == "case"] * 3L
+    as_study(counts = cn, taxonomy = data.frame(genus = paste0("g", 1:6), row.names = rownames(cn)), samples = data.frame(group = grp, row.names = colnames(cn)),
+             study = list(id = id, feature_type = "taxon"))
+  }
+  s <- list(mk("A", 1), mk("B", 2))
+  m <- suppressMessages(merge_studies(s, rank = "genus"))
+  expect_equal(levels(mm_samples(m)$group), c("control", "case"))                                  # not re-sorted alphabetically ("case" first)
+  per <- bind_effects(lapply(s, fit_study, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0))
+  one <- suppressWarnings(fit_study(m, ~ group + study, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0))
+  expect_true("groupcase" %in% per$term); expect_true("groupcase" %in% one$term); expect_false("groupcontrol" %in% one$term)
+  a <- per$estimate[per$term == "groupcase" & per$feature == "g1" & per$study == "A"]; b <- one$estimate[one$term == "groupcase" & one$feature == "g1"]
+  expect_equal(sign(a), sign(b)); expect_gt(b, 0)
+  mixed <- list(s[[1]], { x <- s[[2]]; x$samples$group <- factor(c("case", "control")[as.integer(x$samples$group)], levels = c("case", "control")); x })   # different order in one study: first study wins
+  expect_equal(levels(mm_samples(suppressMessages(merge_studies(mixed, rank = "genus")))$group), c("control", "case"))
+  chr <- lapply(s, function(x) { x$samples$group <- as.character(x$samples$group); x })                                                              # plain text columns still become factors
+  expect_s3_class(mm_samples(suppressMessages(merge_studies(chr, rank = "genus")))$group, "factor")
+})

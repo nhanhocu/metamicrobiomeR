@@ -61,13 +61,15 @@ merge_studies <- function(studies, rank = NULL, key = c("name", "lineage"), feat
   # sample data: columns shared by all studies, plus the study
   if (study_var %in% unlist(lapply(xs, function(x) colnames(mm_samples(x))))) stop("'", study_var, "' is already a sample column.", call. = FALSE)
   shared <- Reduce(intersect, lapply(xs, function(x) colnames(mm_samples(x))))
+  levs <- list()                                                  # keep the level order of factors: the first level is the reference level of a model
+  for (x in xs) for (v in shared) if (is.factor(mm_samples(x)[[v]])) levs[[v]] <- union(levs[[v]], levels(mm_samples(x)[[v]]))
   smp <- do.call(rbind, lapply(seq_along(xs), function(i) {
     s <- mm_samples(xs[[i]])[, shared, drop = FALSE]
     for (v in colnames(s)) if (is.factor(s[[v]])) s[[v]] <- as.character(s[[v]])
     rownames(s) <- paste(ids[i], rownames(s), sep = ":"); s[[study_var]] <- ids[i]; s
   }))
   smp[[study_var]] <- factor(smp[[study_var]], levels = ids)
-  for (v in setdiff(colnames(smp), study_var)) if (is.character(smp[[v]])) smp[[v]] <- factor(smp[[v]])
+  for (v in setdiff(colnames(smp), study_var)) if (is.character(smp[[v]])) smp[[v]] <- if (!is.null(levs[[v]])) factor(smp[[v]], levels = levs[[v]]) else factor(smp[[v]])
   subj <- vapply(xs, function(x) x$study$subject, character(1))
   info <- list(id = paste(ids, collapse = "+"), feature_type = if (length(unique(vapply(xs, function(x) x$study$feature_type, ""))) == 1) xs[[1]]$study$feature_type else "taxon",
                merged_from = ids)

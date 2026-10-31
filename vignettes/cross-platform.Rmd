@@ -1,0 +1,87 @@
+---
+title: "Meta-analysis across platforms"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Meta-analysis across platforms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5, dpi = 80)
+library(metamicrobiomeR)
+options(metamicrobiomeR.quiet = TRUE)
+```
+
+Studies of the same question are often done on different platforms: a 16S study of one region, another of a
+different region on a different sequencer, a shotgun study. They use different databases, name taxa differently,
+and sequence to very different depths. A **combined analysis** merges the raw tables and fits one model; it needs a
+table the studies share. A **meta-analysis** analyses each study on its own terms and combines the *estimates*;
+it only needs the estimates to be comparable. This vignette runs both on the simulated `example_studies`
+(four studies on three platforms, with six genera given a known difference, see `?example_studies`) and compares them.
+
+## What the studies share
+
+```{r check}
+check_poolable(example_studies, rank = "genus")
+```
+
+The 16S studies hold ASVs and the shotgun study holds genera, with different naming (`[Eubacterium]`, `Blautia_A`).
+Names are matched across databases, so most genera appear in several studies, but only some in all four.
+
+## Meta-analysis: each study on its own, then pool
+
+```{r meta}
+res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
+two <- as.data.frame(res)
+c(genera = nrow(two), significant_at_5pct = sum(two$p_adjust <= 0.05))
+```
+
+## Combined analysis: merge the tables, adjust for study
+
+`merge_studies()` matches taxa by name and keeps the genera present in every study (the default), and the model adjusts
+for the study:
+
+```{r combined}
+merged <- merge_studies(example_studies, rank = "genus")
+one <- fit_study(merged, ~ group + age + study, engine = "lm_asin", longitudinal = FALSE)
+one <- one[one$term == "groupcase", ]
+one$p_adjust <- p.adjust(one$p_value, "fdr")
+c(genera = nrow(one), significant_at_5pct = sum(one$p_adjust <= 0.05))
+```
+
+## What differs
+
+```{r compare}
+both <- merge(two[, c("feature", "estimate")], one[, c("feature", "estimate")], by = "feature", suffixes = c("_meta", "_combined"))
+c(genera_in_both = nrow(both), correlation_of_estimates = round(cor(both$estimate_meta, both$estimate_combined), 2),
+  share_with_same_sign = mean(sign(both$estimate_meta) == sign(both$estimate_combined)))
+setdiff(two$feature, one$feature)              # genera only the meta-analysis can use
+head(two[order(two$p_value), "feature"], 5)    # strongest genera, meta-analysis
+head(one[order(one$p_value), "feature"], 5)    # strongest genera, combined analysis
+```
+
+* **The estimates agree.** For the genera both analyses use, the effects are almost the same, and the strongest genera
+  are the same (four of the five strongest are planted differences).
+* **Coverage differs.** The combined analysis can only use genera present in every study; the meta-analysis uses every
+  genus seen in at least two studies, including some the merge drops.
+* **Significance differs a lot.** The combined analysis has 200 samples and calls most genera significant, but only six
+  were given a true difference: most of the rest shift a little because relative abundances are compositional (when
+  some genera rise, the others fall), and with high power small shifts become "significant". The meta-analysis, with
+  four studies, is conservative and finds none at the default test. **Neither count is the answer**: look at effect sizes,
+  their consistency across studies, and the heterogeneity (`summary(res)`).
+
+## Which to use?
+
+| | Combined analysis | Meta-analysis |
+|---|---|---|
+| Needs a shared feature table | yes | no |
+| Needs raw data from every study | yes | no: estimates are enough (`effects_from()`) |
+| Genera analysed | those in every study | those in at least two |
+| Power with a few studies | higher | lower: the default test is conservative |
+| Shows how much studies disagree | no | yes: I2, prediction intervals |
+| Handles batch differences | with a study term | within each study |
+
+When you can do both, report both: agreement strengthens the conclusion, and a difference tells you where to look.
+When the raw data cannot be merged or shared, the meta-analysis is the way to combine them.

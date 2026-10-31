@@ -29,3 +29,18 @@ test_that("the planted differences are what the documentation says they are", {
   s <- pool_sensitivity(res$effects, term = "groupcase", significance = "p_adjust")
   expect_equal(unname(s$n_significant), c(47, 47, 13, 0))                                          # the numbers quoted in the vignette
 })
+
+test_that("the cross-platform vignette's claims about two-stage and combined analyses hold", {
+  res <- suppressMessages(meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                                       fit_args = list(longitudinal = FALSE), quality = "off", check = FALSE))
+  two <- as.data.frame(res)
+  merged <- suppressMessages(merge_studies(example_studies, rank = "genus"))
+  one <- fit_study(merged, ~ group + age + study, engine = "lm_asin", longitudinal = FALSE); one <- one[one$term == "groupcase", ]
+  expect_equal(c(nrow(two), nrow(one)), c(57, 48))
+  both <- merge(two[, c("feature", "estimate")], one[, c("feature", "estimate")], by = "feature", suffixes = c("_m", "_c"))
+  expect_equal(nrow(both), 48); expect_gt(stats::cor(both$estimate_m, both$estimate_c), 0.99); expect_equal(mean(sign(both$estimate_m) == sign(both$estimate_c)), 1)
+  expect_setequal(setdiff(two$feature, one$feature), c("Sutterella", "Lachnospira", "Bacteroides", "Dorea", "Coprococcus", "Bilophila", "Desulfovibrio", "Akkermansia", "Haemophilus"))
+  planted <- c("Escherichia", "Enterococcus", "Faecalibacterium", "Roseburia", "Butyricicoccus")
+  expect_equal(sum(head(one$feature[order(one$p_value)], 5) %in% planted), 4)
+  expect_equal(sum(p.adjust(one$p_value, "fdr") <= 0.05), 43); expect_equal(sum(two$p_adjust <= 0.05), 0)
+})
