@@ -42,6 +42,10 @@ write_report <- function(x, file = "meta-analysis-report.md", top = 10, figures 
                                paste0("Significant under all settings: ", length(sens$robust), " of ", nrow(sens$wide), "."), "")
   if (!is.null(x$alpha)) { a <- as.data.frame(x$alpha); out <- c(out, "## Alpha diversity", "", "Pooled standardised difference between groups:", "", md(a[, intersect(c("feature", "k", "estimate", "ci_lo", "ci_hi", "p_value", "I2"), colnames(a))]), "") }
   if (!is.null(x$beta)) out <- c(out, "## Beta diversity", "", "PERMANOVA per study, p-values combined across studies (R2 is a sample-size weighted mean, without an interval):", "", md(x$beta), "")
+  if (figures && !requireNamespace("ggplot2", quietly = TRUE)) {
+    .inform("ggplot2 is not installed, so the report has no figures (install.packages(\"ggplot2\")).")
+    figures <- FALSE
+  }
   if (figures) {
     dir.create(figdir, showWarnings = FALSE, recursive = TRUE)
     save <- function(name, type, w, h) tryCatch({ ggplot2::ggsave(file.path(figdir, name), plot(x, type), width = w, height = h, dpi = 110, bg = "white"); fignames <<- c(fignames, name) },
@@ -51,7 +55,7 @@ write_report <- function(x, file = "meta-analysis-report.md", top = 10, figures 
              if (length(skipped)) c("", paste0("Not drawn: ", paste(skipped, collapse = ", "), ". This happens when several terms were pooled; draw one with `plot(x, type, term = ...)`.")), "")
   }
   pk <- c("metafor", "glmmTMB", "gamlss", "lme4", "vegan", "ggplot2")
-  ver <- vapply(pk, function(q) if (requireNamespace(q, quietly = TRUE)) as.character(utils::packageVersion(q)) else "not installed", character(1))
+  ver <- vapply(pk, function(q) if (nzchar(system.file(package = q))) as.character(utils::packageVersion(q)) else "not installed", character(1))     # reads the version without loading the package
   out <- c(out, "## Software", "", paste0("- ", c("R", "metamicrobiomeR", pk), ": ", c(as.character(getRversion()), as.character(utils::packageVersion("metamicrobiomeR")), ver)), "")
   writeLines(out, file)
   invisible(file)

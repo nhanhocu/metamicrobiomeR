@@ -132,13 +132,27 @@ The two data contracts (the study object and the effect table) are specified in
 
 ## Install
 
+Version 2.0 is not published yet. Until it is, install it from the source file you were given:
+
 ```r
-remotes::install_github("paytonyau/metamicrobiomeR@v2-dev")     # 2.0 development version
-remotes::install_github("paytonyau/metamicrobiomeR@legacy-1.x") # last 1.x release
+install.packages("metamicrobiomeR_2.0.0.9000.tar.gz", repos = NULL, type = "source")
 ```
 
-Engines and importers use optional packages (`glmmTMB`, `gamlss`, `vegan`, `phyloseq`,
-`SummarizedExperiment`, `biomformat`); a clear error says which one is missing.
+**The core needs nothing but base R** (a full analysis, including alpha diversity, summaries, sensitivity checks and
+reports, runs in a library with none of the packages below). Everything else is optional, and a function that needs
+a package says which one and how to install it:
+
+| Package | Needed for |
+|---|---|
+| `ggplot2` | plots (`plot_forest()`, `plot_heatmap()`, `plot_volcano()`, `plot()` on a result, figures in reports); the tables work without it |
+| `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice when every study has counts) |
+| `gamlss`, `gamlss.dist` | the GAMLSS-BEZI model of the 2019 paper |
+| `lme4` | a subject random effect (repeated measures) with the linear models |
+| `vegan` | beta diversity |
+| `metafor` | the pooling estimators EB, ML, HE and SJ (REML, DL and Paule-Mandel need nothing) |
+| `phyloseq`, `SummarizedExperiment`, `biomformat` | the matching importers |
+
+The first `plot()` on a fresh install asks for `ggplot2`, one `install.packages("ggplot2")` away.
 
 ## Validation and benchmark
 

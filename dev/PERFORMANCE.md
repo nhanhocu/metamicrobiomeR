@@ -49,3 +49,24 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
   and `meta_analyse()` (about 20 s). The suite was not timed before the merge, so no speed-up is claimed.
 * **Progress lines** (`Study 2 of 4: CohortB`) and an engine note (the count model takes about a second per feature and study)
   make a long run less opaque.
+
+## Second pass (measured on one core, same scripts as above)
+
+| Task | Before this pass | After |
+|---|---|---|
+| `fit_study()`, `lm_asin`, 2,000 features x 100 samples | 5.4-6.3 s | 0.08 s |
+| the same, 10,000 features | (about 30 s) | 0.29 s |
+| `pool_effects()`, 5,000 features x 5 studies | 2.6 s | 0.95 s |
+| `pool_sensitivity()` (4 settings) | 8.8 s | 3.8 s |
+| `leave_one_out()` (5 poolings) | 10.4 s | 4.8 s |
+
+* **Why the linear engines were slow:** profiling showed 78% of the time in `data.frame()` calls (two or three small data frames per
+  feature), not in the model fits. The batch path fits every feature with one QR factorisation and builds the result tables in one step. Features
+  that `lm()` would warn about (a perfect fit), data with missing values, rank-deficient designs and one-level variables are left to the
+  per-feature path, so the output is the same row for row (tests compare both paths, `options(metamicrobiomeR.batch_lm = FALSE)` switches the fast path off).
+* **Pooling:** half the time was generic matrix algebra for a one-number problem; the intercept-only case now uses plain arithmetic (tested against the matrix version to 1e-9 and against `metafor`).
+* **Dependencies:** the hard dependencies are now `methods`, `parallel`, `stats`, `utils`. Footprints of the removed ones (recursive, installed
+  package database): `ggplot2` 28 packages, `metafor` 8, both together 33 (they share three), and `lme4` 24 more before that.
+  Checked in a library without `ggplot2`, `metafor`, `lme4` and `glmmTMB`: a full analysis ran and loaded no package beyond base R.
+* **Not done:** the count model (about a second per feature) and GAMLSS are limited by the model fits themselves; `cores` has only been
+  tested for identical results on one core. The number of exports (53) is unchanged.

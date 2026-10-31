@@ -1,4 +1,5 @@
 # Tests for the plots family; merged from several smaller files (see git history).
+skip_if_not_installed("ggplot2")
 
 # ================ forest plot ================
 mk <- function(study, feature, est, se, term = "x", part = "abundance", scale = "logit_mean") {

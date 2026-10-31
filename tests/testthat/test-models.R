@@ -388,3 +388,45 @@ test_that("failed fits are reported with their error and do not stop the analysi
   e3 <- suppressWarnings(fit_study(s, ~ group, engine = "zibb_glmmtmb", longitudinal = FALSE, min_prevalence = 0))
   expect_equal(nrow(e3), 0)
 })
+
+# ---- the batch linear fit must give exactly what lm() gives, feature by feature
+batch_study <- function(n = 60, nf = 40, na = FALSE) {
+  set.seed(3)
+  cn <- matrix(rnbinom(nf * n, mu = 10, size = 1), nf, n, dimnames = list(paste0("f", 1:nf), paste0("S", 1:n)))
+  cn[2, ] <- c(rep(0L, n - 1), 3L)                                       # an almost empty feature
+  smp <- data.frame(group = factor(rep(c("a", "b"), n / 2)), age = rnorm(n), sex = factor(sample(c("F", "M"), n, TRUE)), row.names = colnames(cn))
+  if (na) smp$age[c(4, 9)] <- NA
+  rel <- sweep(cn, 2, colSums(cn), "/") * 0.9
+  rel[1, ] <- 0.05                                                         # exactly constant: a perfect fit, for which lm() warns
+  as_study(relabund = rel, samples = smp, study = list(id = "x", feature_type = "taxon"))
+}
+fit_both <- function(s, formula, engine) {
+  old <- options(metamicrobiomeR.batch_lm = FALSE); on.exit(options(old))
+  ref <- suppressWarnings(fit_study(s, formula, engine = engine, longitudinal = FALSE, min_prevalence = 0))
+  options(metamicrobiomeR.batch_lm = TRUE)
+  list(ref = ref, new = suppressWarnings(fit_study(s, formula, engine = engine, longitudinal = FALSE, min_prevalence = 0)))
+}
+
+test_that("the batch linear fit equals the per-feature fits for both linear engines", {
+  s <- batch_study()
+  for (eng in c("lm_asin", "lm_clr")) {
+    r <- fit_both(s, ~ group + age + sex, eng)
+    expect_equal(as.data.frame(r$new), as.data.frame(r$ref), tolerance = 1e-8)
+    expect_equal(attr(r$new, "fit_info"), attr(r$ref, "fit_info"))
+  }
+  # the helper is really used, and flags the perfectly fitting feature so that lm() handles it as before
+  d0 <- mm_samples(s); Y <- asin(sqrt(mm_relabund(s)))
+  b <- metamicrobiomeR:::.lm_batch(~ group + age + sex, d0, Y)
+  expect_false(is.null(b)); expect_false(b$ok[1]); expect_gte(sum(b$ok), nrow(Y) - 2)
+})
+
+test_that("the batch fit steps aside when the design or the data do not allow it", {
+  expect_null(metamicrobiomeR:::.lm_batch(~ group, mm_samples(batch_study()), { y <- asin(sqrt(mm_relabund(batch_study()))); y[3, 5] <- NA; y }))   # missing values
+  d0 <- mm_samples(batch_study()); Y <- asin(sqrt(mm_relabund(batch_study())))
+  expect_null(metamicrobiomeR:::.lm_batch(~ age + I(2 * age), d0, Y))                                 # not full rank
+  expect_null(metamicrobiomeR:::.lm_batch(~ group, transform(d0, group = factor("a")), Y))            # one level: lm() reports the failure per feature
+  r <- fit_both(batch_study(na = TRUE), ~ group + age, "lm_asin")                                      # missing covariate values
+  expect_equal(as.data.frame(r$new), as.data.frame(r$ref), tolerance = 1e-8)
+  r2 <- fit_both(batch_study(), ~ group + age + I(2 * age), "lm_asin")                                 # rank-deficient formula
+  expect_equal(as.data.frame(r2$new), as.data.frame(r2$ref), tolerance = 1e-8)
+})

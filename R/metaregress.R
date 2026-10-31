@@ -86,6 +86,7 @@ meta_regress <- function(effects, study_data, moderators, term = NULL, part = NU
 
 # metafor, for the estimators the fast core does not cover
 .rma_metafor_mods <- function(d, moderators, mm, method, test) {
+  .need("metafor", "the estimators EB, ML, HE and SJ (REML, DL and PM need no extra package)")
   fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = d$estimate, sei = d$se, mods = moderators, data = d, method = method, test = test)), error = function(e) NULL)
   if (is.null(fit)) return(NULL)
   list(beta = as.numeric(fit$beta), se = fit$se, ci_lb = fit$ci.lb, ci_ub = fit$ci.ub, stat = fit$zval, pval = fit$pval, tau2 = fit$tau2, I2 = fit$I2, QM = fit$QM, QMp = fit$QMp)

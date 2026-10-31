@@ -202,6 +202,8 @@ test_that("write_report copes with several pooled terms", {
 
 test_that("lme4 is optional and the install hint says how to get it", {
   d <- utils::packageDescription("metamicrobiomeR")
-  expect_false(grepl("lme4", d$Imports)); expect_true(grepl("lme4", d$Suggests))
+  imports <- trimws(strsplit(gsub("\\s+", " ", d$Imports), ",")[[1]])
+  expect_equal(sort(imports), c("methods", "parallel", "stats", "utils"))                         # the core needs base R only
+  expect_true(all(c("lme4", "ggplot2", "metafor") %in% trimws(sub("\\(.*\\)", "", strsplit(gsub("\\s+", " ", d$Suggests), ",")[[1]]))))
   expect_error(metamicrobiomeR:::.need("notARealPackage123", "a subject random effect"), "Package 'notARealPackage123' is needed for a subject random effect. Install it with install.packages")
 })

@@ -59,6 +59,14 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
   24 of the 57 packages the hard dependencies pulled in.
 * The test suite is organised by function family (21 files merged into 13, no test removed).
 
+* **Base R only for the core.** `ggplot2` (28 packages with its dependencies) and `metafor` (8) are now optional, as is `lme4`:
+  the hard dependencies are `methods`, `parallel`, `stats` and `utils`. A full analysis runs in a library without them;
+  plots ask for `ggplot2`, and the estimators EB, ML, HE and SJ ask for `metafor`, each with an install hint.
+* **Faster.** The linear engines fit all features of a study in one step when they share a design: 2,000 features
+  take 0.08 s instead of 6 s, with identical results (a 20,000-ASV study: about 0.6 s instead of 51 s).
+  Pooling uses plain arithmetic for the one-number case (default pooling of 5,000 features: 0.95 s; the first version took 37 s),
+  and `write_report()` reads package versions without loading the packages.
+
 ## Messages
 
 * Informational messages say what the package decided or left out (samples with missing values, features

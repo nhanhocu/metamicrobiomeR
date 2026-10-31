@@ -23,6 +23,7 @@
 #' @export
 plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, features = NULL, top = 25, order_by = c("p_value", "estimate"),
                          stars = TRUE, feature_labels = NULL) {
+  .need("ggplot2", "drawing plots (the tables are available without it)")
   order_by <- match.arg(order_by)
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
@@ -88,6 +89,7 @@ plot_heatmap <- function(effects, pooled = NULL, term = NULL, part = NULL, featu
 #' @family plots
 #' @export
 plot_volcano <- function(pooled, alpha = 0.05, label_top = 8, feature_labels = NULL, x_range = NULL) {
+  .need("ggplot2", "drawing plots (the tables are available without it)")
   .check_class(pooled, "mm_pooled", "pooled", "pool_effects()")
   d <- as.data.frame(pooled)
   d <- d[!is.na(d$estimate) & !is.na(d$p_value), , drop = FALSE]

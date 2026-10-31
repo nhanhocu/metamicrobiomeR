@@ -104,3 +104,18 @@ test_that("the REML solution satisfies the REML score equation exactly", {
   }
   expect_gt(n, 20)
 })
+
+test_that("the scalar pooling path equals the matrix path", {
+  set.seed(77); worst <- 0
+  for (k in c(2, 3, 4, 7, 15, 40)) for (rep in 1:8) for (m in c("DL", "REML", "PM")) for (te in c("z", "knha", "adhoc")) {
+    v <- runif(k, 0.01, 0.4); y <- rnorm(k, 0.3, sqrt(v + c(0, 0.1, 1)[1 + rep %% 3]))
+    a <- metamicrobiomeR:::.rma_fast(y, v, method = m, test = te)                                    # scalar path
+    b <- metamicrobiomeR:::.rma_fast(y, v, X = matrix(1, k, 1), method = m, test = te)               # matrix path
+    for (nm in c("beta", "se", "ci_lb", "ci_ub", "stat", "pval", "tau2", "I2", "QE", "QEp", "pi_lb", "pi_ub")) {
+      x <- a[[nm]]; z <- if (nm %in% c("pi_lb", "pi_ub")) NULL else b[[nm]]
+      if (!is.null(z)) worst <- max(worst, abs(x - z) / max(1, abs(z)))
+    }
+    expect_equal(is.null(a$pi_lb), k < 3)
+  }
+  expect_lt(worst, 1e-9)
+})

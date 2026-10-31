@@ -165,6 +165,10 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   # random() must be found without gamlss being attached: evaluate the formula in its namespace
   if (engine == "bezi_gamlss") environment(f) <- asNamespace("gamlss")
 
+  batch <- NULL          # linear engines: one factorisation for all features when they share a design (identical results, far faster)
+  if (engine %in% c("lm_asin", "lm_clr") && !longitudinal && length(idx) && n_cc == nrow(d0) && isTRUE(getOption("metamicrobiomeR.batch_lm", TRUE))) {
+    batch <- .lm_batch(stats::reformulate(terms_f), d0, Y[rownames(ra)[idx], , drop = FALSE])
+  }
   fit_one <- function(k) {
     i <- idx[k]; fid <- rownames(ra)[i]
     d <- d0
@@ -188,13 +192,30 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
            cbind(feature = fid, rank = rk, res$rows, n = nrow(d), stringsAsFactors = FALSE)
          })
   }
-  fits <- if (cores > 1 && length(idx) > 1) parallel::mclapply(seq_along(idx), fit_one, mc.cores = min(cores, length(idx))) else lapply(seq_along(idx), fit_one)
-  for (k in seq_along(fits)) if (inherits(fits[[k]], "try-error")) {          # a worker died: report it as a failed fit
-    fits[[k]] <- list(log = data.frame(feature = rownames(ra)[idx[k]], n = NA_integer_, converged = FALSE, n_warnings = 0L, first_warning = NA_character_,
-                                       singular = FALSE, error = trimws(as.character(fits[[k]])), stringsAsFactors = FALSE), row = NULL)
+  todo <- if (is.null(batch)) seq_along(idx) else which(!batch$ok)        # features that need lm() themselves (or another engine)
+  fits <- if (cores > 1 && length(todo) > 1) parallel::mclapply(todo, fit_one, mc.cores = min(cores, length(todo))) else lapply(todo, fit_one)
+  for (j in seq_along(fits)) if (inherits(fits[[j]], "try-error")) {          # a worker died: report it as a failed fit
+    fits[[j]] <- list(log = data.frame(feature = rownames(ra)[idx[todo[j]]], n = NA_integer_, converged = FALSE, n_warnings = 0L, first_warning = NA_character_,
+                                       singular = FALSE, error = trimws(as.character(fits[[j]])), stringsAsFactors = FALSE), row = NULL)
   }
   rows <- lapply(fits, `[[`, "row"); log <- lapply(fits, `[[`, "log")
   tab <- do.call(rbind, rows)
+  fit_info <- do.call(rbind, log)
+  if (!is.null(batch) && any(batch$ok)) {          # the batch features: one table for all of them, then back into feature order
+    fids <- rownames(ra)[idx]; ok_k <- which(batch$ok); terms <- setdiff(rownames(batch$B), "(Intercept)"); nt <- length(terms); nb <- length(ok_k)
+    rk_all <- if ("rank" %in% colnames(feats)) feats$rank[idx] else rep(NA_character_, length(idx))
+    if (nt) {
+      tab_b <- data.frame(feature = rep(fids[ok_k], each = nt), rank = rep(rk_all[ok_k], each = nt), term = rep(terms, times = nb), part = "abundance",
+                          estimate = as.vector(batch$B[terms, ok_k, drop = FALSE]), se = as.vector(batch$se[terms, ok_k, drop = FALSE]),
+                          p_value = as.vector(batch$pv[terms, ok_k, drop = FALSE]), df = batch$rdf, effect_scale = .mm_engine_scale[[engine]],
+                          converged = TRUE, n = nrow(d0), stringsAsFactors = FALSE)
+      tab <- rbind(tab, tab_b)
+      tab <- tab[order(match(tab$feature, fids)), , drop = FALSE]
+    }
+    fit_info <- rbind(fit_info, data.frame(feature = fids[ok_k], n = nrow(d0), converged = TRUE, n_warnings = 0L, first_warning = NA_character_,
+                                           singular = FALSE, error = NA_character_, stringsAsFactors = FALSE))
+    fit_info <- fit_info[order(match(fit_info$feature, fids)), , drop = FALSE]; rownames(fit_info) <- NULL
+  }
   if (is.null(tab)) tab <- data.frame(feature = character(), rank = character(), term = character(),
                                       part = character(), estimate = numeric(), se = numeric(), p_value = numeric(),
                                       df = numeric(), effect_scale = character(), converged = logical(), n = integer())
@@ -202,7 +223,6 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
                           estimate = tab$estimate, se = tab$se, rank = tab$rank, part = tab$part,
                           df = tab$df, p_value = tab$p_value, n = tab$n, engine = rep(engine, nrow(tab)),
                           effect_scale = tab$effect_scale, converged = tab$converged)
-  fit_info <- do.call(rbind, log)
   attr(out, "fit_info") <- fit_info
   attr(out, "fit_settings") <- list(formula = deparse(formula), engine = engine, rank = rank, longitudinal = longitudinal,
                                     min_prevalence = min_prevalence, min_mean = min_mean, exclude_unassigned = exclude_unassigned,
@@ -331,4 +351,21 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     }
   }
   list(rows = rows, converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = NA_character_)
+}
+
+# All features at once: they share the design matrix, so a single QR factorisation gives every coefficient, standard
+# error and p-value exactly as lm() would. Returns NULL (use the per-feature fits) if the design is not full rank, and
+# marks features with a (nearly) perfect fit, for which lm() warns, so that they go through lm() as before.
+.lm_batch <- function(rhs, d0, Yb) {
+  if (anyNA(Yb)) return(NULL)
+  X <- tryCatch(stats::model.matrix(rhs, d0), error = function(e) NULL)       # e.g. a variable with one level: let the per-feature fits report it
+  if (is.null(X)) return(NULL)
+  qrX <- qr(X)
+  rdf <- nrow(X) - ncol(X)
+  if (qrX$rank < ncol(X) || rdf < 1 || !identical(as.integer(qrX$pivot), seq_len(ncol(X)))) return(NULL)
+  B <- qr.coef(qrX, t(Yb)); R <- t(Yb) - X %*% B
+  s2 <- colSums(R^2) / rdf
+  se <- sqrt(outer(diag(chol2inv(qr.R(qrX))), s2)); dimnames(se) <- dimnames(B); tv <- B / se
+  list(B = B, se = se, tv = tv, pv = 2 * stats::pt(-abs(tv), rdf), rdf = as.numeric(rdf),
+       ok = is.finite(s2) & s2 > 1e-20 * pmax(1, rowMeans(Yb^2)))
 }

@@ -176,6 +176,7 @@ print.mm_pooled <- function(x, n = 6, ...) {
 
 # metafor, for the estimators the fast core does not cover (EB, ML, HE, SJ)
 .rma_metafor <- function(y, v, method, test) {
+  .need("metafor", "the estimators EB, ML, HE and SJ (REML, DL and PM need no extra package)")
   fit <- tryCatch(suppressWarnings(metafor::rma.uni(yi = y, vi = v, method = method, test = test)), error = function(e) NULL)
   if (is.null(fit)) return(NULL)
   pr <- if (length(y) >= 3) tryCatch(suppressWarnings(stats::predict(fit)), error = function(e) NULL) else NULL

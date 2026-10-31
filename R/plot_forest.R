@@ -26,6 +26,7 @@
 #' @export
 plot_forest <- function(effects, pooled = NULL, feature, term = NULL, part = NULL,
                         level = 0.95, show_pi = TRUE, feature_labels = NULL) {
+  .need("ggplot2", "drawing plots (the tables are available without it)")
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   if (missing(feature) || !length(feature)) stop("'feature' is required.", call. = FALSE)
