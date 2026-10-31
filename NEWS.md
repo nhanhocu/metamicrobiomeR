@@ -46,6 +46,11 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
   conclusions would hold in a new study (prediction intervals), the most heterogeneous features, and what can explain
   the differences, including batch effects within studies. The printed summary hints when heterogeneity is high.
 
+* `example_studies`: a small simulated example data set (four case-control studies on three platforms, with real
+  genus names, different naming conventions, ASV and genus level, and six genera with a known difference). It
+  replaces the anonymous simulated features in the documentation; `simulate_studies()` remains for tests and
+  benchmarks. The 2019 data is used only by the validation scripts in `data-raw/`, not by the package examples.
+
 ## Messages
 
 * Informational messages say what the package decided or left out (samples with missing values, features

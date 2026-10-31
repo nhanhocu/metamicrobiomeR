@@ -20,15 +20,29 @@ at the result (forest plot, diagnostics, manifest).
 
 ## 1. Studies
 
-We simulate four small studies with a known set of differential features (so we can check
-the answer), different effect sizes (between-study heterogeneity) and varying sequencing depth.
+`example_studies` is a small **simulated** data set that ships with the package: the genus names are
+real, the numbers are invented. It has four case-control studies on different platforms (two 16S studies with
+ASVs, one shotgun study, and a second 16S study of another region), with different genus lists, naming conventions
+(`[Eubacterium]`, `Blautia_A`) and sequencing depths. Six genera were given a known difference between cases and
+controls (see `?example_studies`): *Escherichia*, *Enterococcus* and *Fusobacterium* higher,
+*Faecalibacterium*, *Roseburia* and *Butyricicoccus* lower. *Fusobacterium* is in one study only, so it cannot be
+pooled.
 
-```{r sim}
-sim <- simulate_studies(n_studies = 4, tau = 0.3, n_samples = 40, n_features = 10, n_diff = 3,
-                        effect = 1.2, seed = 7)
-studies <- sim$studies
+```{r data}
+study_table(example_studies)[, c("study", "n_samples", "n_features", "platform", "region", "database")]
+```
+
+Can they be pooled? The check compares the metadata and matches taxon names across databases:
+
+```{r poolcheck}
+check_poolable(example_studies, rank = "genus")
+```
+
+The studies hold ASVs (16S) or genera (shotgun). Bring them to genus level, matching names across databases:
+
+```{r agglomerate}
+studies <- lapply(example_studies, agglomerate, rank = "genus", key = "name")
 studies[[1]]
-sim$truth[sim$truth$diff, ]
 ```
 
 A study holds counts (or relative abundances), the feature annotation with taxonomy in rank
@@ -52,9 +66,13 @@ m <- manifest(studies[[1]]); m$samples; m$depth
 If you have several studies and want a pooled result, one call does the whole workflow:
 
 ```{r short}
-res <- meta_analyse(studies, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE))
+res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
 res
 ```
+
+With four studies the default test is conservative, so no genus passes the 5% line here, but the four strongest
+are planted differences (see below for how this depends on the test).
 
 `summary(res)` describes how much the studies differ and what could explain it. `plot(res)` draws a forest plot of the strongest features (`plot(res, "heatmap")` and `plot(res, "volcano")` give
 overviews), and `as.data.frame(res)` is the pooled table. The rest of this vignette goes through the same steps one at
@@ -67,20 +85,23 @@ a time, which gives you full control over each.
 `"bezi_gamlss"` (the model of version 1.x), `"lm_asin"` and `"lm_clr"` (compositional sensitivity).
 Estimates of different engines are on different scales, so use the same engine for all studies.
 
-```{r fit, eval = has_tmb}
-effects <- lapply(studies, fit_study, ~ group, engine = "zibb_glmmtmb", longitudinal = FALSE)
+```{r fit}
+effects <- lapply(studies, fit_study, ~ group + age, engine = "lm_asin", longitudinal = FALSE)
 effects[[1]]                              # a short header (study, engine, scale, convergence), then the first rows
 ```
 
-```{r fit-fallback, eval = !has_tmb, echo = FALSE}
-effects <- lapply(studies, fit_study, ~ group, engine = "lm_asin", longitudinal = FALSE)
+Here we use the fast `"lm_asin"` engine. The count model uses the sequencing depth and takes about 40 seconds on this
+data; with it, four genera pass the 5% line in this example, all of them planted:
+
+```{r fit-count, eval = FALSE}
+effects <- lapply(studies, fit_study, ~ group + age, engine = "zibb_glmmtmb", longitudinal = FALSE)
 ```
 
 ## 3. Pooling
 
 ```{r pool}
 bound <- bind_effects(effects)            # refuses to mix engines or effect scales
-pooled <- pool_effects(bound, term = "groupb")
+pooled <- pool_effects(bound, term = "groupcase")
 pooled                                    # the header counts features, studies per feature and flags dominance
 ```
 
@@ -94,14 +115,14 @@ version 1.x calculation. `max_weight` is the share of the result carried by the 
 study: a value near 1 means one study decides the result.
 
 ```{r loo}
-loo <- leave_one_out(bound, feature = pooled$feature[1], term = "groupb")
+loo <- leave_one_out(bound, feature = pooled$feature[1], term = "groupcase")
 loo[, c("omitted", "estimate", "p_value")]
 ```
 
 ## 4. Looking at the result
 
 ```{r forest}
-plot_forest(bound, pooled, feature = pooled$feature[1:2], term = "groupb")
+plot_forest(bound, pooled, feature = pooled$feature[1:2], term = "groupcase")
 ```
 
 ## Checks before you trust a pooled result
@@ -113,13 +134,15 @@ studies, check the estimates, and see how much the answer depends on the method:
 check_poolable(studies)                                   # metadata, sample sizes, overlap
 q <- check_effects_quality(bound); q                       # implausibly small standard errors?
 bound2 <- filter_effects(bound)                            # drops flagged estimates (if any)
-pool_sensitivity(bound, term = "groupb", min_prop = 0)     # same data, several pooling settings
+pool_sensitivity(bound, term = "groupcase", min_prop = 0)     # same data, several pooling settings
 ```
 
-With four small studies the normal-theory tests find the truly differential features, while the
-conservative default (which allows for the uncertainty of the between-study variance with only three
-degrees of freedom) does not: a typical situation with few, small studies. Report which setting you used,
-and treat features that are significant under all settings as the most reliable.
+Here the normal-theory tests (DL and REML with the z test) call 47 of the 57 genera significant, the plain
+Hartung-Knapp test 13, and the default test none. Neither extreme is right. The four strongest genera are planted
+differences, but many others shift only because relative abundances are compositional (when some genera rise,
+all others fall), and the z test ignores the uncertainty of the between-study variance, which is large with four
+studies. Report which setting you used, and treat features that are significant under all settings as the most
+reliable.
 
 Two further ways to combine studies are `combine_pvalues()` (needs only p-values and signs, so
 it also works across engines or tools, but is just as vulnerable to a degenerate study) and
@@ -127,7 +150,7 @@ it also works across engines or tools, but is just as vulnerable to a degenerate
 tools are brought in with `effects_from()`.
 
 ```{r overview, fig.height = 4.5}
-plot_heatmap(bound, pooled, term = "groupb", top = 8)
+plot_heatmap(bound, pooled, term = "groupcase", top = 8)
 ```
 
 ## More

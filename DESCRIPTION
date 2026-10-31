@@ -30,3 +30,4 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 2
 RoxygenNote: 7.3.1
+LazyData: true

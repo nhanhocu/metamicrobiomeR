@@ -10,6 +10,14 @@ Originally described in Ho et al. (2019), *BMC Bioinformatics* 20:188,
 
 ## The short way
 
+Try it with the built-in simulated example (`?example_studies`), then use your own studies:
+
+```r
+res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
+res
+```
+
 ```r
 library(metamicrobiomeR)
 

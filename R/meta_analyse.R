@@ -34,10 +34,8 @@
 #'   (`$effects`), the study table, the checks and the settings. It prints a summary,
 #'   `plot()` draws a forest plot (or a heatmap or volcano plot), and `as.data.frame()` gives the pooled table.
 #' @examples
-#' sim <- simulate_studies(n_studies = 3, n_samples = 30, n_features = 6,
-#'                         n_diff = 2, effect = 1.5, seed = 1)
-#' res <- meta_analyse(sim$studies, ~ group, term = "groupb", engine = "lm_asin",
-#'                     fit_args = list(longitudinal = FALSE))
+#' res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus",
+#'                     engine = "lm_asin", fit_args = list(longitudinal = FALSE))
 #' res
 #' @family pooling
 #' @export
