@@ -36,3 +36,16 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
 * Against metafor's *default* settings the fast core agrees to about four digits; REML and PM results can differ in
   the fourth digit because metafor stops iterating at a threshold of 1e-5.
 * The 2019 pooled sex-difference result is reproduced to about 1e-13 with the fast core.
+
+## Lighter and faster, measured later
+
+* **Hard dependencies:** `lme4` moved from Imports to Suggests. It is used in one place (the subject random effect of the linear
+  engines). The packages pulled in by the hard dependencies fell from 57 to 33 (recursive count from the installed package
+  database, excluding base packages); 24 were reachable only through `lme4`. Verified in a library without `lme4`:
+  the package loads, `meta_analyse()` runs with the linear engine, and a subject random effect gives an install hint.
+  (`glmmTMB` itself needs `lme4`, so the count model is unavailable there and `engine = "auto"` falls back to the linear model.)
+* **Test suite:** 21 files merged into 13, organised by function family, with no test removed (112 blocks before and after, 1,159 expectations
+  passing before and after). The whole suite takes about 80 seconds on one core, mostly the count model (`test-models.R`, about 30 s)
+  and `meta_analyse()` (about 20 s). The suite was not timed before the merge, so no speed-up is claimed.
+* **Progress lines** (`Study 2 of 4: CohortB`) and an engine note (the count model takes about a second per feature and study)
+  make a long run less opaque.

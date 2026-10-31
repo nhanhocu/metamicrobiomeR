@@ -1,6 +1,9 @@
 # metamicrobiomeR
 
-Analyse microbiome studies one at a time and **pool the results across studies**.
+**Meta-analysis for microbiome studies that do not share a platform, a pipeline or a database.**
+Analyse each study on its own terms and **pool the results across studies**, with checks for when pooling would mislead.
+It complements a combined analysis of merged tables rather than replacing it: it still works when the tables cannot be
+merged, and it shows how much the studies disagree (see `vignette("cross-platform")` and `dev/POSITIONING.md`).
 Originally described in Ho et al. (2019), *BMC Bioinformatics* 20:188,
 <https://doi.org/10.1186/s12859-019-2744-2>.
 
