@@ -28,7 +28,8 @@ plot(res)                                           # forest plots of the strong
 as.data.frame(res)                                  # the pooled table
 ```
 
-`meta_analyse()` checks that the studies can be pooled, matches taxa across databases by name, fits the same model to every
+Add `alpha = TRUE` and `beta = TRUE` for alpha and beta diversity with the same model, and `write_report(res)` for a
+shareable Markdown report with figures. `meta_analyse()` checks that the studies can be pooled, matches taxa across databases by name, fits the same model to every
 study, flags implausible estimates, and pools. Messages and warnings are labelled with the study they come from.
 Everything it did is kept in `res$effects`, `res$studies`, `res$checks` and `res$quality`.
 

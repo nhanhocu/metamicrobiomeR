@@ -6,6 +6,7 @@
 #' @section Where to start:
 #' * **One call:** [meta_analyse()] runs the whole workflow (checks, per-study models, quality check,
 #'   pooling) and returns an object that prints a summary and plots. Start here.
+#' * **A report:** [write_report()] turns the result into a shareable Markdown report with figures.
 #' * **Step by step** (full control): build studies with [as_study()] or an importer ([read_dada2()],
 #'   [study_from_phyloseq()], ...); fit a model to each with [fit_study()]; combine with [bind_effects()]
 #'   and [pool_effects()]; look with [plot_forest()], [plot_heatmap()], [plot_volcano()].

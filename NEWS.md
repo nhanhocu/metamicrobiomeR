@@ -51,6 +51,14 @@ are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old int
   replaces the anonymous simulated features in the documentation; `simulate_studies()` remains for tests and
   benchmarks. The 2019 data is used only by the validation scripts in `data-raw/`, not by the package examples.
 
+* `meta_analyse()` prints which study it is on, can also analyse alpha and beta diversity (`alpha = TRUE`,
+  `beta = TRUE`), and `write_report()` writes a Markdown report (settings, studies, checks, pooled results,
+  between-study variation, sensitivity, diversity, figures, software versions).
+* Lighter install: `lme4`, used only for a subject random effect with the linear engines, is now optional (it is
+  needed only when a subject column triggers a longitudinal model, and the error says how to install it). This removes
+  24 of the 57 packages the hard dependencies pulled in.
+* The test suite is organised by function family (21 files merged into 13, no test removed).
+
 ## Messages
 
 * Informational messages say what the package decided or left out (samples with missing values, features
