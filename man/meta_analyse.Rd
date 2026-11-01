@@ -79,7 +79,7 @@ Beta diversity needs the `vegan` package and does not allow terms that vary with
 
 \item{type}{What to draw. `"forest"` (default): the studies and the pooled effect of the strongest features;
 `"heatmap"`: studies by features; `"volcano"`: pooled estimate against evidence; `"alpha"`: forest plot of the
-alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn.
+alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn (for features estimated in three or more studies).
 `"alpha"` and `"beta"` need `alpha = TRUE` or `beta = TRUE` in the analysis.}
 
 \item{feature}{The features to draw in a forest, influence or heatmap plot (default: the `top` features with the smallest p-value).}

@@ -272,3 +272,24 @@ test_that("the report includes the diversity figures when they were analysed", {
   expect_true(all(file.exists(file.path(dirname(f), "r_files", c("alpha.png", "beta.png")))))
   expect_true(any(grepl("!\\[alpha\\]\\(r_files/alpha.png\\)", readLines(f)))); expect_true(any(grepl("!\\[beta\\]\\(r_files/beta.png\\)", readLines(f))))
 })
+
+test_that("the influence plot only uses features that can be pooled again with one study left out", {
+  # features seen in three studies qualify; one seen in two studies does not (leaving one out leaves a single study)
+  mk <- function(study, est, se, feature) new_effect_table(study, feature, "x", est, se, rank = "genus", part = "abundance", n = 20L, engine = "t", effect_scale = "s")
+  eff <- bind_effects(mk(c("a", "b", "c"), c(.5, .6, .4), c(.1, .1, .1), "three"), mk(c("a", "b"), c(1.5, 1.6), c(.05, .05), "two"))
+  pooled <- suppressMessages(pool_effects(eff, min_prop = 0, method = "DL", test = "z"))
+  fake <- structure(list(pooled = pooled, effects = eff, studies = data.frame(study = c("a", "b", "c")), checks = NULL, quality = NULL,
+                         settings = list(formula = "~x", engine = "t", rank = NULL, term = NULL, method = "DL", test = "z", quality = "off")), class = "mm_meta")
+  expect_equal(pooled$feature[1], "two")                                                                    # the strongest feature is the one that cannot be left out
+  p <- plot(fake, "influence"); expect_equal(unique(p$data$panel), "three")                                  # so the plot skips it
+  expect_error(plot(fake, "influence", feature = "two"), "Leaving a study out needs a feature estimated in at least three studies; not so for two")
+  only2 <- fake; only2$pooled <- pooled[pooled$feature == "two", ]
+  expect_error(plot(only2, "influence"), "No feature was estimated in three or more studies, so there is nothing to leave out")
+})
+
+test_that("the sensitivity check reports a problem once, not once per pooling setting", {
+  mk <- function(study, est, se, feature) new_effect_table(study, feature, "x", est, se, rank = "genus", part = "abundance", n = 20L, engine = "t", effect_scale = "s")
+  eff <- bind_effects(mk(c("a", "b", "c"), c(.5, NA, .4), c(.1, .1, .1), "g1"), mk(c("a", "b", "c"), c(.3, .6, .4), c(.1, .1, .1), "g2"))
+  w <- testthat::capture_warnings(suppressMessages(pool_sensitivity(eff, min_prop = 0)))
+  expect_length(w, 1); expect_match(w, "1 estimate not used")
+})

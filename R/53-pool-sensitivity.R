@@ -29,7 +29,7 @@ pool_sensitivity <- function(effects, settings = NULL, term = NULL, part = NULL,
   if (is.null(names(settings)) || any(!nzchar(names(settings)))) stop("'settings' must be a named list.", call. = FALSE)
   long <- do.call(rbind, lapply(names(settings), function(nm) {
     args <- utils::modifyList(c(list(effects = effects, term = term, part = part), list(...)), settings[[nm]])
-    p <- if (nm == names(settings)[1]) do.call(pool_effects, args) else suppressMessages(do.call(pool_effects, args))    # say it once, not once per setting
+    p <- if (nm == names(settings)[1]) do.call(pool_effects, args) else suppressWarnings(suppressMessages(do.call(pool_effects, args)))    # say it once, not once per setting
     p <- as.data.frame(p); p$setting <- nm; p
   }))
   long$significant <- !is.na(long[[significance]]) & long[[significance]] <= alpha

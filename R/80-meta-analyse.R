@@ -194,7 +194,7 @@ as.data.frame.mm_meta <- function(x, ...) as.data.frame(x$pooled, ...)
 #' @param x An `mm_meta` object.
 #' @param type What to draw. `"forest"` (default): the studies and the pooled effect of the strongest features;
 #'   `"heatmap"`: studies by features; `"volcano"`: pooled estimate against evidence; `"alpha"`: forest plot of the
-#'   alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn.
+#'   alpha-diversity metrics; `"beta"`: PERMANOVA R2 of each study; `"influence"`: the pooled effect with each study left out in turn (for features estimated in three or more studies).
 #'   `"alpha"` and `"beta"` need `alpha = TRUE` or `beta = TRUE` in the analysis.
 #' @param feature The features to draw in a forest, influence or heatmap plot (default: the `top` features with the smallest p-value).
 #' @param top Number of features to draw: the strongest ones by p-value (default 3 for forest and influence plots, 25 for the heatmap).
@@ -221,6 +221,12 @@ plot.mm_meta <- function(x, type = c("forest", "heatmap", "volcano", "alpha", "b
   term <- one_term(p)
   pt <- p[p$term == term, , drop = FALSE]
   if (type == "heatmap") return(plot_heatmap(x$effects, x$pooled, term = term, features = feature, top = if (is.null(top)) 25 else top, ...))
+  if (type == "influence") {       # leaving a study out needs at least two left, so only features estimated in three or more studies qualify
+    pt3 <- pt[pt$k >= 3, , drop = FALSE]
+    if (!nrow(pt3)) stop("No feature was estimated in three or more studies, so there is nothing to leave out.", call. = FALSE)
+    if (is.null(feature)) feature <- utils::head(pt3$feature[order(pt3$p_value)], if (is.null(top)) 3 else top)
+    else if (length(bad <- setdiff(feature, pt3$feature))) stop("Leaving a study out needs a feature estimated in at least three studies; not so for ", .show(bad), ".", call. = FALSE)
+  }
   if (is.null(feature)) feature <- utils::head(pt$feature[order(pt$p_value)], if (is.null(top)) 3 else top)
   switch(type,
     forest = plot_forest(x$effects, x$pooled, feature = feature, term = term, ...),
