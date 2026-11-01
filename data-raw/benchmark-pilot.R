@@ -2,7 +2,7 @@
 # Usage: Rscript data-raw/benchmark-pilot.R <engine> <scenario> <reps>
 #   engines:   lm_asin | lm_clr | bezi_gamlss | zibb_glmmtmb
 #   scenarios: null | alt_balanced | alt_unbalanced
-# Results are cached in dev/validation/bench/; summarise with data-raw/benchmark-summary.R.
+# Results are cached in dev/cache/bench/; summarise with data-raw/benchmark-summary.R.
 suppressMessages(library(metamicrobiomeR))
 args <- commandArgs(trailingOnly = TRUE)
 engine <- args[1]; scenario <- args[2]; reps <- as.integer(args[3])
@@ -24,6 +24,6 @@ for (r in seq_len(reps)) {
   res[[r]] <- d
 }
 out <- do.call(rbind, res); out$engine <- engine; out$scenario <- scenario
-dir.create("dev/validation/bench", showWarnings = FALSE, recursive = TRUE)
-saveRDS(out, file.path("dev/validation/bench", paste0(engine, "-", scenario, ".rds")))
+dir.create("dev/cache/bench", showWarnings = FALSE, recursive = TRUE)
+saveRDS(out, file.path("dev/cache/bench", paste0(engine, "-", scenario, ".rds")))
 cat(sprintf("%s / %s: %d reps, %d fits, %.1f s per replicate\n", engine, scenario, reps, nrow(out), mean(tapply(out$seconds, out$rep, mean))))

@@ -1,5 +1,5 @@
 # Summarise the pilot benchmark (data-raw/benchmark-pilot.R). Run from the repository root.
-fs <- list.files("dev/validation/bench", pattern = "\\.rds$", full.names = TRUE)
+fs <- list.files("dev/cache/bench", pattern = "\\.rds$", full.names = TRUE)
 d <- do.call(rbind, lapply(fs, readRDS))
 summ <- function(x) {
   x$sig <- !is.na(x$p) & x$p < 0.05
