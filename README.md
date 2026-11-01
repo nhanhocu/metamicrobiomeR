@@ -159,11 +159,14 @@ The source is organised by workflow stage (numbered files in `R/`, with matching
 
 ## Install
 
-Version 2.0 is not published yet. Until it is, install it from the source file you were given:
+From GitHub (needs the `remotes` package):
 
 ```r
-install.packages("metamicrobiomeR_2.0.0.9000.tar.gz", repos = NULL, type = "source")
+remotes::install_github("paytonyau/microbiome-meta-analysis")             # the default branch
+remotes::install_github("paytonyau/microbiome-meta-analysis@v2-dev")      # the development branch, if that is where 2.0 lives
 ```
+
+Or from a source file: `install.packages("metamicrobiomeR_2.0.0.9000.tar.gz", repos = NULL, type = "source")`.
 
 `ggplot2` is the only required package (for the plots, which are part of every result). Everything else is optional, and a function
 that needs a package says which one and how to install it:

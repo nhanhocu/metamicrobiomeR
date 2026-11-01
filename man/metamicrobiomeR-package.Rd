@@ -35,8 +35,8 @@ warnings are not affected. A message that would repeat on every call is shown on
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/paytonyau/metamicrobiomeR}
-  \item Report bugs at \url{https://github.com/paytonyau/metamicrobiomeR/issues}
+  \item \url{https://github.com/paytonyau/microbiome-meta-analysis}
+  \item Report bugs at \url{https://github.com/paytonyau/microbiome-meta-analysis/issues}
 }
 
 }
