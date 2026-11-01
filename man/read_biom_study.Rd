@@ -10,7 +10,8 @@ read_biom_study(file, samples = NULL, study)
 \item{file}{Path of a BIOM file (needs the `biomformat` package).}
 
 \item{samples}{data.frame of sample data with sample IDs as row names. If `NULL`, the
-sample metadata stored in the BIOM file is used.}
+sample metadata stored in the BIOM file is used.
+Samples that are in only one of the abundance table and the sample data are left out, and a message says which.}
 
 \item{study}{Named list of study metadata (see [as_study()]).}
 }

@@ -10,7 +10,8 @@ read_metaphlan(profile, samples, study, level = "species")
 \item{profile}{Merged MetaPhlAn table (file path or data.frame): a `clade_name` column and
 one column per sample. Lines starting with `#` are ignored.}
 
-\item{samples}{data.frame of sample data; row names are the sample IDs.}
+\item{samples}{data.frame of sample data; row names are the sample IDs.
+Samples that are in only one of the abundance table and the sample data are left out, and a message says which.}
 
 \item{study}{Named list of study metadata; `feature_type` defaults to `"taxon"`.}
 

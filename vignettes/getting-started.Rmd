@@ -61,6 +61,50 @@ genus <- agglomerate(study, "genus")                         # ASVs to genera
 m <- manifest(studies[[1]]); m$samples; m$depth
 ```
 
+## Your own QIIME 2 output
+
+`read_qiime2()` reads the feature table, the taxonomy and the sample metadata of a QIIME 2 project. The package
+ships a small simulated example laid out the way QIIME 2 writes it (a feature table converted with `biom convert --to-tsv`,
+the `taxonomy.tsv` of an exported taxonomy artifact, and a metadata file):
+
+```{r qiime2}
+dir <- system.file("extdata", "qiime2-example", package = "metamicrobiomeR")
+list.files(dir)
+mine <- read_qiime2(file.path(dir, "feature-table.tsv"), file.path(dir, "taxonomy.tsv"),
+                    file.path(dir, "sample-metadata.tsv"), list(id = "mine", region = "V4", database = "SILVA 138"))
+mine
+```
+
+The messages say which samples were left out: here two controls that are in the metadata but not in the feature table,
+and two samples of the table that have no metadata. The `#q2:types` row of the metadata file decides the type of each column, so
+a numeric covariate such as `age` is a number and not a category:
+
+```{r qiime2-types}
+sapply(mm_samples(mine), function(x) class(x)[1])
+levels(mm_samples(mine)$group)
+```
+
+QIIME 2 metadata has no level order, so the levels of a category are alphabetical and the first one is the reference of a model
+(here `case`, so the model term would be `groupcontrol`). To compare cases with controls, put the reference first:
+
+```{r qiime2-reference}
+mine$samples$group <- factor(mine$samples$group, levels = c("control", "case"))
+```
+
+From here it is the same as for any study: `agglomerate(mine, "genus", key = "name")`, then `fit_study()` or `meta_analyse()`
+together with your other studies.
+
+If you have the artifacts (`.qza`) instead of exported files, `read_qiime2()` reads them directly: the taxonomy artifact needs nothing extra, and the
+feature-table artifact needs the `biomformat` and `rhdf5` packages (QIIME 2 stores tables as HDF5). Otherwise export first:
+
+```{r qiime2-artifacts, eval = FALSE}
+# in a shell:
+#   qiime tools export --input-path table.qza --output-path export
+#   biom convert -i export/feature-table.biom -o feature-table.tsv --to-tsv
+#   qiime tools export --input-path taxonomy.qza --output-path export          # writes export/taxonomy.tsv
+study <- read_qiime2("table.qza", "taxonomy.qza", "sample-metadata.tsv", list(id = "mystudy"))
+```
+
 ## The short way, once you have the studies
 
 If you have several studies and want a pooled result, one call does the whole workflow:

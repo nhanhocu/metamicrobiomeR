@@ -13,7 +13,8 @@ amplicon sequence variants (ASVs) in columns named by their sequence.}
 \item{taxa}{Taxonomy from `dada2::assignTaxonomy()`: one row per sequence (row names
 are the sequences) and the rank columns Kingdom to Species.}
 
-\item{samples}{data.frame of sample data; row names are the sample IDs.}
+\item{samples}{data.frame of sample data; row names are the sample IDs.
+Samples that are in only one of the abundance table and the sample data are left out, and a message says which.}
 
 \item{study}{Named list of study metadata (see [as_study()]); `feature_type` defaults to
 `"asv"`.}

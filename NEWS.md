@@ -11,6 +11,10 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * Importers: `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
   `study_from_se()`, `read_function_table()`; exporters `as_phyloseq()` and `as_summarized_experiment()`;
   `effects_from()` brings in results of MaAsLin2, ANCOM-BC2, LinDA or any tool.
+* `read_qiime2()` reads QIIME 2 artifacts (`.qza`, for the taxonomy and the feature table) as well as exported text files, and
+  honours the `#q2:types` row of the metadata (numeric columns are numbers, categorical columns are factors). All file importers keep the
+  samples present in both the table and the sample data and say which were left out. A simulated example in QIIME 2's layout is in
+  `inst/extdata/qiime2-example`.
 * Taxonomy: `parse_taxonomy()`, `harmonise_names()`, `feature_parents()`. A `Domain` column is read as the kingdom.
 * `example_studies`: a simulated example (four case-control studies on three platforms, real genus names, different
   naming conventions, six genera with a known difference).

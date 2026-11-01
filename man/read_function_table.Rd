@@ -12,7 +12,8 @@ columns, the first column holding the feature IDs. An optional `description` col
 kept in the feature data.}
 
 \item{samples}{data.frame of sample data with sample IDs as row names. A column such as
-`nsti` (PICRUSt2) can be used with [subset_samples()].}
+`nsti` (PICRUSt2) can be used with [subset_samples()].
+Samples that are in only one of the abundance table and the sample data are left out, and a message says which.}
 
 \item{study}{Named list of study metadata.}
 

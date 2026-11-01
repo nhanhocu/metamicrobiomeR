@@ -30,7 +30,8 @@ test_that("read_qiime2 reads the exported feature table, taxonomy and metadata",
   f <- mm_features(s)
   expect_equal(f["f1", "genus"], "Blautia"); expect_equal(f["f2", "phylum"], "Bacteroidota"); expect_true(is.na(f["f2", "genus"]))
   expect_true(all(is.na(f["f3", c("kingdom", "phylum")])))
-  expect_equal(mm_samples(s)$group, c("a", "b", "a")); expect_equal(rownames(mm_samples(s)), c("S1", "S2", "S3"))
+  expect_equal(as.character(mm_samples(s)$group), c("a", "b", "a")); expect_s3_class(mm_samples(s)$group, "factor")   # declared categorical
+  expect_equal(rownames(mm_samples(s)), c("S1", "S2", "S3"))
   expect_error(read_qiime2(file.path(d, "ft.tsv"), data.frame(a = 1), smp3(c("S1", "S2", "S3")), list(id = "q")), "Feature ID")
 })
 
@@ -168,4 +169,84 @@ test_that("effects_from validates its input", {
   expect_error(effects_from(mq, "generic", "S1", effect_scale = "c"), "columns")
   expect_error(effects_from(data.frame(taxon = "a"), "ancombc2", "S1", effect_scale = "c"), "lfc")
   expect_error(effects_from(data.frame(a = 1), "generic", "S1", effect_scale = "c", columns = list(feature = "x", term = "y", estimate = "z", se = "w", p_value = "v")), "lacks the column")
+})
+
+# ---- QIIME 2 output: text exports, artifacts (.qza) and metadata
+q2dir <- function() system.file("extdata", "qiime2-example", package = "metamicrobiomeR")
+read_q2 <- function(...) read_qiime2(file.path(q2dir(), "feature-table.tsv"), file.path(q2dir(), "taxonomy.tsv"), file.path(q2dir(), "sample-metadata.tsv"), list(id = "example"), ...)
+# a minimal artifact: a zip with <uuid>/data/<member>, as QIIME 2 writes
+make_qza <- function(member, content_file, name = "artifact.qza") {
+  root <- tempfile("qza_src"); uuid <- "0a1b2c3d-4e5f-6789-abcd-ef0123456789"
+  dir.create(file.path(root, uuid, "data"), recursive = TRUE)
+  file.copy(content_file, file.path(root, uuid, "data", member)); writeLines("uuid: 0a1b2c3d", file.path(root, uuid, "metadata.yaml"))
+  out <- file.path(tempdir(), paste0(basename(root), "-", name)); owd <- setwd(root); on.exit(setwd(owd))
+  utils::zip(out, uuid, flags = "-r9Xq"); out
+}
+
+test_that("the QIIME 2 example files import, with the samples that do not match left out and said so", {
+  expect_true(nzchar(q2dir()))
+  m <- testthat::capture_messages(s <- read_q2())
+  expect_true(any(grepl("^2 samples in the sample data are not in the abundance table and are left out \\(blank1, blank2\\)\\.", m)))
+  expect_true(any(grepl("^2 samples in the abundance table have no sample data and are left out \\(S01, S02\\)\\.", m)))
+  expect_equal(dim(mm_counts(s)), c(129, 48)); expect_false(any(c("S01", "S02", "blank1") %in% colnames(mm_counts(s))))
+  expect_equal(rownames(mm_samples(s)), colnames(mm_counts(s)))
+  tax <- mm_features(s)
+  expect_equal(colnames(tax), c("kingdom", "phylum", "genus"))
+  expect_true(all(is.na(tax[c(5, 17), ])))                                                          # "Unassigned"
+  expect_true(!is.na(tax$phylum[9]) && is.na(tax$genus[9]))                                         # classified to the phylum only
+})
+
+test_that("metadata columns are typed from the #q2:types row, so a numeric covariate is a number", {
+  sm <- mm_samples(suppressMessages(read_q2()))
+  expect_type(sm$age, "double"); expect_s3_class(sm$group, "factor"); expect_s3_class(sm$sex, "factor")
+  expect_equal(levels(sm$group), c("case", "control"))                                              # alphabetical: the first level is the reference of a model
+  g <- agglomerate(suppressMessages(read_q2()), "genus", key = "name")
+  e <- suppressMessages(suppressWarnings(fit_study(g, ~ group + age, engine = "lm_asin", longitudinal = FALSE)))
+  expect_setequal(unique(e$term), c("groupcontrol", "age"))                                         # not one term per distinct age
+  f <- tempfile(fileext = ".tsv")                                                                    # categorical wins over numeric-looking values; empty cells are missing
+  writeLines(c("sample-id\tbatch\tdose\tnote", "#q2:types\tcategorical\tnumeric\tcategorical", "S1\t1\t0.5\ta", "S2\t2\t1.5\t", "S3\t1\t2.5\tb"), f)
+  md <- metamicrobiomeR:::.read_q2_metadata(f)
+  expect_s3_class(md$batch, "factor"); expect_equal(levels(md$batch), c("1", "2")); expect_equal(md$dose, c(0.5, 1.5, 2.5)); expect_true(is.na(md$note[2]))
+  expect_equal(rownames(md), c("S1", "S2", "S3"))
+  g2 <- tempfile(fileext = ".tsv"); writeLines(c("#SampleID\tage\tgrp", "S1\t30\tx", "S2\t41\ty"), g2)     # no types row: numbers are detected
+  md2 <- metamicrobiomeR:::.read_q2_metadata(g2); expect_type(md2$age, "integer"); expect_type(md2$grp, "character")
+  b <- tempfile(fileext = ".tsv"); writeLines(c("sample-id\tx", "#q2:types\tnumeric", "S1\t1", "S2\toops"), b)
+  expect_warning(metamicrobiomeR:::.read_q2_metadata(b), "Column 'x' is declared numeric")
+  expect_error(metamicrobiomeR:::.read_q2_metadata("no-such-file.tsv"), "File not found")
+})
+
+test_that("every file importer keeps the samples present in both tables and stops when there are none in common", {
+  seqtab <- matrix(c(5, 6, 7, 8, 9, 1), 3, 2, dimnames = list(c("S1", "S2", "S3"), c("AAA", "CCC")))
+  smp <- data.frame(g = 1:3, row.names = c("S2", "S3", "S9"))
+  m <- testthat::capture_messages(s <- read_dada2(seqtab, NULL, smp, list(id = "d")))
+  expect_equal(colnames(mm_counts(s)), c("S2", "S3"))
+  expect_true(any(grepl("1 sample in the sample data is not in the abundance table and is left out \\(S9\\)", m)))
+  expect_true(any(grepl("1 sample in the abundance table has no sample data and is left out \\(S1\\)", m)))
+  expect_error(read_dada2(seqtab, NULL, data.frame(g = 1:2, row.names = c("X", "Y")), list(id = "d")), "None of the samples in the abundance table \\(S1, S2, S3\\) is in the sample data \\(X, Y\\)")
+  expect_silent(suppressMessages(read_dada2(seqtab, NULL, data.frame(g = 1:3, row.names = rownames(seqtab)), list(id = "d"))))     # nothing to say when they match
+})
+
+test_that("a QIIME 2 taxonomy artifact (.qza) reads the same as its exported taxonomy.tsv", {
+  skip_if(!nzchar(Sys.which("zip")), "the zip program is not available")
+  qza <- make_qza("taxonomy.tsv", file.path(q2dir(), "taxonomy.tsv"))
+  a <- suppressMessages(read_q2())
+  b <- suppressMessages(read_qiime2(file.path(q2dir(), "feature-table.tsv"), qza, file.path(q2dir(), "sample-metadata.tsv"), list(id = "example")))
+  expect_equal(mm_features(a), mm_features(b)); expect_equal(mm_counts(a), mm_counts(b))
+  wrong <- make_qza("taxonomy.tsv", file.path(q2dir(), "taxonomy.tsv"))
+  expect_error(metamicrobiomeR:::.qza_member(wrong, "feature-table.biom"), "has no data/feature-table.biom. Is it the right kind of QIIME 2 artifact\\? It holds: .*data/taxonomy.tsv")
+  expect_error(metamicrobiomeR:::.qza_member("no-such.qza", "taxonomy.tsv"), "File not found")
+  tt <- tempfile(fileext = ".tsv"); writeLines(c("Feature ID\tConfidence", "a\t0.9"), tt)
+  expect_error(read_qiime2(data.frame(id = "a", S1 = 1, check.names = FALSE), tt, data.frame(g = 1, row.names = "S1"), list(id = "x")), "needs a column called 'Taxon'")
+})
+
+test_that("a QIIME 2 feature-table artifact (.qza) is read through biomformat", {
+  # Real artifacts store the table as HDF5, which biomformat reads with rhdf5. This checks finding the table inside the artifact and
+  # converting it; the HDF5 decoding itself is biomformat's job and is not exercised here (a JSON BIOM table stands in for it).
+  skip_if_not_installed("biomformat"); skip_if(!nzchar(Sys.which("zip")), "the zip program is not available")
+  txt <- suppressMessages(read_q2()); cn <- mm_counts(txt)
+  b <- biomformat::make_biom(data = cn); biom_file <- tempfile(fileext = ".biom"); biomformat::write_biom(b, biom_file)
+  qza <- make_qza("feature-table.biom", biom_file)
+  s <- suppressMessages(read_qiime2(qza, file.path(q2dir(), "taxonomy.tsv"), file.path(q2dir(), "sample-metadata.tsv"), list(id = "example")))
+  expect_equal(mm_counts(s)[rownames(cn), colnames(cn)], cn)
+  expect_equal(mm_features(s)[rownames(cn), ], mm_features(txt)[rownames(cn), ])
 })

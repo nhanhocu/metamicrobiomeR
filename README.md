@@ -77,6 +77,13 @@ With several terms in the model, choose one with `term = "groupcase"`. The funct
 
 `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
 `study_from_se()` (SummarizedExperiment / TreeSummarizedExperiment), or `as_study()` from plain matrices.
+
+**From QIIME 2:** `read_qiime2(table, taxonomy, metadata, study)` takes the feature table, the taxonomy and the usual tab-separated
+metadata file, either as the native artifacts (`.qza`; the feature-table artifact needs `biomformat` and `rhdf5`) or as exported text files.
+The `#q2:types` row of the metadata decides which columns are numbers and which are categories, and samples that are in only one of the table and
+the metadata (controls, for example) are left out, with a message saying which. A small simulated example in QIIME 2's layout is in
+`system.file("extdata", "qiime2-example", package = "metamicrobiomeR")`; see the vignette.
+
 Results from other tools (MaAsLin2, ANCOM-BC2, LinDA) can be pooled too: `effects_from()`.
 
 ## How much do the studies differ, and why?

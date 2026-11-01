@@ -2,19 +2,19 @@
 % Please edit documentation in R/20-import-files.R
 \name{read_qiime2}
 \alias{read_qiime2}
-\title{Read QIIME 2 exports}
+\title{Read QIIME 2 output}
 \usage{
 read_qiime2(feature_table, taxonomy = NULL, samples, study)
 }
 \arguments{
-\item{feature_table}{Feature table exported with `biom convert --to-tsv` (file path or
-data.frame): features in rows, samples in columns, the first column holding the feature IDs.}
+\item{feature_table}{The feature table: the path of a `.qza` artifact (needs `biomformat` and, for the
+HDF5 format QIIME 2 uses, `rhdf5`), the path of a text file exported with `biom convert --to-tsv`, or a
+data.frame (features in rows, samples in columns, the first column holding the feature IDs).}
 
-\item{taxonomy}{`taxonomy.tsv` exported from a QIIME 2 taxonomy artifact (file path or
-data.frame with the columns `Feature ID` and `Taxon`).}
+\item{taxonomy}{The taxonomy: the path of a `.qza` artifact, the path of the exported `taxonomy.tsv`, or a
+data.frame with the columns `Feature ID` and `Taxon`. Optional.}
 
-\item{samples}{Sample metadata: a data.frame with sample IDs as row names, or the path of a
-QIIME 2 metadata file (its `#q2:types` row is ignored).}
+\item{samples}{Sample metadata: the path of a QIIME 2 metadata file, or a data.frame with the sample IDs as row names.}
 
 \item{study}{Named list of study metadata; `feature_type` defaults to `"asv"`.}
 }
@@ -22,7 +22,29 @@ QIIME 2 metadata file (its `#q2:types` row is ignored).}
 An `mm_study` with counts.
 }
 \description{
-Read QIIME 2 exports
+Reads the three things a QIIME 2 project gives you: the feature table, the taxonomy and the
+sample metadata. The feature table and the taxonomy can be the native artifacts (`.qza`) or the
+text files you get by exporting them; the metadata is the usual tab-separated QIIME 2 metadata file.
+}
+\details{
+To export an artifact instead of reading it directly:
+```
+qiime tools export --input-path table.qza --output-path export
+biom convert -i export/feature-table.biom -o feature-table.tsv --to-tsv
+qiime tools export --input-path taxonomy.qza --output-path export    # writes taxonomy.tsv
+```
+
+The metadata file may have the `#q2:types` row: columns declared `numeric` are read as numbers and
+columns declared `categorical` as factors (so a batch coded 1, 2, 3 is not treated as a number). Without
+that row, numeric-looking columns are read as numbers. Empty cells are missing values.
+Samples that are in only one of the table and the metadata (controls left out of the table, samples
+without metadata) are left out, and the message says which.
+}
+\examples{
+dir <- system.file("extdata", "qiime2-example", package = "metamicrobiomeR")
+study <- read_qiime2(file.path(dir, "feature-table.tsv"), file.path(dir, "taxonomy.tsv"),
+                     file.path(dir, "sample-metadata.tsv"), list(id = "example"))
+study
 }
 \seealso{
 Other importers: 
