@@ -6,7 +6,7 @@
 #' @param study Named list of study metadata (see [as_study()]).
 #' @param abundance `"auto"` (default) treats integer values as counts and other values as
 #'   relative abundances; or force `"counts"` or `"relabund"`.
-#' @return An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case).
+#' @return An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case); ranks with no assignment at all are left out.
 #' @family importers
 #' @export
 study_from_phyloseq <- function(ps, study, abundance = c("auto", "counts", "relabund")) {

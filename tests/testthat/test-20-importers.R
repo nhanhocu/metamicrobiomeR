@@ -250,3 +250,19 @@ test_that("a QIIME 2 feature-table artifact (.qza) is read through biomformat", 
   expect_equal(mm_counts(s)[rownames(cn), colnames(cn)], cn)
   expect_equal(mm_features(s)[rownames(cn), ], mm_features(txt)[rownames(cn), ])
 })
+
+test_that("the route through phyloseq (for example from qiime2R) gives the same study as reading the files", {
+  # qiime2R::qza_to_phyloseq() hands over a phyloseq object with Kingdom..Species columns (NA when unclassified) and only the samples
+  # common to the table and the metadata. An object of that shape is built here from the example files (qiime2R itself is not needed).
+  skip_if_not_installed("phyloseq")
+  via_files <- suppressMessages(read_q2()); cn <- mm_counts(via_files); tx <- mm_features(via_files)
+  tt <- matrix(NA_character_, nrow(cn), 7, dimnames = list(rownames(cn), c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")))
+  tt[, "Kingdom"] <- tx$kingdom; tt[, "Phylum"] <- tx$phylum; tt[, "Genus"] <- tx$genus
+  ps <- phyloseq::phyloseq(phyloseq::otu_table(cn, taxa_are_rows = TRUE), phyloseq::tax_table(tt), phyloseq::sample_data(mm_samples(via_files)))
+  via_ps <- study_from_phyloseq(ps, list(id = "ps"))
+  expect_equal(mm_counts(via_ps), cn)
+  expect_equal(colnames(mm_features(via_ps)), c("kingdom", "phylum", "genus"))                    # the empty ranks (class, order, family, species) are not kept
+  expect_equal(mm_features(via_ps), tx)
+  expect_equal(sapply(mm_samples(via_ps), function(x) class(x)[1]), sapply(mm_samples(via_files), function(x) class(x)[1]))
+  expect_error(agglomerate(via_ps, "family"), "has no 'family' column \\(it has: kingdom, phylum, genus\\)")   # a clear error instead of everything becoming 'unassigned'
+})

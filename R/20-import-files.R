@@ -6,7 +6,7 @@
   m <- match(.mm_ranks, lc)
   out <- data.frame(row.names = rownames(tax))
   for (i in which(!is.na(m))) out[[.mm_ranks[i]]] <- .clean_taxon(as.character(tax[[m[i]]]))
-  out
+  out[, colSums(!is.na(out)) > 0, drop = FALSE]                      # a rank with no assignment at all carries no information
 }
 
 .read_table <- function(x, ...) {

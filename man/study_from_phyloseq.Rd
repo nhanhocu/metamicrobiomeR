@@ -15,7 +15,7 @@ study_from_phyloseq(ps, study, abundance = c("auto", "counts", "relabund"))
 relative abundances; or force `"counts"` or `"relabund"`.}
 }
 \value{
-An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case).
+An `mm_study`. Taxonomy ranks are taken from the taxonomy table (any case); ranks with no assignment at all are left out.
 }
 \description{
 Convert a phyloseq object to a study

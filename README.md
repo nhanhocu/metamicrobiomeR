@@ -84,6 +84,10 @@ The `#q2:types` row of the metadata decides which columns are numbers and which 
 the metadata (controls, for example) are left out, with a message saying which. A small simulated example in QIIME 2's layout is in
 `system.file("extdata", "qiime2-example", package = "metamicrobiomeR")`; see the vignette.
 
+If you already read your QIIME 2 files into phyloseq, for example with the `qiime2R` package (`qiime2R::qza_to_phyloseq()`), use
+`study_from_phyloseq(ps, study)`: it gives the same study as `read_qiime2()`. That is tested with a phyloseq object shaped like `qiime2R`'s output;
+`qiime2R` itself is a separate package (not on CRAN) that is not run in the tests.
+
 Results from other tools (MaAsLin2, ANCOM-BC2, LinDA) can be pooled too: `effects_from()`.
 
 ## How much do the studies differ, and why?

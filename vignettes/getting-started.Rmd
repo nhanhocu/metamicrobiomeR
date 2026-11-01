@@ -98,6 +98,15 @@ together with your other studies.
 If you have the artifacts (`.qza`) instead of exported files, `read_qiime2()` reads them directly: the taxonomy artifact needs nothing extra, and the
 feature-table artifact needs the `biomformat` and `rhdf5` packages (QIIME 2 stores tables as HDF5). Otherwise export first:
 
+If you already read your QIIME 2 files into phyloseq, for example with the `qiime2R` package, `study_from_phyloseq()` gives the same study (phyloseq
+keeps only the samples common to the table and the metadata, so nothing is left to align). `qiime2R` is a separate package that is not on CRAN:
+
+```{r qiime2-phyloseq, eval = FALSE}
+# remotes::install_github("jbisanz/qiime2R")
+ps <- qiime2R::qza_to_phyloseq(features = "table.qza", taxonomy = "taxonomy.qza", metadata = "sample-metadata.tsv")
+study <- study_from_phyloseq(ps, list(id = "mystudy", region = "V4", database = "SILVA 138"))
+```
+
 ```{r qiime2-artifacts, eval = FALSE}
 # in a shell:
 #   qiime tools export --input-path table.qza --output-path export
