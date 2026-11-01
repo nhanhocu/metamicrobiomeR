@@ -99,7 +99,7 @@ filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_s
 #'
 #' @param effects An `mm_effects` object with several studies.
 #' @param settings A named list of argument lists for [pool_effects()]. The default compares
-#'   the 1.x calculation (`DL_z`), REML with the normal test, REML with plain Hartung-Knapp and
+#'   DerSimonian-Laird with the normal test (`DL_z`), REML with the normal test, REML with plain Hartung-Knapp and
 #'   REML with the ad hoc Hartung-Knapp test.
 #' @param term,part Optional restrictions, as in [pool_effects()].
 #' @param alpha Significance level applied to the adjusted p-value (or to the p-value if

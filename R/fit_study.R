@@ -17,12 +17,12 @@
 #'   `prevalence` is given, effects on the probability of a structural zero
 #'   (`part = "prevalence"`, scale `"logit_zero_prob"`; a positive value means the
 #'   feature is more often absent).
-#' * `"bezi_gamlss"`: the model of metamicrobiomeR 1.x: a GAMLSS with a zero-inflated
+#' * `"bezi_gamlss"`: the GAMLSS-BEZI model of Ho et al. (2019): a GAMLSS with a zero-inflated
 #'   beta (BEZI) family on relative abundance, logit link for the mean. Only the mean
-#'   part depends on the covariates, as in 1.x. Scale `"logit_mean"`.
+#'   part depends on the covariates. Scale `"logit_mean"`.
 #' * `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
 #'   (the transformation used by MaAsLin), a linear mixed model with a subject random
-#'   intercept when `longitudinal` (p-values from the normal approximation, as in 1.x),
+#'   intercept when `longitudinal` (p-values from the normal approximation),
 #'   otherwise `lm()` with t-based p-values. Scale `"asin_sqrt_mean"`.
 #' * `"lm_clr"`: the same linear (mixed) model on the centred log-ratio transform of the
 #'   features at the analysed rank, as a compositional sensitivity analysis. A pseudocount
@@ -47,13 +47,12 @@
 #' @param min_prevalence,min_mean Feature filters (see Details).
 #' @param n_cycles (`bezi_gamlss` only) Maximum number of outer iterations of the GAMLSS
 #'   fitting algorithm (`n.cyc` in `gamlss::gamlss.control()`). The default is 100.
-#'   Version 1.x used the GAMLSS default of 20, at which most fits on real data did not
-#'   converge (see `dev/VALIDATION.md`); use `n_cycles = 20` to reproduce 1.x results.
+#'   The GAMLSS default is 20, at which many fits on real data do not converge.
 #'   Fits that reach the limit are flagged `converged = FALSE` and a warning reports how many.
 #' @param exclude_unassigned Drop features that are unassigned at their own rank
-#'   (for example a genus-level feature with no genus, such as the 1.x
+#'   (for example a genus-level feature with no genus, such as
 #'   `...f__lachnospiraceae.other`)? Such features lump together unrelated
-#'   organisms. Default `TRUE`; use `FALSE` to reproduce 1.x.
+#'   organisms. Default `TRUE`; use `FALSE` to keep them.
 #' @param prevalence (`zibb_glmmtmb` only) One-sided formula for the covariates of the
 #'   probability of a structural zero, e.g. `~ group`. `NULL` (default) fits an
 #'   intercept-only zero-inflation part, so only abundance effects are reported.
@@ -307,7 +306,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   }
   ct <- catch(summary(fit))$coefficients
   if (longitudinal) {
-    # lme4 gives no p-values: normal approximation, as in 1.x
+    # lme4 gives no p-values: normal approximation
     ct <- cbind(ct[, c("Estimate", "Std. Error", "t value"), drop = FALSE],
                 `Pr(>|t|)` = 2 * stats::pnorm(-abs(ct[, "t value"])))
     conv <- isTRUE(fit@optinfo$conv$opt == 0) && !any(grepl("converge", warns))

@@ -17,8 +17,8 @@ Description: Analyses microbiome studies one at a time and pools the results acr
     (with Hartung-Knapp inference, heterogeneity, prediction intervals, influence diagnostics,
     leave-one-out and meta-regression on study characteristics), hierarchical false discovery
     control across taxonomic ranks, alpha diversity, PERMANOVA, forest plots and provenance
-    manifests complete the workflow. Version 2.0 is a redesign of the package described in
-    Ho et al. (2019) <doi:10.1186/s12859-019-2744-2> and is not compatible with 1.x.
+    manifests complete the workflow. The zero-inflated beta model follows
+    Ho et al. (2019) <doi:10.1186/s12859-019-2744-2>.
 License: GPL (>= 2)
 URL: https://github.com/paytonyau/metamicrobiomeR
 BugReports: https://github.com/paytonyau/metamicrobiomeR/issues

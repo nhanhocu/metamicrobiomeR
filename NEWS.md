@@ -1,134 +1,60 @@
 # metamicrobiomeR (development version)
 
-Version 2.0 is a redesign and a **clean break from 1.x**: the 1.x input format and functions
-are gone. Version 1.3 (branch `legacy-1.x`) is the last release with the old interface; see
-`vignette("migrating-from-1x")`. The specification is in `dev/SPEC.md`; validation against the
-2019 paper in `dev/VALIDATION.md`.
+Version 2.0 is a redesign built around two data contracts, the **study object** and the **effect table**
+(specified in `dev/SPEC.md`).
 
-## New
+## Studies and data
 
-* **Study object and effect table** as the two data contracts (`as_study()`, `check_study()`,
-  `new_effect_table()`, `bind_effects()`), with taxonomy in rank columns and validated study metadata.
-* **Importers:** `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`,
-  `study_from_phyloseq()`, `study_from_se()`, `read_function_table()`; `as_phyloseq()` and
-  `as_summarized_experiment()`; `subset_samples()`, `subset_features()`.
-* **Taxonomy:** `parse_taxonomy()`, `harmonise_names()`, `agglomerate()`, `feature_parents()`.
-* **Engines in `fit_study()`:** `zibb_glmmtmb` (zero-inflated beta-binomial on counts, uses the
-  sequencing depth, optional prevalence part), `bezi_gamlss` (the 1.x model; default `n_cycles = 100`),
-  `lm_asin`, and `lm_clr` (compositional sensitivity). Estimates of different engines cannot be combined.
-* **Pooling:** `pool_effects()` (REML and the ad hoc Hartung-Knapp test by default, heterogeneity,
-  prediction intervals, `max_weight` and `top_study`), `leave_one_out()`, `meta_regress()` with
-  `study_table()`, `adjust_hierarchical()`, `pool_beta()`.
-* **Checks before pooling:** `check_poolable()` (mixed measured/predicted functions, databases, regions, small
-  studies, taxon overlap), `feature_coverage()`, `check_effects_quality()` and `filter_effects()` (implausibly
-  small standard errors, non-converged fits, large estimates), `pool_sensitivity()` (the same effects pooled under
-  several settings).
-* **More ways to combine studies:** `combine_pvalues()` (directional Stouffer or Fisher with a sign test; works
-  across engines and tools), `merge_studies()` (one-stage analysis with study as a covariate), `meta_regress()`.
-* **Results from other tools:** `effects_from()` for MaAsLin2, ANCOM-BC2, LinDA and generic tables.
-* **Plots:** `plot_heatmap()` (studies by features with a pooled column) and `plot_volcano()`.
-* **Diversity:** `alpha_diversity()`, `fit_alpha()`, `fit_beta()`.
-* **Output and reporting:** `plot_forest()`, `manifest()`, `write_manifest()`.
-* **Simulation:** `simulate_study()`, `simulate_studies()`.
+* `as_study()`, `check_study()`, the accessors (`mm_counts()`, `mm_relabund()`, `mm_features()`, `mm_samples()`,
+  `mm_depth()`, `mm_study_info()`), `study_table()`, `subset_samples()`, `subset_features()`, `agglomerate()` (taxa
+  matched by name across databases) and `merge_studies()` (one-stage analysis with the study as a covariate).
+* Importers: `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
+  `study_from_se()`, `read_function_table()`; exporters `as_phyloseq()` and `as_summarized_experiment()`;
+  `effects_from()` brings in results of MaAsLin2, ANCOM-BC2, LinDA or any tool.
+* Taxonomy: `parse_taxonomy()`, `harmonise_names()`, `feature_parents()`. A `Domain` column is read as the kingdom.
+* `example_studies`: a simulated example (four case-control studies on three platforms, real genus names, different
+  naming conventions, six genera with a known difference).
 
-## Easier to use, and faster
+## Per-study models
 
-* `meta_analyse()` runs the whole workflow in one call (checks, per-study models, quality check, pooling) and
-  returns an object with `print()`, `plot()` and `as.data.frame()` methods. Messages and warnings are labelled with
-  the study they come from. The step-by-step functions remain.
-* Pooling is 14 to 45 times faster (a lean DL/REML/PM core, tested against metafor; metafor remains the fallback
-  for other estimators), `leave_one_out()` and `pool_sensitivity()` follow, `meta_regress()` and `combine_pvalues()`
-  are faster, `parse_taxonomy()` is vectorised (identical output, tested against the original), and `fit_study()`
-  gains `cores` for parallel fitting. See `dev/PERFORMANCE.md`.
-* Help pages are grouped into families and the package help page lists where to start.
+* `fit_study()` with the engines `zibb_glmmtmb` (zero-inflated beta-binomial on counts, uses the sequencing depth,
+  optional prevalence part), `bezi_gamlss` (the GAMLSS-BEZI model of Ho et al. 2019; default `n_cycles = 100`),
+  `lm_asin` and `lm_clr` (compositional sensitivity). Estimates of different engines cannot be combined. Unassigned
+  lineages are excluded by default. `cores` fits features in parallel. The linear engines fit all features of a study in one step.
+* Diversity: `alpha_diversity()`, `fit_alpha()`, `fit_beta()` (PERMANOVA) and `pool_beta()`.
 
-* `summary()` of a `meta_analyse()` result describes the between-study variation (I2, tau2, heterogeneity test), whether
-  conclusions would hold in a new study (prediction intervals), the most heterogeneous features, and what can explain
-  the differences, including batch effects within studies. The printed summary hints when heterogeneity is high.
+## Pooling and meta-analysis
 
-* `example_studies`: a small simulated example data set (four case-control studies on three platforms, with real
-  genus names, different naming conventions, ASV and genus level, and six genera with a known difference). It
-  replaces the anonymous simulated features in the documentation; `simulate_studies()` remains for tests and
-  benchmarks. The 2019 data is used only by the validation scripts in `data-raw/`, not by the package examples.
+* `pool_effects()`: REML with the ad hoc Hartung-Knapp test by default, heterogeneity, prediction intervals, `max_weight`
+  and `top_study`, false discovery rate within rank, part and term. REML, DerSimonian-Laird and Paule-Mandel need no
+  extra package; `metafor` is used for EB, ML, HE and SJ. Estimates from different engines or scales are refused.
+* `leave_one_out()`, `meta_regress()` with `study_table()`, `pool_sensitivity()` (the same effects under several settings),
+  `combine_pvalues()` (directional Stouffer or Fisher with a sign test; works across engines and tools),
+  `adjust_hierarchical()` (error control across taxonomic ranks).
 
-* `meta_analyse()` prints which study it is on, can also analyse alpha and beta diversity (`alpha = TRUE`,
-  `beta = TRUE`), and `write_report()` writes a Markdown report (settings, studies, checks, pooled results,
-  between-study variation, sensitivity, diversity, figures, software versions).
-* Lighter install: `lme4`, used only for a subject random effect with the linear engines, is now optional (it is
-  needed only when a subject column triggers a longitudinal model, and the error says how to install it). This removes
-  24 of the 57 packages the hard dependencies pulled in.
-* The test suite is organised by function family (21 files merged into 13, no test removed).
+## Checks and interpretation
 
-* **Lighter dependencies.** `metafor` (8 packages) and `lme4` (24 more) are now optional: the hard dependencies are `ggplot2`, `methods`,
-  `parallel`, `stats` and `utils`, down from 57 packages to 28. The estimators EB, ML, HE and SJ ask for `metafor`, and a subject random
-  effect with the linear models asks for `lme4`, each with an install hint. (`ggplot2` was briefly optional and is required again: the plots are part of every result.)
-* **Faster.** The linear engines fit all features of a study in one step when they share a design: 2,000 features
-  take 0.08 s instead of 6 s, with identical results (a 20,000-ASV study: about 0.6 s instead of 51 s).
-  Pooling uses plain arithmetic for the one-number case (default pooling of 5,000 features: 0.95 s; the first version took 37 s),
-  and `write_report()` reads package versions without loading the packages.
+* `check_poolable()` (mixed measured and predicted functions, databases, regions, small studies, taxon overlap),
+  `feature_coverage()`, `check_effects_quality()` and `filter_effects()` (implausibly small standard errors,
+  non-converged fits, large estimates).
+* `summary()` of a result describes the between-study variation (I2, tau2, heterogeneity test), whether conclusions
+  would hold in a new study (prediction intervals), the most heterogeneous features and what can explain the differences.
 
-* **Graphs.** `plot(res, type)` now also draws `"alpha"` (diversity forest plot), `"beta"` (PERMANOVA R2 by study and combined) and
-  `"influence"` (the pooled effect with each study left out); `top` and `feature` work for every type (`top` was silently ignored for heatmaps).
-  Axis labels and titles use words (`arcsine square-root proportion`, not `asin_sqrt_mean`), stars on dark heatmap tiles are white, and the forest
-  plot leaves room for the weights. Reports include the diversity figures.
+## One call, graphs and reports
 
-## Messages
+* `meta_analyse()` runs the whole workflow (checks, per-study models, quality check, pooling, optionally alpha and beta
+  diversity) and returns an object with `print()`, `summary()`, `plot()` and `as.data.frame()` methods. Messages and warnings
+  are labelled with the study they come from.
+* `plot(res, type)` draws `"forest"`, `"heatmap"`, `"volcano"`, `"alpha"`, `"beta"` or `"influence"`; `plot_forest()`,
+  `plot_heatmap()` and `plot_volcano()` take effect tables from the step-by-step workflow.
+* `write_report()` writes a Markdown report with figures; `manifest()` and `write_manifest()` record data and settings.
+* `simulate_study()` and `simulate_studies()` for tests and benchmarks.
 
-* Informational messages say what the package decided or left out (samples with missing values, features
-  below the filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet
-  otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences them. Errors name the IDs and values involved and
-  say what to do. Third-party console output (lme4 singular fits, glmmTMB, GAMLSS) is captured and reported once.
-  `fit_info` gains `first_warning` and `singular`. Effect and pooled tables print a short header.
-  See `dev/MESSAGES.md`.
-* New guards: pooling or meta-regression of estimates from different engines or scales now fails with a clear
-  error (previously only `bind_effects()` checked); a `Domain` taxonomy column is read as the kingdom.
+## Messages and dependencies
 
-## Changed from 1.x
-
-* 1.x mixed-model p-values were 2% too small, adjusted p-value columns were truncated at the last
-  dot, the GMPR transform returned only missing values, and `meta.taxa()` "pooled" taxa seen in only
-  one study; none of this carries over.
-* Unassigned lineages are excluded from models by default; FDR is adjusted within a rank.
-* The package now has few dependencies: `ggplot2`, `lme4`, `metafor`; the engines and importers use
-  suggested packages.
-
-# metamicrobiomeR 1.3
-
-This is a maintenance release. It restores the package to a working state on
-current versions of R and its dependencies; there are no new features. A
-redesigned version 2.0 is planned.
-
-## Maintainer and licence
-
-* New maintainer: Payton Yau. Nhan Ho remains an author.
-* The licence is now GPL (>= 2) (previously GPL-2).
-
-## Bug fixes
-
-* `taxa.compare()` and `pathway.compare()`: p-values for linear mixed models
-  (`propmed.rel = "lm"`, `longitudinal = "yes"`) were computed as
-  `1.96 * pnorm(-|z|)` instead of `2 * pnorm(-|z|)`, which made them about 2%
-  too small. Results from these models will change slightly; please re-run
-  analyses that used them. Models fitted with GAMLSS and non-longitudinal
-  linear models are not affected.
-* `taxa.compare()`, `pathway.compare()` and `taxcomtab.show()`: the adjusted
-  p-value columns were named by cutting the covariate name at its last dot, so
-  a covariate such as `age.sample` gave `pval.adjust.sample`. Columns now keep
-  the full covariate name (`pval.adjust.age.sample`). Covariate names without a
-  dot are unaffected.
-* `taxa.compare(transform = "gmpr")`: GMPR size factors were `NA` for every
-  sample, so every model failed. They are now calculated. GMPR was designed for
-  count data on a full community table; on relative abundances or very small
-  taxa subsets, samples sharing too few taxa still get `NA` (with a warning).
-* `taxtab6` is now a plain `data.frame`. It was stored as an old-format dplyr
-  `grouped_df` that raised an error on subsetting with current dplyr.
-* `taxa.compare()`, `pathway.compare()` and `alpha.compare()` now use
-  `inherits()` to test for failed model fits, as `class(x) == "try-error"`
-  errors in R >= 4.2 for objects with more than one class.
-
-## Other changes
-
-* Removed the unused `lmerTest` import.
-* Removed ten unused packages from `Suggests` (`RCurl`, `httr`, `repmis`,
-  `jsonlite`, `magrittr`, `foreign`, `mgcv`, `reshape2`, `gplots`, `tsibble`).
-* Added regression tests for the fixes above.
+* Informational messages say what the package decided or left out (samples with missing values, features below the
+  filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet otherwise;
+  `options(metamicrobiomeR.quiet = TRUE)` silences them. Errors name the IDs and values involved and say what to do.
+  Third-party console output is captured and reported once. See `dev/MESSAGES.md`.
+* Only `ggplot2` is required. `glmmTMB`, `gamlss`, `lme4`, `vegan`, `metafor`, `phyloseq`, `SummarizedExperiment` and
+  `biomformat` are optional, and a function that needs one says which and how to install it.

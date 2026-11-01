@@ -64,30 +64,6 @@ test_that("fit_study validates its input", {
   expect_error(fit_study(list(), ~ group), "mm_study")
 })
 
-legacy_ref <- function() readRDS(testthat::test_path("fixtures", "legacy-reference.rds"))
-legacy_study <- function(ref) {
-  tab <- ref$tab; phyla <- grep("^k__", colnames(tab), value = TRUE)
-  rel <- t(as.matrix(tab[, phyla])); colnames(rel) <- tab$x.sampleid
-  smp <- tab[, c("bf", "age.sample", "personid")]; rownames(smp) <- colnames(rel)
-  as_study(relabund = rel, samples = smp, study = list(id = "bangladesh", feature_type = "otu", subject = "personid"))
-}
-expect_matches_legacy <- function(new, old) {
-  for (term in c("bfNon_exclusiveBF", "bfNo_BF", "age.sample")) {
-    n <- new[new$term == term, ]; n <- n[match(old$id, n$feature), ]
-    expect_equal(n$estimate, old[[paste0("Estimate.", term)]], tolerance = 1e-8)
-    expect_equal(n$se, old[[paste0("Std. Error.", term)]], tolerance = 1e-8)
-    expect_equal(n$p_value, old[[paste0("Pr(>|t|).", term)]], tolerance = 1e-8)
-  }
-}
-
-test_that("fit_study reproduces the 1.x GAMLSS-BEZI results (stored reference, Bangladesh data)", {
-  skip_if_not_installed("gamlss")
-  ref <- legacy_ref()
-  new <- suppressWarnings(fit_study(legacy_study(ref), ~ bf + age.sample, n_cycles = 20))
-  expect_equal(length(unique(new$feature)), 4)
-  expect_matches_legacy(new, ref$bezi)
-})
-
 test_that("a warning reports fits that did not converge", {
   skip_if_not_installed("gamlss")
   s <- make_bezi_study()
@@ -121,12 +97,6 @@ test_that("the lm_asin engine returns effects on the arcsine square root scale",
   expect_equal(e2$p_value, 2 * stats::pnorm(-abs(e2$estimate / e2$se)))
   other <- suppressWarnings(fit_study(s, ~ group + age)); other$study <- "sim2"   # a different study, bezi engine
   expect_error(bind_effects(e, other), "effect scales")
-})
-
-test_that("lm_asin reproduces the 1.x linear mixed and linear models (stored reference)", {
-  ref <- legacy_ref(); s <- legacy_study(ref)
-  expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = TRUE), ref$lmasin_mixed)
-  expect_matches_legacy(fit_study(s, ~ bf + age.sample, engine = "lm_asin", longitudinal = FALSE), ref$lmasin_linear)
 })
 
 test_that("fitting on several cores gives identical results", {

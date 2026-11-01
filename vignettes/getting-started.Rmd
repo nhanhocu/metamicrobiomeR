@@ -82,7 +82,7 @@ a time, which gives you full control over each.
 
 `fit_study()` fits the same model to every feature and returns an effect table. The engines are
 `"zibb_glmmtmb"` (a zero-inflated beta-binomial on counts that uses the sequencing depth),
-`"bezi_gamlss"` (the model of version 1.x), `"lm_asin"` and `"lm_clr"` (compositional sensitivity).
+`"bezi_gamlss"` (the GAMLSS-BEZI model of Ho et al. 2019), `"lm_asin"` and `"lm_clr"` (compositional sensitivity).
 Estimates of different engines are on different scales, so use the same engine for all studies.
 
 ```{r fit}
@@ -111,7 +111,7 @@ the result. Silence the messages with `options(metamicrobiomeR.quiet = TRUE)`; w
 
 The default is random-effects meta-analysis with REML and the ad hoc Hartung-Knapp test
 (`test = "adhoc"`), which stays safe with few studies. `method = "DL", test = "z"` gives the
-version 1.x calculation. `max_weight` is the share of the result carried by the most influential
+DerSimonian-Laird estimator with the normal-theory test, which is anti-conservative with few studies. `max_weight` is the share of the result carried by the most influential
 study: a value near 1 means one study decides the result.
 
 ```{r loo}

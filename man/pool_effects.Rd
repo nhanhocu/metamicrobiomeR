@@ -22,25 +22,25 @@ pool_effects(
 \item{term, part}{Optional character vectors restricting the terms and model parts.}
 
 \item{method}{Estimator of the between-study variance, passed to
-`metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird, as in 1.x),
+`metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird),
 "PM", "EB", "ML", "HE" or "SJ".}
 
 \item{test}{Test and confidence interval for the pooled effect, passed to
 `metafor::rma.uni()`: `"adhoc"` (default) is the Hartung-Knapp adjustment
 with the ad hoc correction that keeps the interval from becoming narrower than
 the normal-theory one; `"knha"` is plain Hartung-Knapp, which can give
-spuriously small p-values when only a few studies agree closely (see
-`dev/VALIDATION.md`); `"z"` is the normal-theory test of 1.x. Use
-`method = "DL", test = "z"` to reproduce 1.x.}
+spuriously small p-values when only a few studies agree closely; `"z"` is the
+normal-theory test, which ignores the uncertainty of the between-study variance and is
+anti-conservative with few studies.}
 
 \item{min_studies, min_prop}{Minimum number of studies, and minimum proportion
-of the studies reporting the part and term (1.x used 0.5).}
+of the studies reporting the part and term.}
 
 \item{p_adjust}{Method for [stats::p.adjust()], or `"none"`.}
 
 \item{adjust_by}{Columns defining the family of tests adjusted together: any of
 `"part"`, `"term"`, `"rank"`. The default adjusts within each rank, part and
-term; `c("part", "term")` mixes all ranks, as 1.x did.}
+term; `c("part", "term")` mixes all ranks.}
 }
 \value{
 An object of class `mm_pooled` (a data.frame), one row per feature,

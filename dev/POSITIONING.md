@@ -13,7 +13,6 @@ It rests on five things that exist and are tested:
 ## Evidence we have, and its limits
 | Evidence | Limit |
 |---|---|
-| Reproduces the GAMLSS-BEZI tables and pooled result of the 2019 paper (80 of 80 printed values) | One model, one data set; it also found errors in the original |
 | Fast pooling matches `metafor` (DL, REML to about 1e-10; Paule-Mandel checked against its own equation) | Equivalence, not a new method |
 | Cross-platform mock benchmark (`dev/BENCHMARK-CROSSPLATFORM.md`) | One simulated scenario; no false-positive measure |
 | Example data set and `vignette("cross-platform")` | Simulated |

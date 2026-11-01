@@ -1,6 +1,6 @@
 # metamicrobiomeR 2.0: specification (v1.0 of the draft)
 
-Version 2.0 is a clean break from 1.x. Two contracts hold the package together: the
+Two contracts hold the package together: the
 **study object** (input) and the **effect table** (what models return and pooling consumes).
 
 ## 1. Study object (`mm_study`)

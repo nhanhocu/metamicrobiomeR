@@ -35,7 +35,7 @@ measures) to each alpha-diversity metric and returns the effects as an effect ta
 they can be pooled across studies with [pool_effects()] like any other feature.
 By default each metric is standardised to mean 0 and standard deviation 1 within the
 study first, which makes effects comparable between studies that measure on different
-scales (as in 1.x); the estimates are then in standard-deviation units.
+scales; the estimates are then in standard-deviation units.
 }
 \seealso{
 Other per-study models: 

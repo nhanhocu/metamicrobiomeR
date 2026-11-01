@@ -47,7 +47,7 @@ alpha_diversity <- function(study, metrics = c("shannon", "simpson", "observed")
 #' they can be pooled across studies with [pool_effects()] like any other feature.
 #' By default each metric is standardised to mean 0 and standard deviation 1 within the
 #' study first, which makes effects comparable between studies that measure on different
-#' scales (as in 1.x); the estimates are then in standard-deviation units.
+#' scales; the estimates are then in standard-deviation units.
 #'
 #' @param study An `mm_study`.
 #' @param formula One-sided formula with the covariates, e.g. `~ group + age`.

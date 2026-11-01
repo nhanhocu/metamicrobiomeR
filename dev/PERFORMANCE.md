@@ -35,7 +35,6 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
   one is requested), so results differ from metafor by up to 5e-5. The fast core satisfies the Paule-Mandel equation to 4e-10.
 * Against metafor's *default* settings the fast core agrees to about four digits; REML and PM results can differ in
   the fourth digit because metafor stops iterating at a threshold of 1e-5.
-* The 2019 pooled sex-difference result is reproduced to about 1e-13 with the fast core.
 
 ## Lighter and faster, measured later
 

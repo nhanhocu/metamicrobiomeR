@@ -18,7 +18,7 @@ pool_sensitivity(
 \item{effects}{An `mm_effects` object with several studies.}
 
 \item{settings}{A named list of argument lists for [pool_effects()]. The default compares
-the 1.x calculation (`DL_z`), REML with the normal test, REML with plain Hartung-Knapp and
+DerSimonian-Laird with the normal test (`DL_z`), REML with the normal test, REML with plain Hartung-Knapp and
 REML with the ad hoc Hartung-Knapp test.}
 
 \item{term, part}{Optional restrictions, as in [pool_effects()].}
