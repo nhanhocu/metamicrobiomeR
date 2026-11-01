@@ -51,6 +51,7 @@ Internal helpers (names starting with a dot) sit next to the code that uses them
 |---|---|
 | `tests/testthat/test-NN-*.R` | tests, numbered like the R files they cover (each file's first line says which) |
 | `vignettes/` | `getting-started` (the workflow, step by step) and `cross-platform` (two-stage meta-analysis against a combined analysis) |
+| `inst/extdata/qiime2-example/` | a simulated project in QIIME 2's layout (feature table, taxonomy, metadata); built by `data-raw/make-qiime2-example.R` |
 | `data/example_studies.rda` | the simulated example; built by `data-raw/make-example-studies.R` |
 | `data-raw/` | scripts that build the example data and run the benchmarks |
 | `dev/SPEC.md` | the specification of the two data contracts (study object and effect table) |
