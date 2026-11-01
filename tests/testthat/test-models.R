@@ -49,7 +49,7 @@ test_that("a longitudinal model adds a subject random intercept", {
   e <- suppressWarnings(fit_study(s, ~ group))
   expect_type(e$converged, "logical")
   # the feature with a real group effect converges; convergence of the null
-  # feature is not guaranteed with this engine (see dev/VALIDATION.md)
+  # feature is not guaranteed with this engine
   expect_true(e$converged[e$feature == "F1"])
   expect_setequal(unique(e$term), "groupb")
   expect_gt(e$estimate[e$feature == "F1"], 0.3)
