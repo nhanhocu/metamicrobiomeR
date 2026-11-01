@@ -18,7 +18,7 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
 
 ## What changed
 
-* **Fast pooling core** (`R/rma_fast.R`) for the DL, REML and Paule-Mandel estimators, intercept-only and with
+* **Fast pooling core** (`R/51-pool-engine.R`) for the DL, REML and Paule-Mandel estimators, intercept-only and with
   moderators, and the z, Hartung-Knapp and ad hoc tests. metafor stays as the fallback for EB, ML, HE and SJ.
 * **No per-feature scans:** the feature loops used `effects[effects$key == key, ]`, a scan of the whole table per
   feature (quadratic). They now split once.
@@ -26,7 +26,7 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
   about a second per feature, so this is where the time goes in real analyses. It was only tested for identical results on a
   one-core machine, so a speed-up has not been measured.
 
-## Equivalence with metafor (tests in `tests/testthat/test-rma-fast.R`)
+## Equivalence with metafor (tests in `tests/testthat/test-51-pool-engine.R`)
 
 * DL: agrees with `metafor::rma.uni()` to about 1e-15; REML (run with a tight convergence threshold): about 1e-10;
   estimates, standard errors, intervals, p-values, tau2, I2, Q, prediction intervals, and for meta-regression the
@@ -44,7 +44,7 @@ Already fast and left alone: `agglomerate()` (0.2 s for 20,000 ASVs), `merge_stu
   the package loads, `meta_analyse()` runs with the linear engine, and a subject random effect gives an install hint.
   (`glmmTMB` itself needs `lme4`, so the count model is unavailable there and `engine = "auto"` falls back to the linear model.)
 * **Test suite:** 21 files merged into 13, organised by function family, with no test removed (112 blocks before and after, 1,159 expectations
-  passing before and after). The whole suite takes about 80 seconds on one core, mostly the count model (`test-models.R`, about 30 s)
+  passing before and after). The whole suite takes about 80 seconds on one core, mostly the count model (`test-40-models.R`, about 30 s)
   and `meta_analyse()` (about 20 s). The suite was not timed before the merge, so no speed-up is claimed.
 * **Progress lines** (`Study 2 of 4: CohortB`) and an engine note (the count model takes about a second per feature and study)
   make a long run less opaque.

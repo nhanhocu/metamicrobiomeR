@@ -143,6 +143,8 @@ See `vignette("getting-started")` and `vignette("cross-platform")` for runnable 
 
 The two data contracts (the study object and the effect table) are specified in
 [`dev/SPEC.md`](dev/SPEC.md).
+The source is organised by workflow stage (numbered files in `R/`, with matching numbered tests); see
+[`dev/STRUCTURE.md`](dev/STRUCTURE.md).
 
 ## Install
 

@@ -29,7 +29,7 @@ The package must be quiet when nothing notable happens, and specific when someth
 * Third-party console output (lme4 singular-fit notes, glmmTMB and GAMLSS messages) is captured per
   feature and reported once in aggregate; the details are in `attr(effects, "fit_info")` (`first_warning`, `singular`).
 
-## Helpers (`R/messages.R`)
+## Helpers (`R/01-messages.R`)
 
 `.inform()`, `.show()`, `.plural()`, `.word()`, `.cap()`, `.pct()`, `.check_class()`, `.check_list_of()`,
 `.id_mismatch()`, `.missing_vars()`, `.need()` (names the install command, `BiocManager::install()` for Bioconductor
@@ -79,5 +79,5 @@ packages), `.check_comparable()` (one engine and one scale per part and term, us
 | Wrong object passed | "'study' must be an mm_study object." | adds where to get one and what was received |
 | Printing an effect table | 18 raw lines | a header, then six rows |
 
-Every message above has a test in `tests/testthat/test-messages.R`, including that nothing is printed when
+Every message above has a test in `tests/testthat/test-01-messages.R`, including that nothing is printed when
 nothing notable happens. Add a test with any new message.
