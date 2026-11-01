@@ -10,7 +10,7 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 4.5, dpi = 80)
 library(metamicrobiomeR)
-options(metamicrobiomeR.quiet = TRUE)
+old_options <- options(metamicrobiomeR.quiet = TRUE)
 ```
 
 Studies of the same question are often done on different platforms: a 16S study of one region, another of a
@@ -85,3 +85,7 @@ head(one[order(one$p_value), "feature"], 5)    # strongest genera, combined anal
 
 When you can do both, report both: agreement strengthens the conclusion, and a difference tells you where to look.
 When the raw data cannot be merged or shared, the meta-analysis is the way to combine them.
+
+```{r restore, include = FALSE}
+options(old_options)
+```

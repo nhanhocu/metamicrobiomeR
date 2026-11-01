@@ -11,6 +11,7 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 5, dpi = 80)
 has_tmb <- requireNamespace("glmmTMB", quietly = TRUE)
 library(metamicrobiomeR)
+options(metamicrobiomeR.quiet = FALSE)   # show the notes the functions print (another vignette may have changed this)
 ```
 
 metamicrobiomeR analyses microbiome studies one at a time and then pools the results. The
