@@ -32,6 +32,7 @@
       f <- function(t) { s <- wls(t); -0.5 * (sum(s$w) - sum(diag(s$Ainv %*% crossprod(X, X * s$w^2)))) + 0.5 * sum(s$w^2 * s$r^2) }
       root(f, f(0))
     })
+  if (!is.finite(tau2)) return(NULL)
   s <- wls(tau2)
   q <- sum(s$w * s$r^2) / (k - p)
   scale <- switch(test, z = 1, knha = q, adhoc = max(1, q))
@@ -80,6 +81,7 @@
   se <- sqrt(var_b); stat <- s$mu / se
   df <- if (test == "z") Inf else k - 1
   crit <- stats::qt(1 - (1 - level) / 2, df); vt <- (k - 1) / trP0
+  if (!all(is.finite(c(tau2, se, s$mu)))) return(NULL)           # numerically degenerate (for example a standard error of 1e-15): cannot be pooled
   out <- list(beta = s$mu, se = se, ci_lb = s$mu - crit * se, ci_ub = s$mu + crit * se, stat = stat, pval = 2 * stats::pt(-abs(stat), df),
               tau2 = tau2, I2 = 100 * tau2 / (vt + tau2), QE = QE, QEp = stats::pchisq(QE, k - 1, lower.tail = FALSE), k = k, p = 1L, df = df, vcov = matrix(var_b))
   if (k >= 3) { half <- crit * sqrt(se^2 + tau2); out$pi_lb <- s$mu - half; out$pi_ub <- s$mu + half }

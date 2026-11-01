@@ -77,13 +77,15 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   est <- effects$estimate; sev <- effects$se; stu <- as.character(effects$study); rk_all <- effects$rank
   grp_idx <- split(seq_len(nrow(effects)), factor(effects$.key, levels = keys))      # one pass, not one scan per feature
   fast <- method %in% c("REML", "DL", "PM")
+  degenerate <- 0L
   pool_one <- function(ii) {
     k <- length(ii)
     if (k < min_studies || k < min_prop * n_studies[[effects$.group[ii[1]]]]) return(NULL)
     y <- est[ii]; v <- sev[ii]^2
     r <- if (fast) .rma_fast(y, v, method = method, test = test) else .rma_metafor(y, v, method, test)
-    if (is.null(r)) return(NULL)
+    if (is.null(r)) { degenerate <<- degenerate + 1L; return(NULL) }
     ws <- 1 / (v + r$tau2); share <- ws / sum(ws)
+    if (!all(is.finite(share))) { degenerate <<- degenerate + 1L; return(NULL) }
     rk <- rk_all[ii]; rk <- rk[!is.na(rk)]
     list(feature = effects$feature[ii[1]], rank = if (length(rk)) rk[1] else NA_character_, part = effects$part[ii[1]], term = effects$term[ii[1]],
          k = k, estimate = r$beta[1], se = r$se[1], ci_lo = r$ci_lb[1], ci_hi = r$ci_ub[1], statistic = r$stat[1], p_value = r$pval[1],
@@ -93,6 +95,8 @@ pool_effects <- function(effects, term = NULL, part = NULL,
   }
   rows <- lapply(grp_idx, pool_one)
   rows <- rows[!vapply(rows, is.null, logical(1))]
+  if (degenerate) .inform(.plural(degenerate, "feature"), " could not be pooled because ", if (degenerate == 1) "its estimates are" else "their estimates are",
+                          " numerically degenerate (for example a standard error of about 1e-15, which usually comes from a fit that did not converge); see check_effects_quality().")
   out <- if (length(rows)) {
     cols <- names(rows[[1]])
     as.data.frame(lapply(stats::setNames(cols, cols), function(cn) unlist(lapply(rows, `[[`, cn), use.names = FALSE)), stringsAsFactors = FALSE)

@@ -42,6 +42,11 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `check_poolable()` (mixed measured and predicted functions, databases, regions, small studies, taxon overlap),
   `feature_coverage()`, `check_effects_quality()` and `filter_effects()` (implausibly small standard errors,
   non-converged fits, large estimates).
+* `meta_analyse()` drops doubtful estimates before pooling by default (`quality = "filter"`: fits that did not converge, and standard errors far
+  smaller than in the other studies) and says how many; `quality = "warn"` keeps them. Such fits often have missing or near-zero standard errors, and one
+  of them can otherwise decide the pooled result. Pooling skips features whose estimates are numerically degenerate instead of failing, and says how many.
+  When many fits do not converge, the warning says whether it is the rare features that fail, with the numbers, and suggests a higher `min_prevalence`
+  (on soil data with 15 to 36 samples per study, the count model converged for 12% of the genera present in 10% of samples or fewer and for 99% of those present in more than 75%).
 * `summary()` of a result describes the between-study variation (I2, tau2, heterogeneity test), whether conclusions
   would hold in a new study (prediction intervals), the most heterogeneous features and what can explain the differences.
 

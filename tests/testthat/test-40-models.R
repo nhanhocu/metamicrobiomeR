@@ -400,3 +400,13 @@ test_that("the batch fit steps aside when the design or the data do not allow it
   r2 <- fit_both(batch_study(), ~ group + age + I(2 * age), "lm_asin")                                 # rank-deficient formula
   expect_equal(as.data.frame(r2$new), as.data.frame(r2$ref), tolerance = 1e-8)
 })
+
+test_that("when fits fail, the hint says that the rare features fail, with the user's own numbers", {
+  h <- metamicrobiomeR:::.convergence_hint(c(a = .06, b = .08, c = .10, d = .12, e = .15, f = .20), c(g = .6, h = .8, i = .9), 0.05)
+  expect_match(h, "^ The features that did not converge are rarer \\(present in a median of 11% of the samples, against 80% for the others\\); try a higher 'min_prevalence', for example 0.15\\.$")
+  expect_equal(metamicrobiomeR:::.convergence_hint(c(.1, .2, .3), c(.8, .9), 0.05), "")                           # too few failures to say anything
+  expect_equal(metamicrobiomeR:::.convergence_hint(rep(.8, 6), rep(.5, 5), 0.05), "")                            # failures are not the rare features
+  expect_match(metamicrobiomeR:::.convergence_hint(rep(.7, 6), rep(.95, 3), 0.05), "for example 0.5\\.")          # never suggests more than 0.5
+  expect_match(metamicrobiomeR:::.convergence_hint(rep(.05, 6), rep(.9, 3), 0.1), "for example 0.2\\.")           # at least twice the current filter
+  expect_match(metamicrobiomeR:::.convergence_hint(rep(.45, 6), rep(.9, 3), 0.05), "for example 0.45\\.")         # otherwise the 75th percentile of the failures, rounded up to 0.05
+})

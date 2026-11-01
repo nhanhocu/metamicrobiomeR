@@ -247,3 +247,16 @@ test_that("feature_parents finds the nearest higher feature with the same lineag
   expect_equal(p[["Blau"]], "Clo")                       # genus: class is the nearest present higher rank
   expect_equal(p[["Lacto"]], "Fir")                      # no Bacilli class feature: falls back to the phylum
 })
+
+test_that("pooling skips features with numerically degenerate estimates instead of failing", {
+  # real numbers from a feature whose fit in one study did not converge and returned a standard error of 4e-14:
+  # the DerSimonian-Laird estimate of the between-study variance is then infinite, which used to stop the whole analysis
+  mk <- function(study, est, se, feature) new_effect_table(study, feature, "x", est, se, rank = "genus", part = "abundance", n = 20L, engine = "t", effect_scale = "s")
+  eff <- bind_effects(mk(c("a", "b", "c"), c(0.3439, -0.8520, 0.3075), c(1.167, 4.157e-14, 0.2726), "degenerate"), mk(c("a", "b", "c"), c(.5, .6, .4), c(.2, .25, .3), "fine"))
+  expect_null(metamicrobiomeR:::.rma_fast(c(0.3439, -0.8520, 0.3075), c(1.167, 4.157e-14, 0.2726)^2, method = "DL", test = "z"))
+  expect_message(p <- pool_effects(eff, method = "DL", test = "z", min_prop = 0), "1 feature could not be pooled because its estimates are numerically degenerate")
+  expect_equal(p$feature, "fine")
+  for (m in c("REML", "PM")) expect_true("fine" %in% suppressMessages(pool_effects(eff, method = m, test = "z", min_prop = 0))$feature)
+  expect_s3_class(suppressMessages(pool_sensitivity(eff, min_prop = 0)), "mm_poolcompare")                       # all four settings together no longer stop
+  expect_equal(nrow(suppressMessages(leave_one_out(eff, feature = "fine", min_prop = 0))), 3)
+})

@@ -25,8 +25,10 @@
 #' @param rank Optional taxonomic rank to analyse. Studies that are not yet agglomerated are
 #'   agglomerated to it, matching taxa by harmonised name.
 #' @param method,test Pooling settings, see [pool_effects()].
-#' @param quality What to do about implausible estimates (very small standard errors, fits that did
-#'   not converge): `"warn"` (default) only warns, `"filter"` drops them before pooling, `"off"` skips the check.
+#' @param quality What to do about doubtful estimates (fits that did not converge, and standard errors far
+#'   smaller than in the other studies): `"filter"` (default) drops them before pooling and says how many;
+#'   `"warn"` keeps them and warns; `"off"` skips the check. Fits that did not converge often have missing or
+#'   near-zero standard errors, which can give one study almost all the weight, so they should not be pooled.
 #' @param check Run [check_poolable()] first? Problems are reported as warnings, notes as messages.
 #' @param fit_args,pool_args Further arguments for [fit_study()] and [pool_effects()] as named lists.
 #' @param cores Cores for fitting, see [fit_study()].
@@ -45,7 +47,7 @@
 #' @family pooling
 #' @export
 meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_engines), rank = NULL, method = "REML", test = "adhoc",
-                         quality = c("warn", "filter", "off"), check = TRUE, fit_args = list(), pool_args = list(),
+                         quality = c("filter", "warn", "off"), check = TRUE, fit_args = list(), pool_args = list(),
                          cores = getOption("metamicrobiomeR.cores", 1L), alpha = FALSE, beta = FALSE, alpha_args = list(), beta_args = list()) {
   engine <- match.arg(engine); quality <- match.arg(quality)
   xs <- .as_study_list(list(studies))

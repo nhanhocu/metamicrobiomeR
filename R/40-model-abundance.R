@@ -236,8 +236,11 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   }
   if (!is.null(fit_info) && any(!fit_info$converged & is.na(fit_info$error))) {
     nc <- sum(!fit_info$converged & is.na(fit_info$error))
+    prev_fit <- stats::setNames(vapply(idx, function(i) mean(ra[i, ] > 0, na.rm = TRUE), numeric(1)), rownames(ra)[idx])
+    bad <- !fit_info$converged & is.na(fit_info$error)
     warning(nc, " of ", nrow(fit_info), " fits did not converge",
-            if (engine == "bezi_gamlss") paste0(" within ", n_cycles, " iterations; try a larger 'n_cycles'"), "; see attr(, \"fit_info\").", call. = FALSE)
+            if (engine == "bezi_gamlss") paste0(" within ", n_cycles, " iterations; try a larger 'n_cycles'"), "; see attr(, \"fit_info\").",
+            .convergence_hint(prev_fit[fit_info$feature[bad]], prev_fit[fit_info$feature[fit_info$converged]], min_prevalence), call. = FALSE)
   }
   if (!is.null(fit_info) && any(fit_info$singular)) {
     .inform(sum(fit_info$singular), " of ", nrow(fit_info), " mixed-model fits were singular (the subject variance is estimated as zero), ",
@@ -369,4 +372,13 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   se <- sqrt(outer(diag(chol2inv(qr.R(qrX))), s2)); dimnames(se) <- dimnames(B); tv <- B / se
   list(B = B, se = se, tv = tv, pv = 2 * stats::pt(-abs(tv), rdf), rdf = as.numeric(rdf),
        ok = is.finite(s2) & s2 > 1e-20 * pmax(1, rowMeans(Yb^2)))
+}
+
+# When fits fail, they usually fail for the rare features; say so, with the user's own numbers
+.convergence_hint <- function(prev_failed, prev_ok, min_prevalence) {
+  prev_failed <- prev_failed[is.finite(prev_failed)]; prev_ok <- prev_ok[is.finite(prev_ok)]
+  if (length(prev_failed) < 5 || !length(prev_ok) || stats::median(prev_failed) >= stats::median(prev_ok)) return("")
+  suggest <- min(0.5, max(2 * min_prevalence, ceiling(stats::quantile(prev_failed, 0.75, names = FALSE) / 0.05) * 0.05))
+  paste0(" The features that did not converge are rarer (present in a median of ", .pct(stats::median(prev_failed)), " of the samples, against ",
+         .pct(stats::median(prev_ok)), " for the others); try a higher 'min_prevalence', for example ", format(suggest), ".")
 }

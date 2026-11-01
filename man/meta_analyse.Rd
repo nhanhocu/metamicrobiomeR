@@ -14,7 +14,7 @@ meta_analyse(
   rank = NULL,
   method = "REML",
   test = "adhoc",
-  quality = c("warn", "filter", "off"),
+  quality = c("filter", "warn", "off"),
   check = TRUE,
   fit_args = list(),
   pool_args = list(),
@@ -51,8 +51,10 @@ agglomerated to it, matching taxa by harmonised name.}
 
 \item{method, test}{Pooling settings, see [pool_effects()].}
 
-\item{quality}{What to do about implausible estimates (very small standard errors, fits that did
-not converge): `"warn"` (default) only warns, `"filter"` drops them before pooling, `"off"` skips the check.}
+\item{quality}{What to do about doubtful estimates (fits that did not converge, and standard errors far
+smaller than in the other studies): `"filter"` (default) drops them before pooling and says how many;
+`"warn"` keeps them and warns; `"off"` skips the check. Fits that did not converge often have missing or
+near-zero standard errors, which can give one study almost all the weight, so they should not be pooled.}
 
 \item{check}{Run [check_poolable()] first? Problems are reported as warnings, notes as messages.}
 

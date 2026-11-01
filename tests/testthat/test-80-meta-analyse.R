@@ -58,16 +58,16 @@ degenerate <- function(base) {
   as_study(relabund = rel, samples = mm_samples(base), study = list(id = "bad", feature_type = "taxon"))
 }
 
-test_that("implausible estimates are reported by default and can be filtered out", {
+test_that("doubtful estimates are dropped by default, and kept with a warning on request", {
   s <- c(sims(2), list(degenerate(sims(1)[[1]])))
-  expect_warning(res <- suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0))),
-                 "estimates look doubtful \\(bad: \\d+\\).*use quality = \"filter\" to drop them")
-  expect_gt(sum(res$quality$rows$flagged), 0); expect_equal(nrow(res$effects), 24)                                # kept
-  expect_message(f <- meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "filter", fit_args = list(longitudinal = FALSE, min_prevalence = 0)),
-                 "Dropped \\d+ of 24 estimates before pooling")
-  expect_lt(nrow(f$effects), 24)
-  expect_silent(suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "off", fit_args = list(longitudinal = FALSE, min_prevalence = 0))))
-  expect_null(suppressWarnings(suppressMessages(meta_analyse(s, ~ group, term = "groupb", engine = "lm_asin", quality = "off", fit_args = list(longitudinal = FALSE, min_prevalence = 0))))$quality)
+  args <- list(s, ~ group, term = "groupb", engine = "lm_asin", fit_args = list(longitudinal = FALSE, min_prevalence = 0))
+  expect_message(f <- do.call(meta_analyse, args), "Dropped \\d+ of 24 estimates before pooling")               # the default: they are not pooled
+  expect_lt(nrow(f$effects), 24); expect_s3_class(f$quality, "mm_quality")
+  expect_warning(res <- suppressMessages(do.call(meta_analyse, c(args, list(quality = "warn")))),
+                 "estimates look doubtful \\(bad: \\d+\\).*They are kept; use quality = \"filter\" to drop them")
+  expect_gt(sum(res$quality$rows$flagged), 0); expect_equal(nrow(res$effects), 24)                                   # kept
+  expect_silent(suppressMessages(do.call(meta_analyse, c(args, list(quality = "off")))))
+  expect_null(suppressWarnings(suppressMessages(do.call(meta_analyse, c(args, list(quality = "off")))))$quality)
 })
 
 test_that("warnings from a study are passed on with its name, not lost", {
