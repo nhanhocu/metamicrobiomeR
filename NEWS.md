@@ -1,4 +1,4 @@
-# metamicrobiomeR (development version)
+# metamicrobiomeR 2.0.0.9000
 
 Version 2.0 is a redesign built around two data contracts, the **study object** and the **effect table**
 (specified in `dev/SPEC.md`).
