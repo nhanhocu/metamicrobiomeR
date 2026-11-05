@@ -1,0 +1,49 @@
+---
+title: "Moving from the 1.x functions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Moving from the 1.x functions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(metamicrobiomeR)
+```
+
+The 1.x functions are still in the package, with the same arguments and output, so you do not have to move. This
+vignette is for when you want the newer importers, engines and diagnostics.
+
+## Function map
+
+| 1.x | Modern workflow |
+|---|---|
+| `read.multi()`, QIIME 1 tables | `legacy_to_study()`, `as_study()`, `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()` |
+| `taxa.filter()` | filters inside `fit_study()` (`min_prevalence`, `min_mean`) |
+| `taxa.compare(propmed.rel = "gamlss")` | `fit_study(engine = "bezi_gamlss", n_cycles = 20)` gives the same estimates |
+| `taxa.compare(propmed.rel = "lm", transform = "asin.sqrt")` | `fit_study(engine = "lm_asin")` |
+| `pathway.compare()` | `read_function_table()` then `fit_study()` |
+| `alpha.compare()` | `fit_alpha()` |
+| `meta.taxa()` | `pool_effects(method = "DL", test = "z", adjust_by = c("part", "term"))` |
+| `metatab.show()`, `meta.niceplot()` | `plot_forest()` |
+| `microbiomeage()`, `taxa.mean.plot()`, `taxa.meansdn()`, `taxcomtab.show()` | no modern equivalent, keep using these |
+
+## Where the defaults differ
+
+* **Unassigned lineages**, such as `...f__lachnospiraceae.other`, are left out of the modern models.
+* **Pooling** uses REML with the ad hoc Hartung-Knapp test, in place of DerSimonian-Laird with a normal test.
+* **False discovery rate** is adjusted within a rank, in place of across all ranks.
+* **Iterations:** see `?fit_study` for the current default of the GAMLSS engine.
+
+## Converting a table
+
+`legacy_to_study()` takes a table with samples in rows and taxa in columns named in the QIIME 1 style.
+
+```{r convert}
+data(taxtab6)
+study <- legacy_to_study(as.data.frame(taxtab6), list(id = "Bangladesh", feature_type = "otu", subject = "personid"))
+study
+```
+
+These tables hold relative abundances only, so the count-based engine `"zibb_glmmtmb"` cannot be used on them.

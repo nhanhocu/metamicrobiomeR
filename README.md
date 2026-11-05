@@ -9,6 +9,12 @@ The zero-inflated beta model follows Ho et al. (2019), *BMC Bioinformatics* 20:1
 
 > **Status: version 2.0 is a pre-release and is not on CRAN.** The API may still change.
 
+## If you used version 1.x
+
+Your scripts keep working. `taxa.compare()`, `meta.taxa()`, `metatab.show()`, `meta.niceplot()` and the other 1.x functions are all here, with the same
+arguments and output, and `vignette("my-vignette")` is the original tutorial. See `NEWS.md` for the few changes that can alter results, and
+`vignette("migrating-from-1x")` when you want to move a table to the new functions with `legacy_to_study()`.
+
 ## The short way
 
 Try it with the built-in simulated example (`?example_studies`), then use your own studies:

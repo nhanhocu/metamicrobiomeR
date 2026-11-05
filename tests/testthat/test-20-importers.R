@@ -176,6 +176,7 @@ q2dir <- function() system.file("extdata", "qiime2-example", package = "metamicr
 read_q2 <- function(...) read_qiime2(file.path(q2dir(), "feature-table.tsv"), file.path(q2dir(), "taxonomy.tsv"), file.path(q2dir(), "sample-metadata.tsv"), list(id = "example"), ...)
 # a minimal artifact: a zip with <uuid>/data/<member>, as QIIME 2 writes
 make_qza <- function(member, content_file, name = "artifact.qza") {
+  skip_if(!nzchar(Sys.getenv("R_ZIPCMD", unname(Sys.which("zip")))), "no zip program available")
   root <- tempfile("qza_src"); uuid <- "0a1b2c3d-4e5f-6789-abcd-ef0123456789"
   dir.create(file.path(root, uuid, "data"), recursive = TRUE)
   file.copy(content_file, file.path(root, uuid, "data", member)); writeLines("uuid: 0a1b2c3d", file.path(root, uuid, "metadata.yaml"))

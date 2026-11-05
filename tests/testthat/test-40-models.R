@@ -410,3 +410,16 @@ test_that("when fits fail, the hint says that the rare features fail, with the u
   expect_match(metamicrobiomeR:::.convergence_hint(rep(.05, 6), rep(.9, 3), 0.1), "for example 0.2\\.")           # at least twice the current filter
   expect_match(metamicrobiomeR:::.convergence_hint(rep(.45, 6), rep(.9, 3), 0.05), "for example 0.45\\.")         # otherwise the 75th percentile of the failures, rounded up to 0.05
 })
+
+test_that("bezi_gamlss survives a sparse feature whose coefficients are aliased", {
+  skip_if_not_installed("gamlss"); skip_on_cran()
+  set.seed(3)
+  sam <- data.frame(group = rep(c("a", "b"), each = 9), food = rep(c("x", "y", "z"), 6), subj = rep(paste0("s", 1:6), each = 3),
+                    row.names = paste0("S", 1:18))
+  m <- rbind(common = stats::rbeta(18, 2, 20), rare = c(0.001, rep(0, 8), 0.002, rep(0, 8)))
+  m <- rbind(m, other = 1 - colSums(m)); colnames(m) <- rownames(sam)
+  st <- as_study(relabund = m, samples = sam, study = list(id = "sparse", feature_type = "otu", subject = "subj"))
+  f <- suppressWarnings(suppressMessages(fit_study(st, ~ group + food, longitudinal = TRUE)))
+  expect_true(all(c("common", "rare") %in% f$feature))
+  expect_false(any(grepl("Intercept", f$term)))
+})
