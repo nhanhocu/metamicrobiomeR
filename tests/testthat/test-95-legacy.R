@@ -15,7 +15,11 @@ same_cols <- function(new, old) {
   shared <- shared[vapply(old[shared], is.numeric, logical(1))]
   expect_gt(length(shared), 0)
   # Row labels are index labels carried over from the input and can differ between R versions, so compare the values only.
-  values <- function(x) { m <- as.matrix(x[shared]); dimnames(m) <- NULL; m }
+  # Rows are put in id order first, because tables sorted on tied p-values can come out in a different order on another platform.
+  values <- function(x) {
+    if ("id" %in% names(x)) x <- x[order(as.character(x[["id"]])), , drop = FALSE]
+    m <- as.matrix(x[shared]); dimnames(m) <- NULL; m
+  }
   expect_equal(values(new), values(old), tolerance = tol)
 }
 collect_warnings <- function(expr) {
