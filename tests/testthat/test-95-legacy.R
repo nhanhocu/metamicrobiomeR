@@ -14,7 +14,9 @@ same_cols <- function(new, old) {
   shared <- intersect(colnames(old), colnames(new))
   shared <- shared[vapply(old[shared], is.numeric, logical(1))]
   expect_gt(length(shared), 0)
-  expect_equal(as.matrix(new[shared]), as.matrix(old[shared]), tolerance = tol, ignore_attr = TRUE)
+  # Row labels are index labels carried over from the input and can differ between R versions, so compare the values only.
+  values <- function(x) { m <- as.matrix(x[shared]); dimnames(m) <- NULL; m }
+  expect_equal(values(new), values(old), tolerance = tol)
 }
 collect_warnings <- function(expr) {
   w <- character()
