@@ -1,5 +1,49 @@
 # metamicrobiomeR 2.0.0.9000
 
+## Legacy functions (version 1.x)
+
+The 12 functions and 6 of the 7 datasets of 1.x stay available, with the same arguments and output shape, so existing
+scripts keep working. They receive bug fixes only. New work should start with `meta_analyse()`, and
+`legacy_to_study()` and `vignette("migrating-from-1x")` help you move across.
+
+Changes that can alter legacy results:
+
+* `taxa.compare()`, `pathway.compare()`: p-values for linear mixed models were `1.96 * pnorm(-|z|)` and are now
+  `2 * pnorm(-|z|)`, so they rise by about 2%. GAMLSS and non-longitudinal linear models are not affected.
+* `meta.taxa()`: a taxon is pooled for a term only if at least two studies, and at least `percent.meta` of the studies, have an
+  estimate for that term. It used to count rows, so some taxa were "pooled" from one study or none. The `tabsex4` result for
+  `genderMale` is unchanged. For `bfNo_BF`, 86 of 185 taxa are no longer pooled, and for `bfNon_exclusiveBF` and `age.sample`, 1 each.
+* `taxa.compare(transform = "logit")`: taxa with zeros are left out with a clear warning, and it stops if every taxon has zeros.
+* `taxa.compare(transform = "gmpr")`: size factors are now calculated. They were `NA` for every sample.
+
+Changes that keep legacy results the same:
+
+* `meta.taxa()` sets `method.tau = "DL"`. The `meta` package now defaults to REML, which changed results and stopped with an
+  error on the full `tabsex4` table. The stored 2019 pooled result for `genderMale` is reproduced for all 185 taxa.
+* `taxa.compare()`, `pathway.compare()`: the new `n.cyc` argument keeps its default of 20. Non-convergence now gives one warning
+  with a count, and `attr(result, "fit_info")` holds the details for each taxon.
+* `taxa.compare()`, `pathway.compare()`: a new warning flags taxa with no more non-zero samples than mean-model coefficients.
+  Such a taxon passes the prevalence filter in a small study, and its estimate and standard error are not reliable.
+* `taxa.compare()`, `pathway.compare()`: a new warning says that GAMLSS standard errors with a subject random effect can be too small.
+* `meta.taxa()`: a new warning flags results where one study holds over 90% of the random-effects weight, and
+  `attr(result, "dominance")` lists them.
+* Adjusted p-value columns use the full covariate name, such as `pval.adjust.age.sample`. The old truncated name,
+  `pval.adjust.sample`, stays as an alias so that scripts do not break.
+
+`vignette("notes-earlier-results")` lists what we found when re-running the 1.x examples.
+
+Other changes:
+
+* Fixed the CRAN note for the global variable `id` in `metatab.show()`, which came from the dplyr upgrade. The package now imports
+  only what it uses from dplyr, and no longer attaches `gamlss` when loaded. Scripts that relied on that need `library(gamlss)`.
+* `class(x) == "try-error"` is replaced by `inherits()`. `taxtab6` is a plain `data.frame`.
+* `microbiomeage()` gains a `seed` argument. Its example and the `read.multi()` example no longer download anything.
+* `gtab.3stud` is no longer in the package, because it holds sample-level data obtained from investigators.
+* `lmerTest` and other unused dependencies are removed. `gdata` and `matrixStats` are replaced by base R.
+* The licence is GPL-3, because the GMPR code in `taxa.compare()` comes from a package licensed GPL-3.
+* `fit_study(engine = "bezi_gamlss")` no longer stops on a sparse feature with aliased coefficients.
+* New maintainer: Payton Yau. Nhan Ho remains an author.
+
 Version 2.0 is a redesign built around two data contracts, the **study object** and the **effect table**
 (specified in `dev/SPEC.md`).
 

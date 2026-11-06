@@ -5,7 +5,8 @@ Version: 2.0.0.9000
 Authors@R: c(
     person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut"),
     person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0002-3283-0370"))
+           comment = c(ORCID = "0000-0002-3283-0370")),
+    person("Jun", "Chen", role = c("ctb", "cph"), comment = "GMPR code in taxa.compare()")
     )
 Description: Analyses microbiome studies one at a time and pools the results across studies.
     Studies are held in a validated study object that accepts counts or relative
@@ -19,15 +20,17 @@ Description: Analyses microbiome studies one at a time and pools the results acr
     control across taxonomic ranks, alpha diversity, PERMANOVA, forest plots and provenance
     manifests complete the workflow. The zero-inflated beta model follows
     Ho et al. (2019) <doi:10.1186/s12859-019-2744-2>.
-License: GPL (>= 2)
-URL: https://github.com/paytonyau/microbiome-meta-analysis
-BugReports: https://github.com/paytonyau/microbiome-meta-analysis/issues
+    The functions of version 1.x (taxa.compare(), meta.taxa() and others) remain available.
+License: GPL-3
+URL: https://github.com/nhanhocu/metamicrobiomeR
+BugReports: https://github.com/nhanhocu/metamicrobiomeR/issues
 Depends: R (>= 4.1.0)
-Imports: ggplot2, methods, parallel, stats, utils
-Suggests: biomformat, covr, gamlss, gamlss.dist, glmmTMB, jsonlite, knitr, lme4, metafor (>= 4.0-0), permute,
-        phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan
+Imports: dplyr, gamlss, gamlss.dist, ggplot2, gridExtra, lme4, meta (>= 6.0-0), methods, parallel,
+        plyr, RColorBrewer, stats, tidyr, tools, utils
+Suggests: biomformat, caret, compositions, covr, glmmTMB, jsonlite, knitr, metafor (>= 4.0-0), permute, randomForest,
+        phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan, zCompositions
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 2
-RoxygenNote: 7.3.1
 LazyData: true
+Config/roxygen2/version: 8.1.0

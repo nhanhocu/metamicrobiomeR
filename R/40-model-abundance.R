@@ -289,7 +289,10 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (inherits(sm, "error")) {
     return(list(rows = NULL, converged = isTRUE(fit$converged), warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = conditionMessage(sm)))
   }
-  k <- length(stats::coef(fit, "mu"))
+  # The table stacks the mean, sigma and nu parts, each starting with an intercept. Aliased mean coefficients are not
+  # in it, so count the rows up to the second intercept and not the coefficients of the fit.
+  ints <- which(rownames(sm$coef.table) == "(Intercept)")
+  k <- if (length(ints) >= 2) ints[2] - 1L else nrow(sm$coef.table)
   conv <- isTRUE(fit$converged)
   list(rows = .coef_rows(sm$coef.table[seq_len(k), , drop = FALSE], "abundance", .mm_engine_scale[["bezi_gamlss"]], conv),
        converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = any(grepl("singular", msgs)), error = NA_character_)
