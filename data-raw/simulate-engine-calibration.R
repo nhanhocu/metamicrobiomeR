@@ -1,4 +1,5 @@
 # Usage: Rscript data-raw/simulate-engine-calibration.R <output.rds> <replicates>
+# Results are in dev/engine-calibration-results.csv.
 # Results are summarised in the description of the pull request that added bezi_glmmtmb and in the benchmark protocol.
 # Null simulation through the package itself: fit_study(engine = "bezi_gamlss", longitudinal = TRUE) against
 # fit_study(engine = "bezi_glmmtmb", longitudinal = TRUE). True group effect is zero throughout.
