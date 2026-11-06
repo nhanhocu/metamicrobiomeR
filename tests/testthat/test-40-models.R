@@ -39,7 +39,7 @@ test_that("features failing the prevalence filter are not fitted", {
   skip_if_not_installed("gamlss")
   e <- suppressWarnings(fit_study(make_bezi_study(), ~ group))
   expect_false("Rare" %in% e$feature)
-  e2 <- suppressWarnings(fit_study(make_bezi_study(), ~ group, min_prevalence = 0.01))
+  e2 <- suppressWarnings(fit_study(make_bezi_study(), ~ group, min_prevalence = 0.01, min_nonzero = 0))
   expect_true("Rare" %in% attr(e2, "fit_info")$feature)
 })
 
@@ -102,14 +102,14 @@ test_that("the lm_asin engine returns effects on the arcsine square root scale",
 test_that("fitting on several cores gives identical results", {
   skip_on_os("windows")
   s <- make_bezi_study()
-  a <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, cores = 1)
-  b <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, cores = 2)
+  a <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, min_nonzero = 0, cores = 1)
+  b <- fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, min_nonzero = 0, cores = 2)
   expect_identical(as.data.frame(a), as.data.frame(b)); expect_identical(attr(a, "fit_info"), attr(b, "fit_info"))
   skip_if_not_installed("gamlss")
   g1 <- suppressWarnings(fit_study(s, ~ group, longitudinal = FALSE, cores = 1)); g2 <- suppressWarnings(fit_study(s, ~ group, longitudinal = FALSE, cores = 2))
   expect_equal(as.data.frame(g1), as.data.frame(g2))
   old <- options(metamicrobiomeR.cores = 2); on.exit(options(old))
-  expect_identical(as.data.frame(fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0)), as.data.frame(a))   # the option is used
+  expect_identical(as.data.frame(fit_study(s, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, min_nonzero = 0)), as.data.frame(a))   # the option is used
   expect_error(fit_study(s, ~ group, cores = 0), "'cores' must be a single number of at least 1")
   expect_error(fit_study(s, ~ group, cores = "two"), "'cores' must be")
 })
@@ -419,7 +419,63 @@ test_that("bezi_gamlss survives a sparse feature whose coefficients are aliased"
   m <- rbind(common = stats::rbeta(18, 2, 20), rare = c(0.001, rep(0, 8), 0.002, rep(0, 8)))
   m <- rbind(m, other = 1 - colSums(m)); colnames(m) <- rownames(sam)
   st <- as_study(relabund = m, samples = sam, study = list(id = "sparse", feature_type = "otu", subject = "subj"))
-  f <- suppressWarnings(suppressMessages(fit_study(st, ~ group + food, longitudinal = TRUE)))
+  f <- suppressWarnings(suppressMessages(fit_study(st, ~ group + food, longitudinal = TRUE, min_nonzero = 0)))
   expect_true(all(c("common", "rare") %in% f$feature))
   expect_false(any(grepl("Intercept", f$term)))
+})
+
+test_that("features with too few non-zero samples are not fitted, and min_nonzero changes that", {
+  skip_if_not_installed("gamlss"); skip_on_cran()
+  set.seed(4)
+  sam <- data.frame(group = rep(c("a", "b"), each = 12), age = seq(1, 6, length.out = 24), row.names = paste0("S", 1:24))
+  m <- rbind(common = stats::rbeta(24, 2, 20), two = c(0.004, rep(0, 11), 0.006, rep(0, 11)))
+  m <- rbind(m, other = 1 - colSums(m)); colnames(m) <- rownames(sam)
+  st <- as_study(relabund = m, samples = sam, study = list(id = "low", feature_type = "otu"))
+  expect_warning(f <- suppressMessages(fit_study(st, ~ group + age, min_prevalence = 0.05)), "1 feature not fitted: non-zero in fewer than 4 of the samples used")
+  expect_false("two" %in% f$feature)
+  expect_equal(attr(f, "low_support"), data.frame(feature = "two", n_nonzero = 2L, stringsAsFactors = FALSE))
+  expect_equal(attr(f, "fit_settings")$min_nonzero, 4)
+  g <- suppressWarnings(suppressMessages(fit_study(st, ~ group + age, min_prevalence = 0.05, min_nonzero = 0)))
+  expect_true("two" %in% g$feature)
+  expect_equal(attr(g, "fit_info")$n_nonzero[attr(g, "fit_info")$feature == "two"], 2)
+  expect_error(fit_study(st, ~ group, min_nonzero = -1), "'min_nonzero' must be NULL or a single number of at least 0")
+})
+
+test_that("bezi_glmmtmb fits the zero-inflated beta model on relative abundance, with and without a subject effect", {
+  skip_if_not_installed("glmmTMB"); skip_on_cran()
+  set.seed(5)
+  n_sub <- 20; n_rep <- 3
+  sam <- data.frame(subj = rep(paste0("s", seq_len(n_sub)), each = n_rep), group = rep(rep(c("a", "b"), each = n_sub / 2), each = n_rep),
+                    row.names = paste0("S", seq_len(n_sub * n_rep)))
+  u <- rep(stats::rnorm(n_sub, 0, 0.3), each = n_rep)
+  mu <- stats::plogis(-2.5 + 0.8 * (sam$group == "b") + u)
+  y <- stats::rbeta(nrow(sam), mu * 30, (1 - mu) * 30)
+  y[stats::runif(nrow(sam)) < 0.2] <- 0
+  m <- rbind(F1 = y, F2 = stats::rbeta(nrow(sam), 3, 30))
+  m <- rbind(m, other = 1 - colSums(m)); colnames(m) <- rownames(sam)
+  st <- as_study(relabund = m, samples = sam, study = list(id = "zib", feature_type = "otu", subject = "subj"))
+  e <- suppressWarnings(suppressMessages(fit_study(st, ~ group, engine = "bezi_glmmtmb", prevalence = ~ group)))
+  expect_s3_class(e, "mm_effects")
+  a <- e[e$feature == "F1" & e$part == "abundance" & e$term == "groupb", ]
+  expect_equal(nrow(a), 1L)
+  expect_equal(a$effect_scale, "logit_mean")
+  expect_equal(a$engine, "bezi_glmmtmb")
+  expect_gt(a$estimate, 0.3)
+  expect_lt(a$p_value, 0.05)
+  expect_true(any(e$part == "prevalence" & e$feature == "F1"))
+  expect_false(any(e$part == "prevalence" & e$feature == "F2"))          # F2 has no zeros, so no zero-inflation part
+  e0 <- suppressWarnings(suppressMessages(fit_study(st, ~ group, engine = "bezi_glmmtmb", longitudinal = FALSE, zero_inflation = FALSE)))
+  expect_true(all(e0$part == "abundance"))
+  expect_equal(attr(e0, "fit_settings")$zero_inflation, FALSE)
+  ref <- suppressWarnings(suppressMessages(fit_study(st, ~ group, engine = "bezi_gamlss", longitudinal = FALSE)))
+  expect_equal(e0$effect_scale, ref$effect_scale[match(e0$feature, ref$feature)])
+})
+
+test_that("bezi_gamlss with a subject effect points to bezi_glmmtmb once", {
+  skip_if_not_installed("gamlss"); skip_on_cran()
+  st <- make_bezi_study(subject = "person")
+  st_state <- metamicrobiomeR:::.mm_state
+  st_state$told <- setdiff(st_state$told, "gamlss-random")
+  expect_message(suppressWarnings(fit_study(st, ~ group, longitudinal = TRUE)), "bezi_glmmtmb")
+  expect_no_message(suppressWarnings(fit_study(st, ~ group, longitudinal = TRUE)), message = "bezi_glmmtmb")
 })

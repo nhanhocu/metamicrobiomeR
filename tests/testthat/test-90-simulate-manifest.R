@@ -35,7 +35,7 @@ test_that("repeated measures and several studies are simulated consistently", {
   expect_length(m$studies, 3); expect_equal(sapply(m$studies, function(x) ncol(mm_counts(x))), c(50, 50, 10))
   expect_equal(vapply(m$studies, function(x) mm_study_info(x)$id, ""), c("sim1", "sim2", "sim3"))
   expect_equal(sum(m$truth$diff), 6)
-  eff <- lapply(m$studies, function(x) fit_study(x, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0))
+  eff <- lapply(m$studies, function(x) fit_study(x, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0, min_nonzero = 0))
   expect_s3_class(pool_effects(bind_effects(eff), term = "groupb"), "mm_pooled")
 })
 
