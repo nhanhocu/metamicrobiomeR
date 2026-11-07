@@ -29,6 +29,6 @@ longitudinal="yes",p.adjust.method="fdr")
 }
 \references{
 Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
-(\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4189846/}{PubMed})
+(\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 }
 \keyword{datasets}

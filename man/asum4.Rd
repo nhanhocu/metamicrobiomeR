@@ -25,15 +25,15 @@ data(asum4)
 }
 \references{
 Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
-(\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4189846/}{PubMed})
+(\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 
 Bender et al. Sci Transl Med. 2016 Jul 27; 8(349): 349ra100.
-(\href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5301310/}{PubMed})
+(\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC5301310/}{PubMed Central})
 
 Pannaraj et al. JAMA Pediatr. 2017;90095(7):647–54.
-(\href{https://pubmed.ncbi.nlm.nih.gov/28492938/}{PubMed})
+(\doi{10.1001/jamapediatrics.2017.0378})
 
 Thompson et al. Front Cell Infect Microbiol. 2015;5:3.
-(\href{https://pubmed.ncbi.nlm.nih.gov/25705611/}{PubMed})
+(\doi{10.3389/fcimb.2015.00003})
 }
 \keyword{datasets}
