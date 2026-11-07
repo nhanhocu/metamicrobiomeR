@@ -22,11 +22,11 @@
 #' @param padjust.pool.break.label labels for  multiple testing adjusted p-value breaks. Corresponding default are c("[0,0.1)","[0.1,1]").
 #' @param forest.est.shape point shape of pooled estimates in forest plot. Default are c("17","16") for corresponding significant and non-significant pooled estimates.
 #' @param forest.est.col colors of point (pooled estimates) and 95 CI bars in forest plot. Default are c("red", "black") for significant and non-significant estimates.
-#' @param forest.col Color of forest plot (point estimates and 95 CI). Options are "by.pvalue" (distinguished by signficant vs. non-significant p-value) or "by.estimate" (color scaled similarly to heatmap color).
-#' @param heat.forest.width.ratio ratio of width between heatmap and forest plot to be used in grid.arrange. Dedault is c(1,1).
+#' @param forest.col Color of forest plot (point estimates and 95 CI). Options are "by.pvalue" (distinguished by significant vs. non-significant p-value) or "by.estimate" (color scaled similarly to heatmap color).
+#' @param heat.forest.width.ratio ratio of width between heatmap and forest plot to be used in grid.arrange. Default is c(1,1).
 #' @param point.ratio ratio of point size between significant pooled estimate and non-significant pooled estimate. Default is c(3,1).
 #' @param line.ratio ratio of error bar line size between significant pooled estimate and non-significant pooled estimate. Default is=c(2,1).
-#' @param leg.key.size legdend key size for heatmap.
+#' @param leg.key.size legend key size for heatmap.
 #' @param leg.text.size legend text size for heatmap.
 #' @param heat.text.x.size heatmap x label text size.
 #' @param heat.text.x.angle heatmap x label text angle.

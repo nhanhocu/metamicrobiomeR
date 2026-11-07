@@ -185,7 +185,7 @@
 #'
 #' @usage data(taxtab6)
 #'
-#' @format A data frame with 322 row (samples) and 803 variables (including mapping varilable and bacterial taxonomies from phylum to genus level).
+#' @format A data frame with 322 rows (samples) and 803 variables (including mapping variables and bacterial taxonomies from phylum to genus level).
 #'
 #' @keywords datasets
 #'

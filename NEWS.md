@@ -125,6 +125,9 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 
 ## Messages and dependencies
 
+* `citation("metamicrobiomeR")` gives the 2019 paper and the package. The README has the GitHub install line and the tags of
+  older versions.
+
 * Informational messages say what the package decided or left out (samples with missing values, features below the
   filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet otherwise;
   `options(metamicrobiomeR.quiet = TRUE)` silences them. Errors name the IDs and values involved and say what to do.

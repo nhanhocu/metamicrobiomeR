@@ -18,7 +18,7 @@
 #' @param relabund.filter relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.
 #' @param pooldata whether the data is pooled from multiple studies. Default is FALSE.
 #' @param n.cyc maximum number of GAMLSS iterations. Default is 20, the value used by earlier versions, so that results stay the same.
-#' @return matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
+#' @return matrix of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
 #' @keywords pathway abundance comparison.
 #' @export
 #' @examples
