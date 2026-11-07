@@ -57,7 +57,11 @@
 #' @param study An `mm_study` object.
 #' @param formula One-sided formula with the covariates, e.g. `~ group + age`.
 #'   Variables are looked up in the sample data.
-#' @param engine Model engine (see Details), default `"bezi_gamlss"`.
+#' @param engine Model engine (see Details). The default (`NULL`) is `"bezi_glmmtmb"` when the
+#'   model has a subject random intercept and glmmTMB is installed, and `"bezi_gamlss"` otherwise.
+#'   In null simulations with repeated samples, GAMLSS standard errors with a subject random effect
+#'   were too small (27 to 81 per cent of null tests significant), while `"bezi_glmmtmb"` stayed near
+#'   5 per cent. Set `engine = "bezi_gamlss"` to reproduce version 1.x analyses.
 #' @param rank Optional character vector of feature ranks to analyse (matched
 #'   against the `rank` column of the feature data). `NULL` analyses all features.
 #' @param longitudinal Add a subject-level random intercept? Defaults to `TRUE`
@@ -99,13 +103,13 @@
 #'   below 2 per cent of the median in the study (see [check_effects_quality()]).
 #' @family per-study models
 #' @export
-fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
+fit_study <- function(study, formula, engine = NULL, rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
                       n_cycles = 100, exclude_unassigned = TRUE, prevalence = NULL,
                       zero_inflation = TRUE, pseudocount = NULL, cores = getOption("metamicrobiomeR.cores", 1L),
                       min_nonzero = NULL) {
   .check_class(study, "mm_study", "study", "as_study()")
-  engine <- match.arg(engine, .mm_engines)
+  if (!is.null(engine)) engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
     stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
   }
@@ -131,6 +135,15 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (defaulted) longitudinal <- !is.na(subject)
   if (defaulted && longitudinal) {
     .inform("Using '", subject, "' as a subject random intercept (set longitudinal = FALSE to ignore it).", once = "longitudinal-default")
+  }
+  if (is.null(engine)) {                                                   # default: the zero-inflated beta model, fitted as a mixed model with repeated samples
+    has_tmb <- requireNamespace("glmmTMB", quietly = TRUE)
+    engine <- if (longitudinal && has_tmb) "bezi_glmmtmb" else "bezi_gamlss"
+    if (longitudinal) {
+      .inform(if (has_tmb) "Using the 'bezi_glmmtmb' engine for repeated samples (the zero-inflated beta model with a subject random intercept)."
+              else "Using the 'bezi_gamlss' engine because glmmTMB is not installed; for repeated samples install.packages(\"glmmTMB\") is recommended.",
+              once = "default-engine-longitudinal")
+    }
   }
   if (longitudinal && engine %in% c("lm_asin", "lm_clr")) .need("lme4", "a subject random effect with the linear engines (longitudinal = FALSE avoids it)")
   if (longitudinal && is.na(subject)) {

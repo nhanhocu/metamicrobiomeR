@@ -7,7 +7,7 @@
 fit_study(
   study,
   formula,
-  engine = "bezi_gamlss",
+  engine = NULL,
   rank = NULL,
   longitudinal = NULL,
   min_prevalence = 0.05,
@@ -27,7 +27,11 @@ fit_study(
 \item{formula}{One-sided formula with the covariates, e.g. `~ group + age`.
 Variables are looked up in the sample data.}
 
-\item{engine}{Model engine (see Details), default `"bezi_gamlss"`.}
+\item{engine}{Model engine (see Details). The default (`NULL`) is `"bezi_glmmtmb"` when the
+model has a subject random intercept and glmmTMB is installed, and `"bezi_gamlss"` otherwise.
+In null simulations with repeated samples, GAMLSS standard errors with a subject random effect
+were too small (27 to 81 per cent of null tests significant), while `"bezi_glmmtmb"` stayed near
+5 per cent. Set `engine = "bezi_gamlss"` to reproduce version 1.x analyses.}
 
 \item{rank}{Optional character vector of feature ranks to analyse (matched
 against the `rank` column of the feature data). `NULL` analyses all features.}

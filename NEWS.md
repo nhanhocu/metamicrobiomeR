@@ -96,7 +96,9 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * New engine `bezi_glmmtmb`: the zero-inflated beta model of `bezi_gamlss` on relative abundance, fitted with `glmmTMB`, with an
   optional subject random intercept and prevalence part. It does not need counts. In null simulations, GAMLSS standard errors
   with `random()` were too small for sparse features and for covariates that vary between subjects, so `bezi_gamlss` with a
-  subject effect now points to `bezi_glmmtmb` once per session. A `bezi_glmmtmb` estimate without a finite standard error is
+  subject effect now points to `bezi_glmmtmb` once per session. `fit_study()` now uses `bezi_glmmtmb` by default when the
+  model has a subject random intercept and glmmTMB is installed, and `bezi_gamlss` otherwise. Set `engine = "bezi_gamlss"`
+  to reproduce version 1.x analyses. A `bezi_glmmtmb` estimate without a finite standard error is
   marked `converged = FALSE`.
 * `fit_study()` no longer fits features with too few non-zero samples: a feature needs more non-zero samples than the mean model
   has coefficients. A warning gives the count, `attr(, "low_support")` lists them, and `min_nonzero` changes the threshold
