@@ -77,7 +77,8 @@ An `mm_effects` object with one row per feature, model part and covariate
   term. The attribute `fit_info` is a data.frame with one row per fitted feature
   (samples used, non-zero samples, convergence, number of warnings, and any error
   message), and the attribute `low_support` lists the features not fitted because
-  they had too few non-zero samples.
+  they had too few non-zero samples. A warning lists estimates whose standard error is
+  below 2 per cent of the median in the study (see [check_effects_quality()]).
 }
 \description{
 Fits the same model to each feature and returns the estimates as an effect
@@ -127,12 +128,12 @@ a feature needs more non-zero samples than the mean model has coefficients
 `low_support`.
 }
 \seealso{
-Other per-study models: 
-\code{\link{alpha_diversity}()},
-\code{\link{bind_effects}()},
-\code{\link{check_effects}()},
-\code{\link{fit_alpha}()},
-\code{\link{fit_beta}()},
-\code{\link{new_effect_table}()}
+Other per-study models:
+\code{\link[=alpha_diversity]{alpha_diversity()}},
+\code{\link[=bind_effects]{bind_effects()}},
+\code{\link[=check_effects]{check_effects()}},
+\code{\link[=fit_alpha]{fit_alpha()}},
+\code{\link[=fit_beta]{fit_beta()}},
+\code{\link[=new_effect_table]{new_effect_table()}}
 }
 \concept{per-study models}

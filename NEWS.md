@@ -46,6 +46,10 @@ Changes that keep legacy results the same:
 * `taxa.compare()`, `pathway.compare()`: a new warning says that GAMLSS standard errors with a subject random effect can be too small.
 * `meta.taxa()`: a new warning flags results where one study holds over 90% of the random-effects weight, and
   `attr(result, "dominance")` lists them.
+* `meta.taxa()`: a new warning flags estimates with a standard error below 2% of the median of their study, and
+  `attr(result, "small_se")` lists them. On the stored 2019 example it flags 23 estimates, all from the USA(NC) cohort,
+  including Coprococcus. The pooled results are unchanged. The help page also showed only part of its value section,
+  because of an unescaped percent sign.
 * Adjusted p-value columns use the full covariate name, such as `pval.adjust.age.sample`. The old truncated name,
   `pval.adjust.sample`, stays as an alias so that scripts do not break.
 
@@ -115,7 +119,10 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 
 * `check_poolable()` (mixed measured and predicted functions, databases, regions, small studies, taxon overlap),
   `feature_coverage()`, `check_effects_quality()` and `filter_effects()` (implausibly small standard errors,
-  non-converged fits, large estimates).
+  non-converged fits, large estimates). `check_effects_quality()` also compares each standard error with the median
+  of its own study (`within_ratio = 0.02`), which works with a single study and catches estimates from features with too
+  little information. `fit_study()` warns about such estimates, and `pool_effects()` counts them in the new column
+  `n_flagged_se` and warns when a pooled result includes one.
 * `meta_analyse()` drops doubtful estimates before pooling by default (`quality = "filter"`: fits that did not converge, and standard errors far
   smaller than in the other studies) and says how many; `quality = "warn"` keeps them. Such fits often have missing or near-zero standard errors, and one
   of them can otherwise decide the pooled result. Pooling skips features whose estimates are numerically degenerate instead of failing, and says how many.

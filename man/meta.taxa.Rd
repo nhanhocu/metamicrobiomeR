@@ -39,7 +39,7 @@ meta.taxa(
 \item{method.tau}{estimator of the between-study variance passed to meta::metagen. Default is "DL" (DerSimonian-Laird), the estimator of the 2019 paper. Set explicitly because the meta package now defaults to REML.}
 }
 \value{
-a list of matrices of results for all variables in the comparison models. A taxon is pooled for a term only if at least two studies, and at least `percent.meta` of the studies, have an estimate for that term. `attr(result, "dominance")` lists taxa where one study holds over 90% of the random-effects weight, and the function warns about them, because the pooled result then rests on that study.
+a list of matrices of results for all variables in the comparison models. A taxon is pooled for a term only if at least two studies, and at least `percent.meta` of the studies, have an estimate for that term. `attr(result, "dominance")` lists taxa where one study holds over 90 per cent of the random-effects weight, and the function warns about them, because the pooled result then rests on that study. `attr(result, "small_se")` lists estimates with a standard error below 2 per cent of the median of their study, with a warning. These two checks do not change the results.
 }
 \description{
 This function does meta-analysis based on estimates and standard errors from taxa/pathway abundance comparison using random effect and fixed effect meta-analysis models.

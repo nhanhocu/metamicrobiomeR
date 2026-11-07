@@ -11,7 +11,7 @@
 #' @param percent.meta the threshold percentage of number of studies that a taxa is available to do meta-analysis. Default is 0.5
 #' @param p.adjust.method method for multiple testing adjustment (available methods of the function p.adjust). Default is "fdr".
 #' @param method.tau estimator of the between-study variance passed to meta::metagen. Default is "DL" (DerSimonian-Laird), the estimator of the 2019 paper. Set explicitly because the meta package now defaults to REML.
-#' @return a list of matrices of results for all variables in the comparison models. A taxon is pooled for a term only if at least two studies, and at least `percent.meta` of the studies, have an estimate for that term. `attr(result, "dominance")` lists taxa where one study holds over 90% of the random-effects weight, and the function warns about them, because the pooled result then rests on that study.
+#' @return a list of matrices of results for all variables in the comparison models. A taxon is pooled for a term only if at least two studies, and at least `percent.meta` of the studies, have an estimate for that term. `attr(result, "dominance")` lists taxa where one study holds over 90 per cent of the random-effects weight, and the function warns about them, because the pooled result then rests on that study. `attr(result, "small_se")` lists estimates with a standard error below 2 per cent of the median of their study, with a warning. These two checks do not change the results.
 #' @keywords abundance meta-analysis.
 #' @export
 #' @examples
@@ -44,6 +44,7 @@ meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Erro
   meta.f<-list()
   meta.r<-list()
   dominance<-NULL
+  small.se<-NULL
   for (i in 1:length(es)){
     metatab.f<-NULL
     metatab.r<-NULL
@@ -52,6 +53,12 @@ meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Erro
     term<-gsub(estimate.pattern,"",es[i])
     taxcomdat$estimate<-taxcomdat[,es[i]]
     taxcomdat$se<-taxcomdat[,ses[i]]
+    #implausibly small standard errors within a study (diagnostic only; the results are unchanged)
+    tiny<-.se_within_flags(data.frame(study=taxcomdat$studylab,part="abundance",term=term,se=taxcomdat$se))
+    if (any(tiny)){
+      small.se<-rbind(small.se,data.frame(term=term,id=as.character(taxcomdat[tiny,pool.var]),study=as.character(taxcomdat$studylab[tiny]),
+                                          se=taxcomdat$se[tiny],stringsAsFactors=FALSE))
+    }
     for (j in 1:length(taxname)){
       testdat<-taxcomdat[taxcomdat[,pool.var] %in% taxname[j],]
       # count only the studies with an estimate for this term
@@ -113,6 +120,10 @@ meta.taxa<-function(taxcomdat,estimate.pattern="Estimate.",se.pattern="Std. Erro
   if (!is.null(dominance)){
     attr(meta.fr,"dominance")<-dominance
     warning(nrow(dominance)," pooled results have one study holding over 90% of the random-effects weight, so they rest on that study. See attr(result, \"dominance\").",call.=FALSE)
+  }
+  if (!is.null(small.se)){
+    attr(meta.fr,"small_se")<-small.se
+    warning(nrow(small.se)," estimates have a standard error below 2% of the median of their study, which usually means a taxon with too little information (for example very few non-zero samples). Such an estimate can carry almost all the weight. See attr(result, \"small_se\").",call.=FALSE)
   }
   return(meta.fr)
 }

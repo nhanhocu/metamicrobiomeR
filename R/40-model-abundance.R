@@ -95,7 +95,8 @@
 #'   term. The attribute `fit_info` is a data.frame with one row per fitted feature
 #'   (samples used, non-zero samples, convergence, number of warnings, and any error
 #'   message), and the attribute `low_support` lists the features not fitted because
-#'   they had too few non-zero samples.
+#'   they had too few non-zero samples. A warning lists estimates whose standard error is
+#'   below 2 per cent of the median in the study (see [check_effects_quality()]).
 #' @family per-study models
 #' @export
 fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
@@ -302,6 +303,13 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (!is.null(fit_info) && any(fit_info$singular)) {
     .inform(sum(fit_info$singular), " of ", nrow(fit_info), " mixed-model fits were singular (the subject variance is estimated as zero), ",
             "so those estimates equal a model without the subject effect.")
+  }
+  tiny <- .se_within_flags(as.data.frame(out))
+  if (any(tiny)) {
+    o <- as.data.frame(out)[tiny, , drop = FALSE]; o <- o[order(o$se), , drop = FALSE]
+    warning(sum(tiny), " of ", nrow(out), " estimates have a standard error below 2% of the median in this study (smallest ", signif(o$se[1], 2),
+            ", feature '", o$feature[1], "'). This usually means the feature has too little information for the model, and such an estimate ",
+            "would carry almost all the weight when pooled. They are kept; see check_effects_quality() and filter_effects().", call. = FALSE)
   }
   out
 }

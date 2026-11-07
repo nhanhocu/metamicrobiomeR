@@ -9,16 +9,20 @@ filter_effects(
   drop_nonconverged = TRUE,
   drop_implausible_se = TRUE,
   se_ratio = 0.1,
+  within_ratio = 0.02,
   max_abs_estimate = NULL
 )
 }
 \arguments{
-\item{effects}{An `mm_effects` object with several studies.}
+\item{effects}{An `mm_effects` object.}
 
 \item{drop_nonconverged, drop_implausible_se}{Which flags to act on.}
 
 \item{se_ratio}{Flag standard errors below this fraction of the other studies' typical
-small standard error.}
+small standard error. Needs at least two studies.}
+
+\item{within_ratio}{Flag standard errors below this fraction of the median standard error of
+the same study, part and term. `0` turns this comparison off.}
 
 \item{max_abs_estimate}{Optionally flag estimates with a larger absolute value (only
 meaningful on scales with a natural range, such as logits).}
@@ -32,9 +36,9 @@ Removes estimates flagged by [check_effects_quality()]: from fits that did not c
 and/or with an implausibly small standard error (or very large estimate).
 }
 \seealso{
-Other checks before pooling: 
-\code{\link{check_effects_quality}()},
-\code{\link{check_poolable}()},
-\code{\link{feature_coverage}()}
+Other checks before pooling:
+\code{\link[=check_effects_quality]{check_effects_quality()}},
+\code{\link[=check_poolable]{check_poolable()}},
+\code{\link[=feature_coverage]{feature_coverage()}}
 }
 \concept{checks before pooling}

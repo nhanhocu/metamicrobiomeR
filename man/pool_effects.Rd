@@ -49,7 +49,9 @@ An object of class `mm_pooled` (a data.frame), one row per feature,
   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
   unless there are at least 3 studies), the share of the total random-effects
   weight carried by the most influential study (`max_weight`, between 0 and 1) and
-  that study (`top_study`), and the adjusted p-value `p_adjust`. A `max_weight`
+  that study (`top_study`), the number of contributing estimates flagged by
+  [check_effects_quality()] for an implausibly small standard error (`n_flagged_se`, with a
+  warning when any is above 0), and the adjusted p-value `p_adjust`. A `max_weight`
   close to 1 means one study determines the pooled result; use [leave_one_out()]
   to see it without that study.
 }
@@ -67,22 +69,22 @@ will not be significant; that is the honest answer with so little replication, a
 `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
 When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
 (once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
-with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0\%
-but detected the effect in about half to two thirds of data sets, against more than 90\% for the
-normal test, which kept false positives near 4\%. With 10 studies the tests agreed closely.
+with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0 per cent
+but detected the effect in about half to two thirds of data sets, against more than 90 per cent for the
+normal test, which kept false positives near 4 per cent. With 10 studies the tests agreed closely.
 The default stays the cautious one, and a result that is significant only with `test = "z"`
 should be reported as such.
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.
 }
 \seealso{
-Other pooling: 
-\code{\link{adjust_hierarchical}()},
-\code{\link{combine_pvalues}()},
-\code{\link{leave_one_out}()},
-\code{\link{meta_analyse}()},
-\code{\link{meta_regress}()},
-\code{\link{pool_beta}()},
-\code{\link{pool_sensitivity}()}
+Other pooling:
+\code{\link[=adjust_hierarchical]{adjust_hierarchical()}},
+\code{\link[=combine_pvalues]{combine_pvalues()}},
+\code{\link[=leave_one_out]{leave_one_out()}},
+\code{\link[=meta_analyse]{meta_analyse()}},
+\code{\link[=meta_regress]{meta_regress()}},
+\code{\link[=pool_beta]{pool_beta()}},
+\code{\link[=pool_sensitivity]{pool_sensitivity()}}
 }
 \concept{pooling}

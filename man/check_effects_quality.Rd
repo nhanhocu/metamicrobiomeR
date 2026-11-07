@@ -7,15 +7,23 @@
 check_effects_quality(
   effects,
   se_ratio = 0.1,
+  within_ratio = 0.02,
+  min_estimates = 10,
   max_abs_estimate = NULL,
   quantile = 0.05
 )
 }
 \arguments{
-\item{effects}{An `mm_effects` object with several studies.}
+\item{effects}{An `mm_effects` object.}
 
 \item{se_ratio}{Flag standard errors below this fraction of the other studies' typical
-small standard error.}
+small standard error. Needs at least two studies.}
+
+\item{within_ratio}{Flag standard errors below this fraction of the median standard error of
+the same study, part and term. `0` turns this comparison off.}
+
+\item{min_estimates}{Minimum number of estimates in a study, part and term for the
+within-study comparison.}
 
 \item{max_abs_estimate}{Optionally flag estimates with a larger absolute value (only
 meaningful on scales with a natural range, such as logits).}
@@ -26,20 +34,25 @@ meaningful on scales with a natural range, such as logits).}
 An object of class `mm_quality`: `studies` (per study, part and term: the number of
   estimates, the proportion converged, the minimum, the chosen quantile and the median of
   the standard errors, and how many were flagged) and `rows` (the effect rows with the flag
-  columns `flag_se`, `flag_converged`, `flag_estimate` and `flagged`).
+  columns `flag_se` (either comparison), `flag_se_within`, `flag_converged`, `flag_estimate`
+  and `flagged`).
 }
 \description{
 Pooling weights studies by their precision, so an implausibly small standard error
-gives one study almost all the weight. This compares each study with the others, for each
-part and term: a study's estimate is flagged when its standard error is below `se_ratio`
+gives one study almost all the weight. Two comparisons are made for each part and term.
+Between studies, a study's estimate is flagged when its standard error is below `se_ratio`
 times the typical small standard error of the other studies (their median 5th percentile).
-Estimates from fits that did not converge, and (optionally) very large estimates, are flagged
-too. The comparison needs at least two studies.
+Within a study, an estimate is flagged when its standard error is below `within_ratio` times
+the median standard error of that study, which needs at least `min_estimates` estimates and
+works with a single study. In fits of real and simulated data, well-identified estimates never
+fell below 7 per cent of their study's median, while estimates from features with too little
+information (for example two non-zero samples) fell below 1 per cent.
+Estimates from fits that did not converge, and (optionally) very large estimates, are flagged too.
 }
 \seealso{
-Other checks before pooling: 
-\code{\link{check_poolable}()},
-\code{\link{feature_coverage}()},
-\code{\link{filter_effects}()}
+Other checks before pooling:
+\code{\link[=check_poolable]{check_poolable()}},
+\code{\link[=feature_coverage]{feature_coverage()}},
+\code{\link[=filter_effects]{filter_effects()}}
 }
 \concept{checks before pooling}
