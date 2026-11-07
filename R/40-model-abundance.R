@@ -442,6 +442,7 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     return(list(rows = NULL, converged = conv, warnings = c(warns, msgs[!grepl("singular", msgs)]), singular = sing, error = conditionMessage(sm)))
   }
   rows <- .coef_rows(sm$cond, "abundance", .mm_engine_scale[["bezi_glmmtmb"]], conv, "Pr(>|z|)")
+  if (!is.null(rows)) rows$converged <- rows$converged & is.finite(rows$se)    # TMB can report a positive-definite Hessian with a NaN SE
   if (use_zi && !is.null(prevalence) && !is.null(sm$zi)) {
     zr <- .coef_rows(sm$zi, "prevalence", "logit_zero_prob", conv, "Pr(>|z|)")
     if (!is.null(zr)) {
