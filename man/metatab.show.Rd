@@ -26,13 +26,13 @@ metatab.show(
 )
 }
 \arguments{
-\item{metatab}{matrice of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.}
+\item{metatab}{matrix of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.}
 
-\item{com.pooled.tab}{matrice of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.}
+\item{com.pooled.tab}{matrix of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.}
 
 \item{sumvar}{Either "taxa" for taxa and "path" for pathway.}
 
-\item{highest.lev}{Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shortgun data).}
+\item{highest.lev}{Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shotgun data).}
 
 \item{tax.lev}{taxa level to be displayed. Options are from "l2" (phylum) to "l7" (species). Default is "l2".}
 
