@@ -31,6 +31,7 @@ Suggests: biomformat, caret, compositions, covr, glmmTMB, jsonlite, knitr, metaf
         phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan, zCompositions
 VignetteBuilder: knitr
 Encoding: UTF-8
+Language: en-GB
 Config/testthat/edition: 2
 LazyData: true
 Config/roxygen2/version: 8.1.0

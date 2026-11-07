@@ -8,7 +8,7 @@
 #' @param comvar main variable for comparison.
 #' @param groupvar variable for stratifying.
 #' @param mean.filter mean abundance filtering threshold (only plot those with mean abundance>threshold and plot all those with mean abundance <threshold as "other").
-#' @param pallete.by.phylum whether each pallete of color for each phylum. Default is FALSE (plot distinc colors).
+#' @param pallete.by.phylum whether each pallete of color for each phylum. Default is FALSE (plot distinct colors).
 #' @param show.taxname whether show "full" taxa name or "short" name. Default is "full".
 #' @param legend.position position of legend. Options are c("right", "left","bottom","top","none") as in ggplot2. Default is "right".
 #' @param xlab label for x-axis. Default is "Chronological age (month)".
@@ -36,13 +36,13 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
   tabm<-apply(tabmean[,taxname1],2,mean)
   tabm<-tabm[tabm>=mean.filter]
   if (sumvar=="taxa"){
-    l2<-taxname1[-grep("c__",taxname1)]
-    l3<-taxname1[-grep("o__",taxname1)]
-    l4<-taxname1[-grep("f__",taxname1)]
-    l5<-taxname1[-grep("g__",taxname1)]
+    l2<-taxname1[!grepl("c__",taxname1)]
+    l3<-taxname1[!grepl("o__",taxname1)]
+    l4<-taxname1[!grepl("f__",taxname1)]
+    l5<-taxname1[!grepl("g__",taxname1)]
     #For species
     if (tax.lev=="l7"){
-      l6<-taxname1[-grep("s__",taxname1)]
+      l6<-taxname1[!grepl("s__",taxname1)]
       l7<-taxname1
       taxnamel<-list(l2=l2,l3=l3,l4=l4,l5=l5,l6=l6,l7=l7)
       tabmeanl<-list(l2=tabmean[,colnames(tabmean) %in% c(comvar, groupvar, l2)],l3=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l3)],l4=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l4)],l5=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l5)],l6=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l6)],l7=tabmean[,colnames(tabmean) %in% c(comvar, groupvar,l7)])
@@ -79,16 +79,19 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
       taxuse<-taxuse[!taxs %in% "_mean"]
     }
     if (tax.lev=="l2"){
-      taxuse<-taxuse
+      #keep phylum-level names only, so that kingdom-level rows (for example k__archaea) are not stacked with the phyla
+      taxuse<-taxuse[grep(".p__",taxuse,fixed=TRUE)]
+      taxs<-sub(".*p__", "",taxuse)
+      taxuse<-taxuse[!taxs %in% "_mean"]
     }
   }
   if (sumvar=="path"){
     taxuse=taxname1
   }
-  if (tax.select=="none"){
+  if (.legacy_is_none(tax.select)){
     taxuse<-taxuse[taxuse %in% names(tabm)]
   }
-  if (tax.select!="none"){
+  if (!.legacy_is_none(tax.select)){
     taxuse<-taxuse[taxuse %in% paste(tax.select,"_mean",sep="")]
   }
   taxuse.rm<-gsub("_mean","",taxuse)
@@ -98,7 +101,7 @@ taxa.mean.plot<-function(tabmean,sumvar="taxa",tax.select="none",tax.lev="l2", c
   tab<-tab[,colnames(tab)[!colnames(tab) %in% taxnouse]]
   # to long format
   gathercols <- c("control", "cond1", "cond2")
-  tab.l <- tidyr::gather(tab, key="taxa", value="rel_abund", c("others_mean",taxuse), factor_key=TRUE)
+  tab.l <- tidyr::gather(tab, key="taxa", value="rel_abund", tidyr::all_of(c("others_mean",taxuse)), factor_key=TRUE)
   tab.l<-as.data.frame(tab.l)
   tab.l$taxa<-gsub("_mean","",tab.l$taxa)
   tab.l<-tab.l[,c(comvar,groupvar,"taxa","rel_abund")]

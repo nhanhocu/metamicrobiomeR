@@ -5,8 +5,8 @@
 #' get the training and test sets from Bangladesh data based on the shared genera list,
 #' fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies,
 #' check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.
-#' @param l6.relabundtab list of taxa summary table from phylum up to genus level merged to mapping file outputed from QIIME of all included studies.
-#' @param bal6 reference data for model training (taxa summary table from phylum up to genus level merged to mapping file outputed from QIIME of the Bangladesh study).
+#' @param l6.relabundtab list of taxa summary table from phylum up to genus level merged to mapping file output from QIIME of all included studies.
+#' @param bal6 reference data for model training (taxa summary table from phylum up to genus level merged to mapping file output from QIIME of the Bangladesh study).
 #' @param seed optional random seed, so that the Random Forest fit can be repeated. Default is NULL, as in earlier versions.
 #' @return list of training and test sets of Bangladesh data, shared genera list, relative abundance data of shared genera, randomforest fit, RF model performance plot,predicted microbiome age of Bangladesh data and data of other included studies.
 #' @keywords microbiome age Random Forest.

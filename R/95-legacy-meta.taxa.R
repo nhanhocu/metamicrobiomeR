@@ -1,7 +1,7 @@
 #' Meta-analysis of taxa/pathway abundance comparison.
 #'
 #' This function does meta-analysis based on estimates and standard errors from taxa/pathway abundance comparison using random effect and fixed effect meta-analysis models.
-#' @param taxcomdat matrice of estimates and SE of all taxa/pathways combined from all included studies.
+#' @param taxcomdat matrix of estimates and SE of all taxa/pathways combined from all included studies.
 #' @param estimate.pattern string pattern for estimates. Default is "Estimate.".
 #' @param se.pattern string pattern for standard error. Default is "Std. Error.".
 #' @param summary.measure "RR" for estimates from GAMLSS with BEZI family and "RD" for estimates from Linear/linear mixed effect model. Default is "RR"

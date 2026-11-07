@@ -1,10 +1,10 @@
 #' Display meta-analysis results.
 #'
 #' This function displays meta-analysis results of relative abundance as heatmap, forest plot, table or data.
-#' @param metatab matrice of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.
-#' @param com.pooled.tab matrice of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.
+#' @param metatab matrix of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.
+#' @param com.pooled.tab matrix of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.
 #' @param sumvar Either "taxa" for taxa and "path" for pathway.
-#' @param highest.lev Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shortgun data).
+#' @param highest.lev Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shotgun data).
 #' @param tax.lev taxa level to be displayed. Options are from "l2" (phylum) to "l7" (species). Default is "l2".
 #' @param showvar variable (string pattern) in the model to be displayed.
 #' @param estimate.pattern string pattern for estimates. Default is "Estimate.".
@@ -59,15 +59,15 @@ metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",highest.lev="g",tax.
   #remove row with NA values (no meta-analysis)
   mtaba1<-mtaba1[!is.na(mtaba1[,"estimate"]),]
   if (sumvar=="taxa"){
-    al2<-mtaba1$id[-grep("c__",mtaba1$id)]
-    al3<-mtaba1$id[-grep("o__",mtaba1$id)]
-    al4<-mtaba1$id[-grep("f__",mtaba1$id)]
-    al5<-mtaba1$id[-grep("g__",mtaba1$id)]
+    al2<-mtaba1$id[!grepl("c__",mtaba1$id)]
+    al3<-mtaba1$id[!grepl("o__",mtaba1$id)]
+    al4<-mtaba1$id[!grepl("f__",mtaba1$id)]
+    al5<-mtaba1$id[!grepl("g__",mtaba1$id)]
     if (highest.lev=="g"){
       mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1)
     }
     if (highest.lev=="s"){
-      al6<-mtaba1$id[-grep("s__",mtaba1$id)]
+      al6<-mtaba1$id[!grepl("s__",mtaba1$id)]
       mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1[mtaba1$id %in% al6,],l7=mtaba1)
     }
     mtaba<-mtabal[[tax.lev]]
@@ -127,10 +127,12 @@ metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",highest.lev="g",tax.
     taxsig<-taxsig[order(taxsig$id,decreasing = TRUE),]
     taxsig$id<-as.factor(taxsig$id)
     #each study
+    #a table without a "pop" column uses the study labels
+    if (!"pop" %in% colnames(com.pooled.tab)) com.pooled.tab$pop<-com.pooled.tab$study
     pooltab<-com.pooled.tab[,c("id","study","pop",colnames(com.pooled.tab)[grep(showvar,colnames(com.pooled.tab))])]
-    colnames(pooltab)[grep(estimate.pattern,colnames(pooltab))]<-"estimate"
-    colnames(pooltab)[grep(se.pattern,colnames(pooltab))]<-"se"
-    colnames(pooltab)[grep(p.pattern,colnames(pooltab))]<-"p"
+    colnames(pooltab)[grep(estimate.pattern,colnames(pooltab),fixed=TRUE)]<-"estimate"
+    colnames(pooltab)[grep(se.pattern,colnames(pooltab),fixed=TRUE)]<-"se"
+    colnames(pooltab)[grep(p.pattern,colnames(pooltab),fixed=TRUE)]<-"p"
     taxsig.stud<-pooltab[pooltab$id %in% taxsig$id,c("estimate","se","p","id","study","pop")]
     taxsig.all<-plyr::rbind.fill(taxsig.stud,taxsig)
     taxsig.all$id<-as.factor(taxsig.all$id)
@@ -139,6 +141,10 @@ metatab.show<-function(metatab,com.pooled.tab,sumvar="taxa",highest.lev="g",tax.
     rownames(taxsig.all)<-NULL
   }
   if (nrow(taxsig)==0){
+    if (!exists("mtab", inherits = FALSE) || nrow(mtab) == 0) {
+      warning("No pooled result at tax.lev = \"", tax.lev, "\". Check that tax.lev matches the taxon names (for example l2 needs names ",
+              "with \"p__\" and no \"c__\", l6 needs \"g__\"), and that showvar is a term in the meta-analysis.", call. = FALSE)
+    }
     display="table"
   }
   if (display=="plot"){

@@ -15,8 +15,27 @@ Changes that can alter legacy results:
   `genderMale` is unchanged. For `bfNo_BF`, 86 of 185 taxa are no longer pooled, and for `bfNon_exclusiveBF` and `age.sample`, 1 each.
 * `taxa.compare(transform = "logit")`: taxa with zeros are left out with a clear warning, and it stops if every taxon has zeros.
 * `taxa.compare(transform = "gmpr")`: size factors are now calculated. They were `NA` for every sample.
+* `taxa.compare()`, `pathway.compare()`, `taxcomtab.show()`, `metatab.show()`: p-value columns are now found by the literal
+  text `Pr(>|t|)`. Before, any column containing "Pr" was taken as a p-value column, so when a covariate name or level
+  contained "Pr" (for example a level "Pre" or a variable "Probiotic"), the estimates and standard errors were replaced
+  by adjusted values and extra `pval.adjust` columns appeared (GitHub issue #18). Results without "Pr" in a name are unchanged.
+* `taxa.compare()`, `pathway.compare()`: taxa and pathways whose names are not syntactic R names (with spaces, semicolons or
+  dashes) are now fitted. Before, they failed with an error and were left out (#5).
+* `taxcomtab.show()`, `metatab.show()`, `taxa.mean.plot()`: a table holding a single taxonomic level (for example phyla only)
+  gave an empty result. It is now shown (#22).
+* `taxa.mean.plot(tax.lev = "l2")` keeps phylum-level taxa only, so kingdom-level rows such as `k__archaea` are no longer
+  stacked with the phyla (#3).
 
 Changes that keep legacy results the same:
+
+* `taxa.compare()`, `pathway.compare()`: `adjustvar` defaults to `NULL`, so a model without adjustment variables works (#17).
+* `taxcomtab.show()`, `taxa.mean.plot()`: `tax.select` accepts several taxa, and `taxa.meansdn()` several variables in
+  `othervar`. Before, these stopped with "the condition has length > 1" in R 4.2 and later (#2, #7). `taxa.meansdn()` also
+  leaves `sumvar` and `groupvar` out of the abundance variables when `othervar` is given.
+* `metatab.show()` uses the study labels when the table has no `pop` column (#19), and warns when the table has no taxa at the
+  chosen `tax.lev`, instead of returning an empty table silently (#22).
+* `taxa.compare()`, `taxa.filter()`, `taxa.meansdn()`: when no column name contains `k__`, they stop with a clear message,
+  which explains how to rename QIIME 2 names starting with `d__` (#14).
 
 * `meta.taxa()` sets `method.tau = "DL"`. The `meta` package now defaults to REML, which changed results and stopped with an
   error on the full `tabsex4` table. The stored 2019 pooled result for `genderMale` is reproduced for all 185 taxa.
@@ -113,6 +132,9 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `simulate_study()` and `simulate_studies()` for tests and benchmarks.
 
 ## Messages and dependencies
+
+* `citation("metamicrobiomeR")` gives the 2019 paper and the package. The README has the GitHub install line and the tags of
+  older versions.
 
 * Informational messages say what the package decided or left out (samples with missing values, features below the
   filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet otherwise;

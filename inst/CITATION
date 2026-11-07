@@ -1,0 +1,25 @@
+bibentry(
+  bibtype = "Article",
+  title = paste("metamicrobiomeR: an R package for analysis of microbiome relative abundance data using",
+                "zero-inflated beta GAMLSS and meta-analysis across studies using random effects models"),
+  author = c(person("Nhan Thi", "Ho"), person("Fan", "Li"), person("Shuang", "Wang"), person("Louise", "Kuhn")),
+  journal = "BMC Bioinformatics",
+  year = "2019",
+  volume = "20",
+  pages = "188",
+  doi = "10.1186/s12859-019-2744-2",
+  textVersion = paste("Ho NT, Li F, Wang S, Kuhn L (2019). metamicrobiomeR: an R package for analysis of microbiome",
+                      "relative abundance data using zero-inflated beta GAMLSS and meta-analysis across studies using",
+                      "random effects models. BMC Bioinformatics, 20, 188. doi:10.1186/s12859-019-2744-2")
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "metamicrobiomeR: Differential Abundance and Meta-Analysis of Microbiome Studies",
+  author = c(person("Nhan", "Ho"), person("Payton", "Yau")),
+  year = "2026",
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/nhanhocu/metamicrobiomeR",
+  textVersion = paste0("Ho N, Yau P (2026). metamicrobiomeR: Differential Abundance and Meta-Analysis of Microbiome Studies. ",
+                       "R package version ", meta$Version, ". https://github.com/nhanhocu/metamicrobiomeR")
+)

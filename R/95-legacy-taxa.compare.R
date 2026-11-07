@@ -6,14 +6,14 @@
 #' @param transform transformation of relative abundance data. Options are "none" for no transformation, "gmpr" for Geometric Mean of Pairwise Ratios (GMPR) normalization, "asin.sqrt" for arcsine transformation, "logit" for logit transformation, "clr" for centered log ratio transformation. Default is "none".
 #' @param zeroreplace.method Method for zero replacement implemented in R package *zCompositions*. Options are "none" for no replacement, "multKM" for Multiplicative Kaplan-Meier smoothing spline (KMSS) replacement, "multLN" for Multiplicative lognormal replacement, "multRepl" for Multiplicative simple replacement, "lrEM" for Log-ratio EM algorithm, "lrDA" for Log-ratio DA algorithm. Default is "none".
 #' @param comvar main variable for comparison
-#' @param adjustvar variables to be adjusted.
+#' @param adjustvar variables to be adjusted. Default is NULL (no adjustment).
 #' @param personid name of variable for person id (applicable for longitudinal data)
 #' @param longitudinal whether data is longitudinal? Options are "yes" or "no". Default is "yes".
 #' @param p.adjust.method method for multiple testing adjustment. Options are those of the p.adjust.methods of stats:: p.adjust function. Default for this function is "fdr".
 #' @param percent.filter prevalence threshold (the percentage of number of samples the taxa/pathway available). Default is 0.05.
 #' @param relabund.filter relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.
 #' @param n.cyc maximum number of GAMLSS iterations. Default is 20, the value used by earlier versions, so that results stay the same.
-#' @return matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models. For GAMLSS fits, `attr(result, "fit_info")` gives for each taxon the number of samples, the number of non-zero samples, the number of mean-model coefficients and whether the fit converged. The function warns when fits do not converge and when a taxon has no more non-zero samples than mean-model coefficients, because its estimate and standard error are then not reliable. In simulations, standard errors from GAMLSS with a subject random effect (`longitudinal = "yes"`) were too small for sparse taxa and for variables that do not change within a subject, so the function warns about this as well. See `vignette("notes-earlier-results")`.
+#' @return matrix of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models. For GAMLSS fits, `attr(result, "fit_info")` gives for each taxon the number of samples, the number of non-zero samples, the number of mean-model coefficients and whether the fit converged. The function warns when fits do not converge and when a taxon has no more non-zero samples than mean-model coefficients, because its estimate and standard error are then not reliable. In simulations, standard errors from GAMLSS with a subject random effect (`longitudinal = "yes"`) were too small for sparse taxa and for variables that do not change within a subject, so the function warns about this as well. See `vignette("notes-earlier-results")`.
 #' @keywords taxa abundance comparison
 #' @export
 #' @examples
@@ -27,7 +27,7 @@
 
 
 taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.method="none",
-                       comvar,adjustvar,personid="personid",longitudinal="yes",
+                       comvar,adjustvar=NULL,personid="personid",longitudinal="yes",
                        percent.filter=0.05,relabund.filter=0.00005,p.adjust.method="fdr",n.cyc=20){
   taxdat<-as.data.frame(taxtab)
   taxdat[,comvar]<-.legacy_drop_levels(taxdat[,comvar]) #drop missing/unused level and keep level order
@@ -35,7 +35,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
     taxdat$personid<-as.factor(taxdat[,personid])
   }
   # get assigned taxa only
-  taxlist<-colnames(taxdat)[grep("k__",colnames(taxdat))]
+  taxlist<-.legacy_taxlist(colnames(taxdat))
   #filter using percent.filter
   taxtest<-apply(taxdat[,taxlist,drop=FALSE],2,function(x){length(x[!is.na(x)&x>0])})
   taxget<-taxtest[taxtest>=percent.filter*(nrow(taxdat))]
@@ -163,11 +163,11 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
     #linear/linear mixed effect model
     if (propmed.rel=="lm"){
       if (longitudinal=="yes"){
-        fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat)))
-        #fitsum<-try(summary(lme4::glmer(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
+        fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(.legacy_bt(taxname[i]),paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat)))
+        #fitsum<-try(summary(lme4::glmer(stats::as.formula(paste(.legacy_bt(taxname[i]),paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
       }
       if (longitudinal=="no"){
-        fitsum<-try(summary(stats::glm(stats::as.formula(paste(taxname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
+        fitsum<-try(summary(stats::glm(stats::as.formula(paste(.legacy_bt(taxname[i]),paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=taxdat,family="gaussian")))
       }
       if (inherits(fitsum, "try-error")) {
         warning("Error in model fit, NA introduced.\n")
@@ -210,7 +210,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
         testdat <- taxdat[, c(taxname[i], comvar, adjustvar, "personid")]
         testdat[, taxname[i]][testdat[, taxname[i]] >= 1] <- 0.9999
         testdat <- stats::na.omit(testdat)
-        fitobj <- .legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(taxname[i],
+        fitobj <- .legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(.legacy_bt(taxname[i]),
                                   paste(c(comvar, adjustvar, "random(personid)"),
                                   collapse = "+"), sep = "~")), family = BEZI, data = testdat,
                                   control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
@@ -220,7 +220,7 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
         testdat <- taxdat[, c(taxname[i], comvar, adjustvar)]
         testdat[, taxname[i]][testdat[, taxname[i]] >= 1] <- 0.9999
         testdat <- stats::na.omit(testdat)
-        fitobj <- .legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(taxname[i],
+        fitobj <- .legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(.legacy_bt(taxname[i]),
                                     paste(c(comvar, adjustvar), collapse = "+"),
                                     sep = "~")), family = BEZI, data = testdat,
                                   control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
@@ -256,11 +256,11 @@ taxa.compare<-function(taxtab,propmed.rel="gamlss",transform="none",zeroreplace.
       }
     }
   }
-  np<-length(colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])
+  np<-length(.legacy_pcols(colnames(estisum)))
   if(np>1){
-    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',.legacy_pcols(colnames(estisum)))]<-apply(estisum[,.legacy_pcols(colnames(estisum))],2,stats::p.adjust,method = p.adjust.method)
   }else{
-    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-stats::p.adjust(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',.legacy_pcols(colnames(estisum)))]<-stats::p.adjust(estisum[,.legacy_pcols(colnames(estisum))],method = p.adjust.method)
   }
   estisum<-.legacy_padjust_alias(estisum)
   if (!is.null(fit.info)){

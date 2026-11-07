@@ -19,7 +19,7 @@ taxa.filter<-function(taxtab, percent.filter=0.05, relabund.filter=0.00005){
   # filter (remove) taxa with relative abundance <relabund.filter and available in <percent.filter of number of samples
   taxdat<-as.data.frame(taxtab)
   # get assigned taxa only
-  taxlist<-colnames(taxdat)[grep("k__",colnames(taxdat))]
+  taxlist<-.legacy_taxlist(colnames(taxdat))
   #filter using percent.filter
   taxtest<-apply(taxdat[,taxlist],2,function(x){length(x[!is.na(x)&x>0])})
   taxget<-taxtest[taxtest>=percent.filter*(nrow(taxdat))]

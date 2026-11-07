@@ -12,7 +12,7 @@ pathway.compare(
   stat.med = "gamlss",
   transform = "none",
   comvar,
-  adjustvar,
+  adjustvar = NULL,
   personid = "personid",
   longitudinal = "yes",
   p.adjust.method = "fdr",
@@ -37,7 +37,7 @@ pathway.compare(
 
 \item{comvar}{main variable for comparison.}
 
-\item{adjustvar}{variables to be adjusted.}
+\item{adjustvar}{variables to be adjusted. Default is NULL (no adjustment).}
 
 \item{personid}{name of variable for person id in mapping file (applicable for longitudinal data)}
 
@@ -54,7 +54,7 @@ pathway.compare(
 \item{n.cyc}{maximum number of GAMLSS iterations. Default is 20, the value used by earlier versions, so that results stay the same.}
 }
 \value{
-matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
+matrix of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
 }
 \description{
 This is a slightly modified version of the taxa.compare function.

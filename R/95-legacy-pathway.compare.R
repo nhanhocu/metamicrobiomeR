@@ -10,7 +10,7 @@
 #' @param stat.med statistical method for comparison. stat.med can be "lm" for LM/LMEM (usable for both pathsum="rel" or "log") or "gamlss" for GAMLSS with BEZI family (gamlss only make sense if pathsum="rel" ).
 #' @param transform transformation of relative abundance data. Options are "none" for no transformation, "asin.sqrt" for arcsine transformation, "logit" for logit transformation. Default is "none".
 #' @param comvar main variable for comparison.
-#' @param adjustvar variables to be adjusted.
+#' @param adjustvar variables to be adjusted. Default is NULL (no adjustment).
 #' @param personid name of variable for person id in mapping file (applicable for longitudinal data)
 #' @param longitudinal whether the data is longitudinal. Default is "yes".
 #' @param p.adjust.method method for multiple testing adjustment. Available options are those of the p.adjust function. Default is "fdr".
@@ -18,7 +18,7 @@
 #' @param relabund.filter relative abundance threshold (the minimum of the average relative abundance for a taxa/pathway to be retained). Default is 0.00005.
 #' @param pooldata whether the data is pooled from multiple studies. Default is FALSE.
 #' @param n.cyc maximum number of GAMLSS iterations. Default is 20, the value used by earlier versions, so that results stay the same.
-#' @return matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
+#' @return matrix of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models.
 #' @keywords pathway abundance comparison.
 #' @export
 #' @examples
@@ -36,7 +36,7 @@
 
 
 pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
-                          stat.med="gamlss",transform="none", comvar,adjustvar,personid="personid",
+                          stat.med="gamlss",transform="none", comvar,adjustvar=NULL,personid="personid",
                           longitudinal="yes",p.adjust.method="fdr",
                           percent.filter=0.05,relabund.filter=0.00005,pooldata=FALSE,n.cyc=20){
   pathlev<-paste("l",1:length(pathtab),sep="")
@@ -90,11 +90,11 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
       #linear mixed model
       if (stat.med=="lm" & (pathsum=="rel"|pathsum=="log")){
         if (longitudinal=="yes"){
-          fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=pathdat)))
+          fitsum<-try(summary(lme4::lmer(stats::as.formula(paste(.legacy_bt(pathname[i]),paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=pathdat)))
           #fitsum<-try(summary(lme4::glmer(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar,"(1|personid)"),collapse="+"),sep="~")), data=pathdat,family="gaussian")))
         }
         if (longitudinal=="no"){
-          fitsum<-try(summary(stats::glm(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=pathdat,family="gaussian")))
+          fitsum<-try(summary(stats::glm(stats::as.formula(paste(.legacy_bt(pathname[i]),paste(c(comvar,adjustvar),collapse="+"),sep="~")), data=pathdat,family="gaussian")))
         }
         if (inherits(fitsum, "try-error")) {
           warning("Error in model fit, NA introduced.\n")
@@ -139,7 +139,7 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
           testdat<-pathdat[,c(pathname[i],comvar,adjustvar,"personid")]
           testdat[,pathname[i]][testdat[,pathname[i]]==1]<-0.9999 # dirty fix for 1 value of relative abundance
           testdat<-stats::na.omit(testdat)
-          fitobj<-.legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar,"random(personid)"),collapse="+"),sep="~")), family = BEZI, data = testdat, control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
+          fitobj<-.legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(.legacy_bt(pathname[i]),paste(c(comvar,adjustvar,"random(personid)"),collapse="+"),sep="~")), family = BEZI, data = testdat, control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
           fitsum<-.legacy_summary(fitobj)
           fit.info<-rbind(fit.info,.legacy_fit_info(pathname[i],testdat,comvar,adjustvar,fitobj))
           #To check
@@ -149,7 +149,7 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
           testdat<-pathdat[,c(pathname[i],comvar,adjustvar)]
           testdat[,pathname[i]][testdat[,pathname[i]]==1]<-0.9999 # dirty fix for 1 value of relative abundance
           testdat<-stats::na.omit(testdat)
-          fitobj<-.legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(pathname[i],paste(c(comvar,adjustvar),collapse="+"),sep="~")), family = BEZI, data = testdat, control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
+          fitobj<-.legacy_quiet(try(gamlss::gamlss(stats::as.formula(paste(.legacy_bt(pathname[i]),paste(c(comvar,adjustvar),collapse="+"),sep="~")), family = BEZI, data = testdat, control = gamlss::gamlss.control(n.cyc = n.cyc, trace = FALSE))))
           fitsum<-.legacy_summary(fitobj)
           fit.info<-rbind(fit.info,.legacy_fit_info(pathname[i],testdat,comvar,adjustvar,fitobj))
           #TO check
@@ -184,7 +184,7 @@ pathway.compare<-function(pathtab,mapfile,sampleid="sampleid",pathsum="rel",
         }
       }
     }
-    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))])]<-apply(estisum[,colnames(estisum)[grep("Pr(>|t|)",colnames(estisum))]],2,stats::p.adjust,method = p.adjust.method)
+    estisum[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',.legacy_pcols(colnames(estisum)))]<-apply(estisum[,.legacy_pcols(colnames(estisum))],2,stats::p.adjust,method = p.adjust.method)
     estisum<-.legacy_padjust_alias(estisum)
     if (!is.null(fit.info)){
       attr(estisum,"fit_info")<-fit.info

@@ -34,7 +34,7 @@ taxa.mean.plot(
 
 \item{mean.filter}{mean abundance filtering threshold (only plot those with mean abundance>threshold and plot all those with mean abundance <threshold as "other").}
 
-\item{pallete.by.phylum}{whether each pallete of color for each phylum. Default is FALSE (plot distinc colors).}
+\item{pallete.by.phylum}{whether each pallete of color for each phylum. Default is FALSE (plot distinct colors).}
 
 \item{show.taxname}{whether show "full" taxa name or "short" name. Default is "full".}
 

@@ -10,7 +10,7 @@ taxa.compare(
   transform = "none",
   zeroreplace.method = "none",
   comvar,
-  adjustvar,
+  adjustvar = NULL,
   personid = "personid",
   longitudinal = "yes",
   percent.filter = 0.05,
@@ -30,7 +30,7 @@ taxa.compare(
 
 \item{comvar}{main variable for comparison}
 
-\item{adjustvar}{variables to be adjusted.}
+\item{adjustvar}{variables to be adjusted. Default is NULL (no adjustment).}
 
 \item{personid}{name of variable for person id (applicable for longitudinal data)}
 
@@ -45,7 +45,7 @@ taxa.compare(
 \item{n.cyc}{maximum number of GAMLSS iterations. Default is 20, the value used by earlier versions, so that results stay the same.}
 }
 \value{
-matrice of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models. For GAMLSS fits, `attr(result, "fit_info")` gives for each taxon the number of samples, the number of non-zero samples, the number of mean-model coefficients and whether the fit converged. The function warns when fits do not converge and when a taxon has no more non-zero samples than mean-model coefficients, because its estimate and standard error are then not reliable. In simulations, standard errors from GAMLSS with a subject random effect (`longitudinal = "yes"`) were too small for sparse taxa and for variables that do not change within a subject, so the function warns about this as well. See `vignette("notes-earlier-results")`.
+matrix of coefficients, standard errors, p-values and multiple testing adjusted p-values of all variables in the models. For GAMLSS fits, `attr(result, "fit_info")` gives for each taxon the number of samples, the number of non-zero samples, the number of mean-model coefficients and whether the fit converged. The function warns when fits do not converge and when a taxon has no more non-zero samples than mean-model coefficients, because its estimate and standard error are then not reliable. In simulations, standard errors from GAMLSS with a subject random effect (`longitudinal = "yes"`) were too small for sparse taxa and for variables that do not change within a subject, so the function warns about this as well. See `vignette("notes-earlier-results")`.
 }
 \description{
 This function compares taxa relative abundance summary tables at all levels between groups using GAMLSS with BEZI or Linear/Linear Mixed Effect models (LM/LMEM) after filtering (using prevalence and relative abundance thresholds).
