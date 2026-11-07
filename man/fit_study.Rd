@@ -17,7 +17,8 @@ fit_study(
   prevalence = NULL,
   zero_inflation = TRUE,
   pseudocount = NULL,
-  cores = getOption("metamicrobiomeR.cores", 1L)
+  cores = getOption("metamicrobiomeR.cores", 1L),
+  min_nonzero = NULL
 )
 }
 \arguments{
@@ -47,15 +48,16 @@ Fits that reach the limit are flagged `converged = FALSE` and a warning reports 
 `...f__lachnospiraceae.other`)? Such features lump together unrelated
 organisms. Default `TRUE`; use `FALSE` to keep them.}
 
-\item{prevalence}{(`zibb_glmmtmb` only) One-sided formula for the covariates of the
+\item{prevalence}{(`zibb_glmmtmb` and `bezi_glmmtmb`) One-sided formula for the covariates of the
 probability of a structural zero, e.g. `~ group`. `NULL` (default) fits an
 intercept-only zero-inflation part, so only abundance effects are reported.
 Prevalence effects can be poorly identified; unidentifiable ones are flagged
 `converged = FALSE`.}
 
-\item{zero_inflation}{(`zibb_glmmtmb` only) Include a zero-inflation part? It is
-dropped automatically for features without zero counts. `FALSE` fits a plain
-beta-binomial model.}
+\item{zero_inflation}{(`zibb_glmmtmb` and `bezi_glmmtmb`) Include a zero-inflation part? It is
+dropped automatically for features without zeros. `FALSE` fits a plain
+beta-binomial model (`zibb_glmmtmb`), or a beta model in which zeros are replaced by
+half the smallest non-zero value of the feature (`bezi_glmmtmb`).}
 
 \item{pseudocount}{(`lm_clr` only) Value added to counts (default 0.5) or, for
 proportions, to relative abundances (default half the smallest positive value).}
@@ -64,15 +66,22 @@ proportions, to relative abundances (default half the smallest positive value).}
 `options(metamicrobiomeR.cores = )`). Uses forking, so it is available on Linux and macOS but not on
 Windows, where one core is used. Worthwhile for the count model and GAMLSS, which take about a second
 per feature; the linear engines are fast anyway. Results do not depend on `cores`.}
+
+\item{min_nonzero}{Minimum number of samples, among those used in the model, in
+which a feature must be non-zero to be fitted. `NULL` (default) uses the number
+of coefficients of the mean model (intercept included) plus one. Use `0` to fit
+every feature that passes the other filters.}
 }
 \value{
 An `mm_effects` object with one row per feature, model part and covariate
   term. The attribute `fit_info` is a data.frame with one row per fitted feature
-  (samples used, convergence, number of warnings, and any error message).
+  (samples used, non-zero samples, convergence, number of warnings, and any error
+  message), and the attribute `low_support` lists the features not fitted because
+  they had too few non-zero samples.
 }
 \description{
 Fits the same model to each feature and returns the estimates as an effect
-table. Four engines are available.
+table. Five engines are available.
 }
 \details{
 * `"zibb_glmmtmb"`: a zero-inflated beta-binomial model on the counts with the
@@ -84,7 +93,17 @@ table. Four engines are available.
   feature is more often absent).
 * `"bezi_gamlss"`: the GAMLSS-BEZI model of Ho et al. (2019): a GAMLSS with a zero-inflated
   beta (BEZI) family on relative abundance, logit link for the mean. Only the mean
-  part depends on the covariates. Scale `"logit_mean"`.
+  part depends on the covariates. Scale `"logit_mean"`. With a subject random effect
+  (`random()`), the standard errors can be too small for sparse features and for
+  covariates that vary between subjects, so `"bezi_glmmtmb"` is preferable for
+  longitudinal data (see `vignette("notes-earlier-results")`).
+* `"bezi_glmmtmb"`: the same zero-inflated beta model on relative abundance, fitted
+  by maximum likelihood with `glmmTMB` (beta family, logit link for the mean, a
+  logit model for the probability of a zero) and an optional subject random
+  intercept, whose variance is estimated by Laplace approximation rather than by
+  the penalised fitting that GAMLSS uses. Does not need counts. Scale
+  `"logit_mean"`, so its estimates are on the same scale as `"bezi_gamlss"`.
+  `prevalence` gives effects on the probability of a zero, as for `"zibb_glmmtmb"`.
 * `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
   (the transformation used by MaAsLin), a linear mixed model with a subject random
   intercept when `longitudinal` (p-values from the normal approximation),
@@ -99,6 +118,13 @@ Estimates from different engines are on different scales and are not comparable;
 Features are kept if they are present (abundance above zero) in at least
 `min_prevalence` of all samples and their mean relative abundance exceeds
 `min_mean`. Samples with a missing value in the model are dropped for that feature.
+
+A feature that is non-zero in only a few samples gives an estimate that is
+essentially the difference between those few values, often with a tiny standard
+error that has no inferential meaning. Such features are therefore not fitted:
+a feature needs more non-zero samples than the mean model has coefficients
+(see `min_nonzero`). The features left out are listed in the attribute
+`low_support`.
 }
 \seealso{
 Other per-study models: 
