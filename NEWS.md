@@ -104,6 +104,9 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `pool_effects()`: REML with the ad hoc Hartung-Knapp test by default, heterogeneity, prediction intervals, `max_weight`
   and `top_study`, false discovery rate within rank, part and term. REML, DerSimonian-Laird and Paule-Mandel need no
   extra package; `metafor` is used for EB, ML, HE and SJ. Estimates from different engines or scales are refused.
+* When features are pooled from fewer than 5 studies with a Hartung-Knapp test, `pool_effects()` says so once per session
+  and suggests `test = "z"` or `pool_sensitivity()` as a sensitivity analysis. The default test is unchanged. Version 1.x
+  (`meta.taxa()`) pooled with DerSimonian-Laird and the normal test, which is less conservative with few studies.
 * `leave_one_out()`, `meta_regress()` with `study_table()`, `pool_sensitivity()` (the same effects under several settings),
   `combine_pvalues()` (directional Stouffer or Fisher with a sign test; works across engines and tools),
   `adjust_hierarchical()` (error control across taxonomic ranks).

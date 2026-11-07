@@ -12,6 +12,13 @@
 #' freedom, so with only two studies they have one degree of freedom and even a clear effect
 #' will not be significant; that is the honest answer with so little replication, and
 #' `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
+#' When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
+#' (once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
+#' with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0%
+#' but detected the effect in about half to two thirds of data sets, against more than 90% for the
+#' normal test, which kept false positives near 4%. With 10 studies the tests agreed closely.
+#' The default stays the cautious one, and a result that is significant only with `test = "z"`
+#' should be reported as such.
 #' Pooling is only meaningful when the studies report the same effect scale;
 #' [bind_effects()] enforces this.
 #'
@@ -111,9 +118,15 @@ pool_effects <- function(effects, term = NULL, part = NULL,
     .inform(.plural(n_total - nrow(out), "feature"), " of ", n_total, " not pooled (estimated in fewer than ", min_studies, " studies",
             if (min_prop > 0) paste0(" or in fewer than ", .pct(min_prop), " of the studies reporting the term"), ").")
   }
-  if (test != "z" && any(out$k == 2)) {
-    .inform(.plural(sum(out$k == 2), "feature"), if (sum(out$k == 2) == 1) " was" else " were", " pooled from only 2 studies: the Hartung-Knapp test then has 1 degree of freedom and is very conservative (see ?pool_effects).",
-            once = "k2-hk")
+  few <- out$k < 5
+  if (test != "z" && any(few)) {
+    kr <- range(out$k[few])
+    .inform(.plural(sum(few), "feature"), if (sum(few) == 1) " was" else " were", " pooled from fewer than 5 studies (",
+            if (kr[1] == kr[2]) paste0(kr[1], " studies") else paste0(kr[1], " to ", kr[2], " studies"), "). ",
+            "With so few studies the Hartung-Knapp test has k - 1 degrees of freedom and is conservative: a clear effect may not be ",
+            "significant, especially after FDR correction", if (kr[1] == 2) ", and with 2 studies it has 1 degree of freedom" else "", ". ",
+            "As a sensitivity analysis, compare with test = \"z\" or run pool_sensitivity() (see ?pool_effects).",
+            once = "few-studies-hk")
   }
   fam <- do.call(paste, c(lapply(adjust_by, function(a) out[[a]]), sep = "\r"))
   out$p_adjust <- NA_real_
