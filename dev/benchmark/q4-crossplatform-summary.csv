@@ -1,0 +1,7 @@
+"engine","design","n_analysed","auc","dir","power","false_pos"
+"lm_clr","combined (merged tables)",30,1,1,1,0.017
+"zibb_glmmtmb","combined (merged tables)",30,0.989,1,0.997,0.164
+"lm_clr","two-stage (default test)",49.99,1,1,0,0
+"zibb_glmmtmb","two-stage (default test)",49.99,0.996,1,0,0
+"lm_clr","two-stage (z test)",49.99,1,1,1,0.01
+"zibb_glmmtmb","two-stage (z test)",49.99,0.996,1,0.995,0.059

@@ -53,11 +53,14 @@ pooled <- list(); fitted <- list()
 for (i in seq_len(nrow(runs))) {
   r <- runs[i, ]; lab <- paste0(r$engine, if (r$guard) "_guard" else "_noguard")
   fits <- lapply(names(studies), function(n) {
+    cache <- file.path(out, paste0("fit_", lab, "_", gsub("[^A-Za-z]", "", n), ".rds"))  # restartable: reuse a finished fit
+    if (file.exists(cache)) { f <- readRDS(cache); cat(lab, n, ": reused saved fit\n"); return(f) }
     f <- suppressWarnings(suppressMessages(fit_study(studies[[n]], ~ gender + bf + age.sample, engine = r$engine,
                                                      longitudinal = cohorts[[n]]$long, min_prevalence = 0.05,
                                                      min_nonzero = if (r$guard) NULL else 0)))
     ls <- attr(f, "low_support")
-    cat(lab, n, ": fitted", length(unique(f$feature)), "| left out for low support", if (is.null(ls)) 0 else nrow(ls), "\n")
+    cat(lab, n, ": fitted", length(unique(f$feature)), "| left out for low support", if (is.null(ls)) 0 else nrow(ls), format(Sys.time()), "\n")
+    saveRDS(f, cache)
     f
   })
   eff <- suppressMessages(do.call(bind_effects, fits))
