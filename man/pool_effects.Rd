@@ -65,6 +65,13 @@ The Hartung-Knapp tests (`"adhoc"`, `"knha"`) use a t distribution with `k - 1` 
 freedom, so with only two studies they have one degree of freedom and even a clear effect
 will not be significant; that is the honest answer with so little replication, and
 `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
+When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
+(once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
+with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0\%
+but detected the effect in about half to two thirds of data sets, against more than 90\% for the
+normal test, which kept false positives near 4\%. With 10 studies the tests agreed closely.
+The default stays the cautious one, and a result that is significant only with `test = "z"`
+should be reported as such.
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.
 }
