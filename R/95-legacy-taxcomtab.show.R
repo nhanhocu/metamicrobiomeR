@@ -35,15 +35,15 @@ taxcomtab.show<-function(taxcomtab,sumvar="taxa", tax.lev="l2",tax.select="none"
                          p.cutoff=0.05,digit=2,p.digit=4){
   mtaba1<-taxcomtab[,c("id",colnames(taxcomtab)[grep(showvar,colnames(taxcomtab))])]
   if (sumvar=="taxa"){
-    al2<-mtaba1$id[-grep("c__",mtaba1$id)]
-    al3<-mtaba1$id[-grep("o__",mtaba1$id)]
-    al4<-mtaba1$id[-grep("f__",mtaba1$id)]
-    al5<-mtaba1$id[-grep("g__",mtaba1$id)]
+    al2<-mtaba1$id[!grepl("c__",mtaba1$id)]
+    al3<-mtaba1$id[!grepl("o__",mtaba1$id)]
+    al4<-mtaba1$id[!grepl("f__",mtaba1$id)]
+    al5<-mtaba1$id[!grepl("g__",mtaba1$id)]
     if (tax.lev!="l7"){
       mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1)
     }
     if (tax.lev=="l7"){
-      al6<-mtaba1$id[-grep("s__",mtaba1$id)]
+      al6<-mtaba1$id[!grepl("s__",mtaba1$id)]
       mtabal<-list(l2=mtaba1[mtaba1$id %in% al2,],l3=mtaba1[mtaba1$id %in% al3,],l4=mtaba1[mtaba1$id %in% al4,],l5=mtaba1[mtaba1$id %in% al5,],l6=mtaba1[mtaba1$id %in% al6,],l7=mtaba1)
     }
     mtaba<-mtabal[[tax.lev]]
@@ -70,20 +70,20 @@ taxcomtab.show<-function(taxcomtab,sumvar="taxa", tax.lev="l2",tax.select="none"
     mtaba<-mtaba1
     taxuse<-mtaba$id
   }
-  if (tax.select!="none"){
+  if (!.legacy_is_none(tax.select)){
     taxuse<-taxuse[taxuse %in% tax.select]
   }
   datuse<-as.data.frame(mtaba[mtaba$id %in% taxuse,])
   if (readjust.p==TRUE){
-    datuse[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))])]<-stats::p.adjust(datuse[,colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))]],method = p.adjust.method)
+    datuse[,sub('^Pr\\(>\\|t\\|\\)', 'pval.adjust',.legacy_pcols(colnames(datuse)))]<-stats::p.adjust(datuse[,.legacy_pcols(colnames(datuse))],method = p.adjust.method)
   }
   datuse<-as.data.frame(datuse)
-  datsig<-datuse[datuse[,colnames(datuse)[grep("Pr(>|t|)",colnames(datuse))]]<p.cutoff,]
-  datsig<-datsig[order(datsig[,colnames(datsig)[grep("Pr(>|t|)",colnames(datsig))]]),]
+  datsig<-datuse[datuse[,.legacy_pcols(colnames(datuse))]<p.cutoff,]
+  datsig<-datsig[order(datsig[,.legacy_pcols(colnames(datsig))]),]
   datsig[,"ll"]<-datsig[,colnames(datsig)[grep("Estimate",colnames(datsig))]]-1.96*datsig[,colnames(datsig)[grep("Std. Error",colnames(datsig))]]
   datsig[,"ul"]<-datsig[,colnames(datsig)[grep("Estimate",colnames(datsig))]]+1.96*datsig[,colnames(datsig)[grep("Std. Error",colnames(datsig))]]
   datsig[,c(colnames(datsig)[grep("Estimate",colnames(datsig))],"ll","ul")]<-round(datsig[,c(colnames(datsig)[grep("Estimate",colnames(datsig))],"ll","ul")],digit)
-  datsig[,c(colnames(datsig)[grep("Pr(>|t|)",colnames(datsig))],colnames(datsig)[grep("pval.adjust.",colnames(datsig))])]<-round(datsig[,c(colnames(datsig)[grep("Pr(>|t|)",colnames(datsig))],colnames(datsig)[grep("pval.adjust.",colnames(datsig))])],p.digit)
-  datsig<-datsig[,c("id",colnames(datsig)[grep("Estimate",colnames(datsig))],"ll","ul",colnames(datsig)[grep("Pr(>|t|)",colnames(datsig))],colnames(datsig)[grep("pval.adjust.",colnames(datsig))])]
+  datsig[,c(.legacy_pcols(colnames(datsig)),colnames(datsig)[grep("pval.adjust.",colnames(datsig))])]<-round(datsig[,c(.legacy_pcols(colnames(datsig)),colnames(datsig)[grep("pval.adjust.",colnames(datsig))])],p.digit)
+  datsig<-datsig[,c("id",colnames(datsig)[grep("Estimate",colnames(datsig))],"ll","ul",.legacy_pcols(colnames(datsig)),colnames(datsig)[grep("pval.adjust.",colnames(datsig))])]
   return(datsig)
 }

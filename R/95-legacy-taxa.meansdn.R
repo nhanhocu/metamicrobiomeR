@@ -21,11 +21,12 @@ taxa.meansdn<-function(taxtab, sumvar, groupvar,percent.filter=0.05,relabund.fil
   taxdat$sumvar<-taxdat[,sumvar]
   taxdat$groupvar<-taxdat[,groupvar]
   # get assigned taxa only
-  if (othervar!="none"){
-    taxlist<-colnames(taxdat)[!colnames(taxdat) %in% othervar]
+  if (!.legacy_is_none(othervar)){
+    #the summary and grouping variables (and their copies) are never abundance variables
+    taxlist<-colnames(taxdat)[!colnames(taxdat) %in% c(othervar,sumvar,groupvar,"sumvar","groupvar")]
   }
-  if (othervar=="none") {
-    taxlist<-colnames(taxdat)[grep("k__",colnames(taxdat))]
+  if (.legacy_is_none(othervar)) {
+    taxlist<-.legacy_taxlist(colnames(taxdat))
   }
   #filter using percent.filter
   taxtest<-apply(taxdat[,taxlist],2,function(x){length(x[!is.na(x)&x>0])})

@@ -12,7 +12,7 @@ pathway.compare(
   stat.med = "gamlss",
   transform = "none",
   comvar,
-  adjustvar,
+  adjustvar = NULL,
   personid = "personid",
   longitudinal = "yes",
   p.adjust.method = "fdr",
@@ -37,7 +37,7 @@ pathway.compare(
 
 \item{comvar}{main variable for comparison.}
 
-\item{adjustvar}{variables to be adjusted.}
+\item{adjustvar}{variables to be adjusted. Default is NULL (no adjustment).}
 
 \item{personid}{name of variable for person id in mapping file (applicable for longitudinal data)}
 

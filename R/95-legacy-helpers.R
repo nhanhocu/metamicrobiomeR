@@ -71,3 +71,26 @@ utils::globalVariables(c("sequences.per.sample", "pop", "plotvar", "esticat", "p
   }
   tab
 }
+
+# TRUE when an argument that defaults to "none" is left at that value. Works for vectors, where `x != "none"` fails in R 4.2 and later.
+.legacy_is_none <- function(x) is.null(x) || (length(x) == 1 && identical(as.character(x), "none"))
+
+# Names of the p-value columns. Matches the text "Pr(>|t|)" literally, so that covariate names or levels containing "Pr"
+# (for example a level "Pre") are not taken for p-value columns.
+.legacy_pcols <- function(nm) grep("Pr(>|t|)", nm, fixed = TRUE, value = TRUE)
+
+# Quote a variable name for use in a model formula, so that names with spaces, semicolons or dashes work.
+.legacy_bt <- function(x) paste0("`", gsub("`", "\\\\`", x), "`")
+
+# Taxon columns: the legacy functions recognise taxa by "k__" in the column name.
+.legacy_taxlist <- function(nm) {
+  tl <- nm[grep("k__", nm)]
+  if (!length(tl)) {
+    hint <- if (any(grepl("^d__", nm))) {
+      " Your names start with \"d__\" (QIIME 2 with SILVA 138), so rename them first, for example colnames(x) <- sub(\"^d__\", \"k__\", colnames(x))."
+    } else ""
+    stop("No taxon columns found. The 1.x functions recognise taxa by \"k__\" in the column name.", hint,
+         " The functions of version 2.0 (as_study(), fit_study()) read other naming conventions directly.", call. = FALSE)
+  }
+  tl
+}
