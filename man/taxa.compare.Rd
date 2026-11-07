@@ -10,7 +10,7 @@ taxa.compare(
   transform = "none",
   zeroreplace.method = "none",
   comvar,
-  adjustvar,
+  adjustvar = NULL,
   personid = "personid",
   longitudinal = "yes",
   percent.filter = 0.05,
@@ -30,7 +30,7 @@ taxa.compare(
 
 \item{comvar}{main variable for comparison}
 
-\item{adjustvar}{variables to be adjusted.}
+\item{adjustvar}{variables to be adjusted. Default is NULL (no adjustment).}
 
 \item{personid}{name of variable for person id (applicable for longitudinal data)}
 
