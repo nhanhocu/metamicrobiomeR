@@ -84,9 +84,9 @@ meta.niceplot(
 
 \item{forest.est.col}{colors of point (pooled estimates) and 95 CI bars in forest plot. Default are c("red", "black") for significant and non-significant estimates.}
 
-\item{forest.col}{Color of forest plot (point estimates and 95 CI). Options are "by.pvalue" (distinguished by signficant vs. non-significant p-value) or "by.estimate" (color scaled similarly to heatmap color).}
+\item{forest.col}{Color of forest plot (point estimates and 95 CI). Options are "by.pvalue" (distinguished by significant vs. non-significant p-value) or "by.estimate" (color scaled similarly to heatmap color).}
 
-\item{leg.key.size}{legdend key size for heatmap.}
+\item{leg.key.size}{legend key size for heatmap.}
 
 \item{leg.text.size}{legend text size for heatmap.}
 
@@ -98,7 +98,7 @@ meta.niceplot(
 
 \item{forest.axis.text.x}{forest plot x label text size.}
 
-\item{heat.forest.width.ratio}{ratio of width between heatmap and forest plot to be used in grid.arrange. Dedault is c(1,1).}
+\item{heat.forest.width.ratio}{ratio of width between heatmap and forest plot to be used in grid.arrange. Default is c(1,1).}
 
 \item{point.ratio}{ratio of point size between significant pooled estimate and non-significant pooled estimate. Default is c(3,1).}
 

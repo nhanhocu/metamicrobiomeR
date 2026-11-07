@@ -1,10 +1,10 @@
 #' Display meta-analysis results.
 #'
 #' This function displays meta-analysis results of relative abundance as heatmap, forest plot, table or data.
-#' @param metatab matrice of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.
-#' @param com.pooled.tab matrice of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.
+#' @param metatab matrix of taxa/pathway abundance comparison meta-analysis results generated from meta.taxa.
+#' @param com.pooled.tab matrix of taxa/pathway abundance comparison generated from taxa.compare or pathway.compare combined from all included studies.
 #' @param sumvar Either "taxa" for taxa and "path" for pathway.
-#' @param highest.lev Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shortgun data).
+#' @param highest.lev Highest level of bacterial taxonomies available for analysis. Options are "g" for genus (usually for 16S data) and "s" for species (usually for shotgun data).
 #' @param tax.lev taxa level to be displayed. Options are from "l2" (phylum) to "l7" (species). Default is "l2".
 #' @param showvar variable (string pattern) in the model to be displayed.
 #' @param estimate.pattern string pattern for estimates. Default is "Estimate.".

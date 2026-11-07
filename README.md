@@ -165,23 +165,22 @@ The source is organised by workflow stage (numbered files in `R/`, with matching
 
 ## Install
 
-From GitHub (needs the `remotes` package):
+Version 2.0 is planned for CRAN in December 2026. Until then, install it from GitHub (needs the `remotes` package):
 
 ```r
-remotes::install_github("paytonyau/microbiome-meta-analysis")             # the default branch
-remotes::install_github("paytonyau/microbiome-meta-analysis@v2-dev")      # the development branch, if that is where 2.0 lives
+remotes::install_github("nhanhocu/metamicrobiomeR@dev-2.0")
 ```
 
-Or from a source file: `install.packages("metamicrobiomeR_2.0.0.9000.tar.gz", repos = NULL, type = "source")`.
+Older versions stay available by tag: `remotes::install_github("nhanhocu/metamicrobiomeR@v1.2")` for CRAN 1.2, and
+`@v1.1-github` for the earlier GitHub version.
 
-`ggplot2` is the only required package (for the plots, which are part of every result). Everything else is optional, and a function
-that needs a package says which one and how to install it:
+The packages for the 1.x functions and the GAMLSS model (`dplyr`, `gamlss`, `ggplot2`, `lme4`, `meta` and a few others) are
+installed with the package. Everything else is optional, and a function that needs a package says which one and how to
+install it:
 
 | Package | Needed for |
 |---|---|
 | `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice when every study has counts) |
-| `gamlss`, `gamlss.dist` | the GAMLSS-BEZI model (Ho et al. 2019) |
-| `lme4` | a subject random effect (repeated measures) with the linear models |
 | `vegan` | beta diversity |
 | `metafor` | the pooling estimators EB, ML, HE and SJ (REML, DL and Paule-Mandel need nothing) |
 | `phyloseq`, `SummarizedExperiment`, `biomformat` | the matching importers |
@@ -195,4 +194,9 @@ that needs a package says which one and how to install it:
 
 ## Authors and licence
 
-Nhan Ho (author), Payton Yau (maintainer). GPL (>= 2).
+Nhan Ho (author), Payton Yau (maintainer). GPL-3.
+
+## Citation
+
+If you use metamicrobiomeR, please cite the package and the paper describing the zero-inflated beta model:
+`citation("metamicrobiomeR")` gives both.

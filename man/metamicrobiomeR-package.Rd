@@ -35,8 +35,8 @@ warnings are not affected. A message that would repeat on every call is shown on
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/paytonyau/microbiome-meta-analysis}
-  \item Report bugs at \url{https://github.com/paytonyau/microbiome-meta-analysis/issues}
+  \item \url{https://github.com/nhanhocu/metamicrobiomeR}
+  \item Report bugs at \url{https://github.com/nhanhocu/metamicrobiomeR/issues}
 }
 
 }
@@ -45,7 +45,13 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Payton Yau \email{tungon@gmail.com} (\href{https://orcid.org/0000-0002-3283-0370}{ORCID})
   \item Nhan Ho \email{nhanhocumc@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item Jun Chen (GMPR code in taxa.compare()) [contributor, copyright holder]
 }
 
 }

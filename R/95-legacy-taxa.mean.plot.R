@@ -8,7 +8,7 @@
 #' @param comvar main variable for comparison.
 #' @param groupvar variable for stratifying.
 #' @param mean.filter mean abundance filtering threshold (only plot those with mean abundance>threshold and plot all those with mean abundance <threshold as "other").
-#' @param pallete.by.phylum whether each pallete of color for each phylum. Default is FALSE (plot distinc colors).
+#' @param pallete.by.phylum whether each pallete of color for each phylum. Default is FALSE (plot distinct colors).
 #' @param show.taxname whether show "full" taxa name or "short" name. Default is "full".
 #' @param legend.position position of legend. Options are c("right", "left","bottom","top","none") as in ggplot2. Default is "right".
 #' @param xlab label for x-axis. Default is "Chronological age (month)".
