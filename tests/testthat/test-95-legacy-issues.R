@@ -80,3 +80,11 @@ test_that("metatab.show() works without a 'pop' column and explains an empty res
   expect_no_warning(metatab.show(metatab = m$random, com.pooled.tab = sub_meta, tax.lev = "l2", showvar = "genderMale", p.cutoff = 0,
                                  display = "table"))
 })
+
+test_that("GAMLSS without a subject effect does not need a personid column (#9)", {
+  skip_if_not_installed("gamlss")
+  d9 <- d[, colnames(d) != "personid"]
+  r <- suppressWarnings(taxa.compare(taxtab = d9, propmed.rel = "gamlss", comvar = "gender", adjustvar = c("age.sample", "bf"), longitudinal = "no"))
+  expect_s3_class(r, "data.frame")
+  expect_true("Estimate.genderMale" %in% colnames(r))
+})
