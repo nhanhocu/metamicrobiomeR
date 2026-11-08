@@ -144,6 +144,70 @@ out") and stay quiet otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences
 
 See `vignette("getting-started")` and `vignette("cross-platform")` for runnable examples.
 
+## What you can analyse
+
+Start from your study data and follow a branch. Teal boxes are in the new workflow; purple is only in the original 1.x functions, which are still available.
+
+```mermaid
+flowchart LR
+  S["Study data"]
+  S --> T["Taxa abundance"]
+  S --> F["Function"]
+  S --> A["Alpha diversity"]
+  S --> B["Beta diversity"]
+  S --> P["Prediction"]
+  T --> T1["Per-study differential abundance<br/>fit_study(), taxa.compare()"]
+  T --> T2["Count-based model with depth<br/>engine zibb_glmmtmb"]
+  T --> T3["Random-effects pooling<br/>pool_effects(), meta.taxa()"]
+  T --> T4["Moderators and leave-one-out<br/>meta_regress(), leave_one_out()"]
+  F --> F1["Pathway differential abundance<br/>fit_study(), pathway.compare()"]
+  F --> F2["Predicted flag, NSTI filter<br/>read_function_table(), subset_samples()"]
+  F --> F3["Hierarchical FDR across levels<br/>adjust_hierarchical()"]
+  A --> A1["Standardised group comparison<br/>fit_alpha()"]
+  A --> A2["Pooled standardised effect<br/>pool_effects()"]
+  B --> B1["Per-study PERMANOVA effect size<br/>fit_beta()"]
+  B --> B2["Pooled R² or stratified model<br/>pool_beta(), merge_studies()"]
+  P --> P1["Microbiome age model<br/>microbiomeage()"]
+  classDef grp fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef new fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+  classDef old fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  class S,T,F,A,B,P grp
+  class T1,T2,T3,T4,F1,F2,F3,A1,A2,B1,B2 new
+  class P1 old
+```
+
+<details>
+<summary>The same tree as plain text</summary>
+
+```text
+Study data
+├── Taxa abundance
+│   ├── Per-study differential abundance   fit_study(), taxa.compare()
+│   ├── Count-based model with depth       engine zibb_glmmtmb
+│   ├── Random-effects pooling             pool_effects(), meta.taxa()
+│   └── Moderators and leave-one-out       meta_regress(), leave_one_out()
+├── Function
+│   ├── Pathway differential abundance     fit_study(), pathway.compare()
+│   ├── Predicted flag, NSTI filter        read_function_table(), subset_samples()
+│   └── Hierarchical FDR across levels     adjust_hierarchical()
+├── Alpha diversity
+│   ├── Standardised group comparison      fit_alpha()
+│   └── Pooled standardised effect         pool_effects()
+├── Beta diversity
+│   ├── Per-study PERMANOVA effect size    fit_beta()
+│   └── Pooled R² or stratified model      pool_beta(), merge_studies()
+└── Prediction
+    └── Microbiome age model               microbiomeage()   (original 1.x only)
+```
+
+</details>
+
+Three details that the boxes cannot show:
+
+- `pool_beta()` combines the studies' permutation p-values (Stouffer or Fisher) and reports a sample-size-weighted mean R² only as a description. For a model with a study term, merge the studies with `merge_studies()` and fit `fit_beta()` on the result.
+- There is no function for the NSTI filter: `read_function_table()` records whether the functions were measured or predicted, and you filter on an `nsti` column of the sample data with `subset_samples()`.
+- `adjust_hierarchical()` works on any parent-child structure of features (see `feature_parents()`), including taxonomic ranks, so it also applies to the taxa branch.
+
 ## What is in the package
 
 | Area | Functions |
