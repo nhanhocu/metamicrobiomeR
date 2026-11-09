@@ -43,8 +43,12 @@ meta_analyse(
 
 \item{term}{Model term(s) to pool (for example `"groupb"`); by default all terms.}
 
-\item{engine}{A [fit_study()] engine, or `"auto"` (default): the count model if every study has
-counts and `glmmTMB` is installed, otherwise the fast arcsine-square-root linear model.}
+\item{engine}{A [fit_study()] engine, or `"auto"` (default). With repeated samples (a study with a
+subject column, unless the fitting arguments set `longitudinal = FALSE`) it is the centred log-ratio linear
+mixed model (`"lm_clr"`), which kept false positives near 5 per cent in every simulated setting with
+repeated samples, while the count and beta mixed models exceeded 7.5 per cent with sparse taxa and the
+count model often failed to converge. Otherwise it is the count model if every study has counts and
+`glmmTMB` is installed, and the fast arcsine-square-root linear model if not.}
 
 \item{rank}{Optional taxonomic rank to analyse. Studies that are not yet agglomerated are
 agglomerated to it, matching taxa by harmonised name.}

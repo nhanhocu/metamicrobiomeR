@@ -180,7 +180,7 @@ install it:
 
 | Package | Needed for |
 |---|---|
-| `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice when every study has counts) |
+| `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice in `meta_analyse()` when every study has counts and samples are not repeated) |
 | `vegan` | beta diversity |
 | `metafor` | the pooling estimators EB, ML, HE and SJ (REML, DL and Paule-Mandel need nothing) |
 | `phyloseq`, `SummarizedExperiment`, `biomformat` | the matching importers |

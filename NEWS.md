@@ -152,6 +152,10 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `meta_analyse()` runs the whole workflow (checks, per-study models, quality check, pooling, optionally alpha and beta
   diversity) and returns an object with `print()`, `summary()`, `plot()` and `as.data.frame()` methods. Messages and warnings
   are labelled with the study they come from.
+* `meta_analyse(engine = "auto")` uses `lm_clr` with repeated samples (a study with a subject column, unless
+  `fit_args = list(longitudinal = FALSE)`). In the benchmark it kept false positives between 4% and 6% in every setting with
+  repeated samples, while `zibb_glmmtmb` and `bezi_glmmtmb` exceeded 7.5% with sparse taxa and `zibb_glmmtmb` failed to
+  converge in up to a fifth of sparse data sets. Without repeated samples the choice is unchanged.
 * `plot(res, type)` draws `"forest"`, `"heatmap"`, `"volcano"`, `"alpha"`, `"beta"` or `"influence"`; `plot_forest()`,
   `plot_heatmap()` and `plot_volcano()` take effect tables from the step-by-step workflow.
 * `write_report()` writes a Markdown report with figures; `manifest()` and `write_manifest()` record data and settings.
