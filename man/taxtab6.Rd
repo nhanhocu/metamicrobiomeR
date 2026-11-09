@@ -8,7 +8,7 @@
 A data frame with 322 rows (samples) and 803 variables (including mapping variables and bacterial taxonomies from phylum to genus level).
 }
 \source{
-\href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 }
 \usage{
 data(taxtab6)

@@ -8,7 +8,7 @@
 A list of 4 dataframes for four indexes: Chao1, Observed_species, PD_whole_tree, Shannon.
 }
 \source{
-\href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 }
 \usage{
 data(alphadat)

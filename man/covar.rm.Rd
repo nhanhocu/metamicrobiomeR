@@ -8,7 +8,7 @@
 A dataframe with 996 rows and 32 variables.
 }
 \source{
-\href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 }
 \usage{
 data(covar.rm)
