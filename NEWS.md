@@ -1,4 +1,4 @@
-# metamicrobiomeR 2.0.0.9000
+# metamicrobiomeR 2.0.0
 
 **Results that differ from version 1.2.** Linear mixed-model p-values in `taxa.compare()` and `pathway.compare()` were
 `1.96 * pnorm(-|z|)` in version 1.2, about 2% too small, and are now `2 * pnorm(-|z|)`. Rerunning a 1.x script therefore
