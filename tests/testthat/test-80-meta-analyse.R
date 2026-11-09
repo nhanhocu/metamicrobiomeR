@@ -48,6 +48,13 @@ test_that("the engine is chosen automatically and the choice is reported", {
   rel <- lapply(s, function(x) as_study(relabund = mm_relabund(x), samples = mm_samples(x), study = list(id = x$study$id, feature_type = "taxon")))
   m2 <- testthat::capture_messages(meta_analyse(rel, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
   expect_true(any(grepl("Using the 'lm_asin' engine \\(not every study has counts\\)", m2)))
+  # repeated samples: the centred log-ratio mixed model, unless fit_args turns the subject effect off
+  rep_s <- lapply(s, function(x) { x$samples$subj <- paste0("p", rep(seq_len(nrow(x$samples) / 2), each = 2)); x$study$subject <- "subj"; x })
+  m3 <- testthat::capture_messages(r3 <- meta_analyse(rep_s, ~ group, term = "groupb", fit_args = list(min_prevalence = 0.5)))
+  expect_true(any(grepl("Using the 'lm_clr' engine \\(repeated samples", m3)))
+  expect_equal(r3$settings$engine, "lm_clr")
+  m4 <- testthat::capture_messages(meta_analyse(rep_s, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0.5)))
+  expect_true(any(grepl("Using the 'zibb_glmmtmb' engine \\(every study has counts", m4)))
 })
 
 # a study whose fits are degenerate: within each group the abundances are (almost) constant, so the standard errors collapse

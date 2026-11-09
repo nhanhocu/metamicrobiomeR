@@ -20,8 +20,12 @@
 #' @param studies A list of `mm_study` objects.
 #' @param formula One-sided model formula, e.g. `~ group + age`.
 #' @param term Model term(s) to pool (for example `"groupb"`); by default all terms.
-#' @param engine A [fit_study()] engine, or `"auto"` (default): the count model if every study has
-#'   counts and `glmmTMB` is installed, otherwise the fast arcsine-square-root linear model.
+#' @param engine A [fit_study()] engine, or `"auto"` (default). With repeated samples (a study with a
+#'   subject column, unless `fit_args` sets `longitudinal = FALSE`) it is the centred log-ratio linear
+#'   mixed model (`"lm_clr"`), which kept false positives near 5 per cent in every simulated setting with
+#'   repeated samples, while the count and beta mixed models exceeded 7.5 per cent with sparse taxa and the
+#'   count model often failed to converge. Otherwise it is the count model if every study has counts and
+#'   `glmmTMB` is installed, and the fast arcsine-square-root linear model if not.
 #' @param rank Optional taxonomic rank to analyse. Studies that are not yet agglomerated are
 #'   agglomerated to it, matching taxa by harmonised name.
 #' @param method,test Pooling settings, see [pool_effects()].
@@ -56,10 +60,12 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
   if (anyDuplicated(ids)) stop("Study IDs must be unique; '", ids[anyDuplicated(ids)], "' is used twice.", call. = FALSE)
   if (!inherits(formula, "formula") || length(formula) != 2) stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
   if (engine == "auto") {
+    # repeated samples: as in fit_study(), unless fit_args says otherwise, a study with a subject column is fitted with a subject random intercept
+    long <- if (!is.null(fit_args$longitudinal)) isTRUE(fit_args$longitudinal) else any(vapply(xs, function(x) !is.na(mm_study_info(x)$subject), logical(1)))
     all_counts <- all(vapply(xs, function(x) !is.null(mm_counts(x)), logical(1)))
     ok <- all_counts && requireNamespace("glmmTMB", quietly = TRUE)
-    engine <- if (ok) "zibb_glmmtmb" else "lm_asin"
-    .inform("Using the '", engine, "' engine (", if (ok) "every study has counts; about a second per feature and study, engine = \"lm_asin\" is much faster for a first look" else if (!all_counts) "not every study has counts" else "glmmTMB is not installed", ").")
+    engine <- if (long) "lm_clr" else if (ok) "zibb_glmmtmb" else "lm_asin"
+    .inform("Using the '", engine, "' engine (", if (long) "repeated samples: in simulations it kept false positives near 5% with sparse taxa, where the count and beta mixed models did not" else if (ok) "every study has counts; about a second per feature and study, engine = \"lm_asin\" is much faster for a first look" else if (!all_counts) "not every study has counts" else "glmmTMB is not installed", ").")
   }
   pc <- NULL
   if (check) {
