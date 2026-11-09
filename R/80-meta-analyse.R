@@ -21,7 +21,7 @@
 #' @param formula One-sided model formula, e.g. `~ group + age`.
 #' @param term Model term(s) to pool (for example `"groupb"`); by default all terms.
 #' @param engine A [fit_study()] engine, or `"auto"` (default). With repeated samples (a study with a
-#'   subject column, unless `fit_args` sets `longitudinal = FALSE`) it is the centred log-ratio linear
+#'   subject column, unless the fitting arguments set `longitudinal = FALSE`) it is the centred log-ratio linear
 #'   mixed model (`"lm_clr"`), which kept false positives near 5 per cent in every simulated setting with
 #'   repeated samples, while the count and beta mixed models exceeded 7.5 per cent with sparse taxa and the
 #'   count model often failed to converge. Otherwise it is the count model if every study has counts and
