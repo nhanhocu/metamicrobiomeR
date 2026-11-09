@@ -76,10 +76,11 @@ will not be significant; that is the honest answer with so little replication, a
 `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
 When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
 (once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
-with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0 per cent
-but detected the effect in about half to two thirds of data sets, against more than 90 per cent for the
-normal test, which kept false positives near 4 per cent. With 10 studies the tests agreed closely.
-The default stays the cautious one, and a result that is significant only with `test = "z"`
+with 3 studies and a true effect, the ad hoc Hartung-Knapp test detected the effect in about half to
+two thirds of data sets, against more than 90 per cent for the normal test. But when the studies truly
+differed (between-study SD 0.3 to 1 with no average effect), the normal test gave 9 to 20 per cent false
+positives with REML or DL, while the ad hoc Hartung-Knapp test stayed between 1 and 7 per cent. The
+default is therefore the cautious test, and a result that is significant only with `test = "z"`
 should be reported as such.
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.

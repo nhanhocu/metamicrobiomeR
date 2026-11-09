@@ -19,10 +19,11 @@
 #' `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
 #' When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
 #' (once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
-#' with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0 per cent
-#' but detected the effect in about half to two thirds of data sets, against more than 90 per cent for the
-#' normal test, which kept false positives near 4 per cent. With 10 studies the tests agreed closely.
-#' The default stays the cautious one, and a result that is significant only with `test = "z"`
+#' with 3 studies and a true effect, the ad hoc Hartung-Knapp test detected the effect in about half to
+#' two thirds of data sets, against more than 90 per cent for the normal test. But when the studies truly
+#' differed (between-study SD 0.3 to 1 with no average effect), the normal test gave 9 to 20 per cent false
+#' positives with REML or DL, while the ad hoc Hartung-Knapp test stayed between 1 and 7 per cent. The
+#' default is therefore the cautious test, and a result that is significant only with `test = "z"`
 #' should be reported as such.
 #' Pooling is only meaningful when the studies report the same effect scale;
 #' [bind_effects()] enforces this.
@@ -136,7 +137,8 @@ pool_effects <- function(effects, term = NULL, part = NULL,
             if (kr[1] == kr[2]) paste0(kr[1], " studies") else paste0(kr[1], " to ", kr[2], " studies"), "). ",
             "With so few studies the Hartung-Knapp test has k - 1 degrees of freedom and is conservative: a clear effect may not be ",
             "significant, especially after FDR correction", if (kr[1] == 2) ", and with 2 studies it has 1 degree of freedom" else "", ". ",
-            "As a sensitivity analysis, compare with test = \"z\" or run pool_sensitivity() (see ?pool_effects).",
+            "As a sensitivity analysis, compare with test = \"z\" or run pool_sensitivity(), keeping in mind that the z test ",
+            "gives too many false positives when the studies differ (see ?pool_effects).",
             once = "few-studies-hk")
   }
   if (any(out$n_flagged_se > 0)) {
