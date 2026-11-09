@@ -113,29 +113,38 @@ print.mm_poolcheck <- function(x, ...) {
 #' Diagnose the per-study estimates before pooling
 #'
 #' Pooling weights studies by their precision, so an implausibly small standard error
-#' gives one study almost all the weight. This compares each study with the others, for each
-#' part and term: a study's estimate is flagged when its standard error is below `se_ratio`
+#' gives one study almost all the weight. Two comparisons are made for each part and term.
+#' Between studies, a study's estimate is flagged when its standard error is below `se_ratio`
 #' times the typical small standard error of the other studies (their median 5th percentile).
-#' Estimates from fits that did not converge, and (optionally) very large estimates, are flagged
-#' too. The comparison needs at least two studies.
+#' Within a study, an estimate is flagged when its standard error is below `within_ratio` times
+#' the median standard error of that study, which needs at least `min_estimates` estimates and
+#' works with a single study. In fits of real and simulated data, well-identified estimates never
+#' fell below 7 per cent of their study's median, while estimates from features with too little
+#' information (for example two non-zero samples) fell below 1 per cent.
+#' Estimates from fits that did not converge, and (optionally) very large estimates, are flagged too.
 #'
-#' @param effects An `mm_effects` object with several studies.
+#' @param effects An `mm_effects` object.
 #' @param se_ratio Flag standard errors below this fraction of the other studies' typical
-#'   small standard error.
+#'   small standard error. Needs at least two studies.
+#' @param within_ratio Flag standard errors below this fraction of the median standard error of
+#'   the same study, part and term. `0` turns this comparison off.
+#' @param min_estimates Minimum number of estimates in a study, part and term for the
+#'   within-study comparison.
 #' @param max_abs_estimate Optionally flag estimates with a larger absolute value (only
 #'   meaningful on scales with a natural range, such as logits).
 #' @param quantile The quantile used as a study's "small standard error" (default 5 per cent).
 #' @return An object of class `mm_quality`: `studies` (per study, part and term: the number of
 #'   estimates, the proportion converged, the minimum, the chosen quantile and the median of
 #'   the standard errors, and how many were flagged) and `rows` (the effect rows with the flag
-#'   columns `flag_se`, `flag_converged`, `flag_estimate` and `flagged`).
+#'   columns `flag_se` (either comparison), `flag_se_within`, `flag_converged`, `flag_estimate`
+#'   and `flagged`).
 #' @family checks before pooling
 #' @export
-check_effects_quality <- function(effects, se_ratio = 0.1, max_abs_estimate = NULL, quantile = 0.05) {
+check_effects_quality <- function(effects, se_ratio = 0.1, within_ratio = 0.02, min_estimates = 10, max_abs_estimate = NULL, quantile = 0.05) {
   .check_class(effects, "mm_effects", "effects", "fit_study() or bind_effects()")
   check_effects(effects)
   d <- as.data.frame(effects)
-  d$flag_se <- FALSE; d$flag_converged <- !d$converged
+  d$flag_se <- FALSE; d$flag_se_within <- .se_within_flags(d, within_ratio, min_estimates); d$flag_converged <- !d$converged
   d$flag_estimate <- if (is.null(max_abs_estimate)) FALSE else !is.na(d$estimate) & abs(d$estimate) > max_abs_estimate
   grp <- paste(d$part, d$term, sep = "\r")
   summ <- list()
@@ -150,13 +159,29 @@ check_effects_quality <- function(effects, se_ratio = 0.1, max_abs_estimate = NU
       se <- d$se[jj]
       summ[[length(summ) + 1]] <- data.frame(study = s, part = d$part[jj][1], term = d$term[jj][1], n = length(jj),
         converged = mean(d$converged[jj]), se_min = suppressWarnings(min(se, na.rm = TRUE)), se_q = unname(q[[s]]),
-        se_median = stats::median(se, na.rm = TRUE), reference_se_q = ref, flagged_se = sum(d$flag_se[jj]),
-        flagged_estimate = sum(d$flag_estimate[jj]), stringsAsFactors = FALSE)
+        se_median = stats::median(se, na.rm = TRUE), reference_se_q = ref, flagged_se = sum(d$flag_se[jj] | d$flag_se_within[jj]),
+        flagged_se_within = sum(d$flag_se_within[jj]), flagged_estimate = sum(d$flag_estimate[jj]), stringsAsFactors = FALSE)
     }
   }
+  d$flag_se <- d$flag_se | d$flag_se_within
   d$flagged <- d$flag_se | d$flag_converged | d$flag_estimate
-  structure(list(studies = do.call(rbind, summ), rows = d, settings = list(se_ratio = se_ratio, max_abs_estimate = max_abs_estimate, quantile = quantile)),
+  structure(list(studies = do.call(rbind, summ), rows = d,
+                 settings = list(se_ratio = se_ratio, within_ratio = within_ratio, min_estimates = min_estimates, max_abs_estimate = max_abs_estimate, quantile = quantile)),
             class = "mm_quality")
+}
+
+# Within-study flag: a standard error below `ratio` times the median of the same study, part and term
+.se_within_flags <- function(d, ratio = 0.02, min_n = 10) {
+  out <- rep(FALSE, nrow(d))
+  if (!nrow(d) || is.null(ratio) || ratio <= 0) return(out)
+  ok <- !is.na(d$se) & is.finite(d$se) & d$se > 0
+  g <- paste(d$study, d$part, d$term, sep = "\r")
+  for (k in unique(g[ok])) {
+    ii <- which(g == k & ok)
+    if (length(ii) < min_n) next
+    out[ii] <- d$se[ii] < ratio * stats::median(d$se[ii])
+  }
+  out
 }
 
 #' @export
@@ -165,8 +190,8 @@ print.mm_quality <- function(x, ...) {
   cat("<mm_quality> ", nrow(x$rows), " estimates; flagged: ", sum(x$rows$flagged), " (standard error ", sum(x$rows$flag_se),
       ", not converged ", sum(x$rows$flag_converged), ", large estimate ", sum(x$rows$flag_estimate), ")\n", sep = "")
   bad <- s[s$flagged_se > 0 | s$flagged_estimate > 0, , drop = FALSE]
-  for (i in seq_len(nrow(bad))) cat(sprintf("  study %s, %s/%s: %d implausibly small standard errors (min %.3g; other studies' typical small value %.3g)\n",
-                                            bad$study[i], bad$part[i], bad$term[i], bad$flagged_se[i], bad$se_min[i], bad$reference_se_q[i]))
+  for (i in seq_len(nrow(bad))) cat(sprintf("  study %s, %s/%s: %d implausibly small standard errors (min %.3g; this study's median %.3g; other studies' typical small value %.3g)\n",
+                                            bad$study[i], bad$part[i], bad$term[i], bad$flagged_se[i], bad$se_min[i], bad$se_median[i], bad$reference_se_q[i]))
   invisible(x)
 }
 
@@ -181,8 +206,8 @@ print.mm_quality <- function(x, ...) {
 #'   attribute `dropped`.
 #' @family checks before pooling
 #' @export
-filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_se = TRUE, se_ratio = 0.1, max_abs_estimate = NULL) {
-  q <- check_effects_quality(effects, se_ratio = se_ratio, max_abs_estimate = max_abs_estimate)
+filter_effects <- function(effects, drop_nonconverged = TRUE, drop_implausible_se = TRUE, se_ratio = 0.1, within_ratio = 0.02, max_abs_estimate = NULL) {
+  q <- check_effects_quality(effects, se_ratio = se_ratio, within_ratio = within_ratio, max_abs_estimate = max_abs_estimate)
   r <- q$rows
   drop <- (drop_nonconverged & r$flag_converged) | (drop_implausible_se & r$flag_se) | (!is.null(max_abs_estimate) & r$flag_estimate)
   out <- as.data.frame(effects)[!drop, , drop = FALSE]

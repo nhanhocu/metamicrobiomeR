@@ -151,7 +151,7 @@ See `vignette("getting-started")` and `vignette("cross-platform")` for runnable 
 | Studies | `as_study()`, `check_study()`, `subset_samples()`, `subset_features()`, `study_table()`, `agglomerate()` |
 | Import | `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`, `study_from_se()`, `read_function_table()`; export with `as_phyloseq()`, `as_summarized_experiment()` |
 | Taxonomy | `parse_taxonomy()`, `harmonise_names()`, `feature_parents()` |
-| Per-study models | `fit_study()` with engines `zibb_glmmtmb` (counts, uses depth, optional prevalence part), `bezi_gamlss` (the GAMLSS-BEZI model of Ho et al. 2019), `lm_asin`, `lm_clr`; `fit_alpha()`, `fit_beta()` |
+| Per-study models | `fit_study()` with engines `zibb_glmmtmb` (counts, uses depth, optional prevalence part), `bezi_gamlss` (the GAMLSS-BEZI model of Ho et al. 2019), `bezi_glmmtmb` (the same model as a mixed model, the default with repeated samples), `lm_asin`, `lm_clr`; `fit_alpha()`, `fit_beta()` |
 | Before pooling | `check_poolable()`, `feature_coverage()`, `check_effects_quality()`, `filter_effects()` |
 | Pooling | `bind_effects()`, `pool_effects()`, `leave_one_out()`, `pool_sensitivity()`, `meta_regress()`, `combine_pvalues()`, `merge_studies()` (one-stage), `pool_beta()`, `adjust_hierarchical()` |
 | Other tools' results | `effects_from()` (MaAsLin2, ANCOM-BC2, LinDA, generic) |

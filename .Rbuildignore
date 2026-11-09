@@ -4,3 +4,4 @@
 ^cran-comments\.md$
 ^dev$
 ^data-raw$
+^tests/testthat/_problems$

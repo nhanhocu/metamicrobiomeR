@@ -99,8 +99,8 @@ test_that("influence diagnostics report the weight of the most influential study
   expect_equal(p$top_study, "s1")                              # the study with the smallest standard error
   # one very precise study carries almost all the weight
   dom <- bind_effects(eff("a", 0.4, 0.005), eff("b", 0.0, 0.4), eff("c", 0.5, 0.35))
-  expect_gt(pool_effects(dom, method = "DL", test = "z")$max_weight, 0.99)
-  expect_identical(pool_effects(dom, method = "DL", test = "z")$top_study, "a")
+  expect_warning(pd <- pool_effects(dom, method = "DL", test = "z"), "implausibly small standard error")   # 0.005 against 0.4: flagged
+  expect_gt(pd$max_weight, 0.99); expect_identical(pd$top_study, "a"); expect_equal(pd$n_flagged_se, 1)
 })
 
 test_that("leave_one_out repeats the pooling without each study", {
@@ -118,7 +118,7 @@ test_that("leave_one_out repeats the pooling without each study", {
   # the result that depends on one study loses significance without it
   dom <- bind_effects(eff("a", 0.43, 0.005), eff("b", 0.01, 0.43), eff("c", 0.55, 0.35))
   l2 <- leave_one_out(dom, method = "DL", test = "z")
-  expect_lt(pool_effects(dom, method = "DL", test = "z")$p_value, 1e-6)
+  expect_lt(suppressWarnings(pool_effects(dom, method = "DL", test = "z"))$p_value, 1e-6)
   expect_gt(l2$p_value[l2$omitted == "a"], 0.1)
   expect_error(leave_one_out(bind_effects(eff("a", 0.1, 0.1))), "two studies")
   expect_error(leave_one_out(data.frame(a = 1)), "mm_effects")
@@ -256,7 +256,7 @@ test_that("pooling skips features with numerically degenerate estimates instead 
   expect_null(metamicrobiomeR:::.rma_fast(c(0.3439, -0.8520, 0.3075), c(1.167, 4.157e-14, 0.2726)^2, method = "DL", test = "z"))
   expect_message(p <- pool_effects(eff, method = "DL", test = "z", min_prop = 0), "1 feature could not be pooled because its estimates are numerically degenerate")
   expect_equal(p$feature, "fine")
-  for (m in c("REML", "PM")) expect_true("fine" %in% suppressMessages(pool_effects(eff, method = m, test = "z", min_prop = 0))$feature)
-  expect_s3_class(suppressMessages(pool_sensitivity(eff, min_prop = 0)), "mm_poolcompare")                       # all four settings together no longer stop
+  for (m in c("REML", "PM")) expect_true("fine" %in% suppressWarnings(suppressMessages(pool_effects(eff, method = m, test = "z", min_prop = 0)))$feature)
+  expect_s3_class(suppressWarnings(suppressMessages(pool_sensitivity(eff, min_prop = 0))), "mm_poolcompare")                       # all four settings together no longer stop
   expect_equal(nrow(suppressMessages(leave_one_out(eff, feature = "fine", min_prop = 0))), 3)
 })

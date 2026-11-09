@@ -21,11 +21,11 @@ pool_effects(
 
 \item{term, part}{Optional character vectors restricting the terms and model parts.}
 
-\item{method}{Estimator of the between-study variance, passed to
-`metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird),
-"PM", "EB", "ML", "HE" or "SJ".}
+\item{method}{Estimator of the between-study variance: "REML" (default), "DL"
+(DerSimonian-Laird), "PM" (Paule-Mandel), or "EB", "ML", "HE" or "SJ" through
+`metafor::rma.uni()`.}
 
-\item{test}{Test and confidence interval for the pooled effect, passed to
+\item{test}{Test and confidence interval for the pooled effect, with the same meaning as in
 `metafor::rma.uni()`: `"adhoc"` (default) is the Hartung-Knapp adjustment
 with the ad hoc correction that keeps the interval from becoming narrower than
 the normal-theory one; `"knha"` is plain Hartung-Knapp, which can give
@@ -47,15 +47,24 @@ An object of class `mm_pooled` (a data.frame), one row per feature,
   part and term, with the number of studies `k`, the pooled `estimate`, `se`,
   confidence limits, test `statistic` and `p_value`, the heterogeneity measures
   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
-  unless there are at least 3 studies), the share of the total random-effects
+  unless there are at least 3 studies; it uses a t distribution with `k - 1` degrees of
+  freedom with the Hartung-Knapp tests, as metafor does, and the normal distribution with
+  `test = "z"`, while some authors prefer `k - 2`), the share of the total random-effects
   weight carried by the most influential study (`max_weight`, between 0 and 1) and
-  that study (`top_study`), and the adjusted p-value `p_adjust`. A `max_weight`
+  that study (`top_study`), the number of contributing estimates flagged by
+  [check_effects_quality()] for an implausibly small standard error (`n_flagged_se`, with a
+  warning when any is above 0), and the adjusted p-value `p_adjust`. A `max_weight`
   close to 1 means one study determines the pooled result; use [leave_one_out()]
   to see it without that study.
 }
 \description{
 Random-effects meta-analysis of the per-study estimates in an effect table,
-separately for every feature, model part and term, using `metafor::rma.uni()`.
+separately for every feature, model part and term. The "REML", "DL" and "PM" estimators use
+a fast internal implementation that agrees with `metafor::rma.uni()` (DerSimonian-Laird and the
+Hartung-Knapp tests to about 1e-12, REML to about 1e-9 at a tight tolerance). REML picks the
+solution with the highest restricted likelihood when its estimating equation has several
+roots, and Paule-Mandel solves its equation exactly, so either can differ slightly from
+metafor, whose iterations stop at a looser tolerance. The other estimators call metafor.
 }
 \details{
 A feature is pooled only if it was estimated in at least `min_studies` studies
@@ -67,22 +76,23 @@ will not be significant; that is the honest answer with so little replication, a
 `test = "z"` (which ignores the uncertainty of the between-study variance) is the optimistic one.
 When any feature is pooled from fewer than 5 studies with a Hartung-Knapp test, a message
 (once per session) suggests comparing with `test = "z"` or [pool_sensitivity()]. In simulations
-with 3 studies and a true effect, the ad hoc Hartung-Knapp test kept false positives near 0\%
-but detected the effect in about half to two thirds of data sets, against more than 90\% for the
-normal test, which kept false positives near 4\%. With 10 studies the tests agreed closely.
-The default stays the cautious one, and a result that is significant only with `test = "z"`
+with 3 studies and a true effect, the ad hoc Hartung-Knapp test detected the effect in about half to
+two thirds of data sets, against more than 90 per cent for the normal test. But when the studies truly
+differed (between-study SD 0.3 to 1 with no average effect), the normal test gave 9 to 20 per cent false
+positives with REML or DL, while the ad hoc Hartung-Knapp test stayed between 1 and 7 per cent. The
+default is therefore the cautious test, and a result that is significant only with `test = "z"`
 should be reported as such.
 Pooling is only meaningful when the studies report the same effect scale;
 [bind_effects()] enforces this.
 }
 \seealso{
-Other pooling: 
-\code{\link{adjust_hierarchical}()},
-\code{\link{combine_pvalues}()},
-\code{\link{leave_one_out}()},
-\code{\link{meta_analyse}()},
-\code{\link{meta_regress}()},
-\code{\link{pool_beta}()},
-\code{\link{pool_sensitivity}()}
+Other pooling:
+\code{\link[=adjust_hierarchical]{adjust_hierarchical()}},
+\code{\link[=combine_pvalues]{combine_pvalues()}},
+\code{\link[=leave_one_out]{leave_one_out()}},
+\code{\link[=meta_analyse]{meta_analyse()}},
+\code{\link[=meta_regress]{meta_regress()}},
+\code{\link[=pool_beta]{pool_beta()}},
+\code{\link[=pool_sensitivity]{pool_sensitivity()}}
 }
 \concept{pooling}

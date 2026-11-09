@@ -139,7 +139,7 @@ test_that("effect and pooled tables print a short header instead of a raw data f
   expect_match(testthat::capture_output(print(p)), "<mm_pooled> 1 feature pooled \\(DL, z test\\); 4 studies each")
   expect_match(testthat::capture_output(print(p)), "adjusted p <= 0.05: 1 \\| median I2: 0%")
   dom <- bind_effects(mkq(c("a", "b", "c"), c(.4, .0, .5), c(.005, .4, .35)))
-  expect_match(testthat::capture_output(print(pool_effects(dom, method = "DL", test = "z"))), "1 dominated by one study")
+  expect_match(testthat::capture_output(print(suppressWarnings(pool_effects(dom, method = "DL", test = "z")))), "1 dominated by one study")
 })
 
 # ------------------------------------------------------------ other functions

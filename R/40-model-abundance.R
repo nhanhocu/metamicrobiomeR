@@ -32,9 +32,13 @@
 #'   the penalised fitting that GAMLSS uses. Does not need counts. Scale
 #'   `"logit_mean"`, so its estimates are on the same scale as `"bezi_gamlss"`.
 #'   `prevalence` gives effects on the probability of a zero, as for `"zibb_glmmtmb"`.
+#'   P-values are Wald tests. In null simulations with 40 subjects and 4 samples each they
+#'   were significant at 0.05 in 4 to 6 per cent of data sets, and in 8 to 12 per cent when
+#'   85 per cent of samples were zero.
 #' * `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
 #'   (the transformation used by MaAsLin), a linear mixed model with a subject random
-#'   intercept when `longitudinal` (p-values from the normal approximation),
+#'   intercept when `longitudinal` (p-values from the normal approximation, which is
+#'   optimistic with few subjects),
 #'   otherwise `lm()` with t-based p-values. Scale `"asin_sqrt_mean"`.
 #' * `"lm_clr"`: the same linear (mixed) model on the centred log-ratio transform of the
 #'   features at the analysed rank, as a compositional sensitivity analysis. A pseudocount
@@ -44,8 +48,9 @@
 #' [bind_effects()] refuses to combine them.
 #'
 #' Features are kept if they are present (abundance above zero) in at least
-#' `min_prevalence` of all samples and their mean relative abundance exceeds
-#' `min_mean`. Samples with a missing value in the model are dropped for that feature.
+#' `min_prevalence` of the samples with complete model variables and their mean relative
+#' abundance in those samples exceeds `min_mean`. Samples with a missing value in the model
+#' are dropped.
 #'
 #' A feature that is non-zero in only a few samples gives an estimate that is
 #' essentially the difference between those few values, often with a tiny standard
@@ -57,7 +62,11 @@
 #' @param study An `mm_study` object.
 #' @param formula One-sided formula with the covariates, e.g. `~ group + age`.
 #'   Variables are looked up in the sample data.
-#' @param engine Model engine (see Details), default `"bezi_gamlss"`.
+#' @param engine Model engine (see Details). The default (`NULL`) is `"bezi_glmmtmb"` when the
+#'   model has a subject random intercept and glmmTMB is installed, and `"bezi_gamlss"` otherwise.
+#'   In null simulations with repeated samples, GAMLSS standard errors with a subject random effect
+#'   were too small (27 to 81 per cent of null tests significant), while `"bezi_glmmtmb"` stayed near
+#'   5 per cent. Set `engine = "bezi_gamlss"` to reproduce version 1.x analyses.
 #' @param rank Optional character vector of feature ranks to analyse (matched
 #'   against the `rank` column of the feature data). `NULL` analyses all features.
 #' @param longitudinal Add a subject-level random intercept? Defaults to `TRUE`
@@ -95,16 +104,17 @@
 #'   term. The attribute `fit_info` is a data.frame with one row per fitted feature
 #'   (samples used, non-zero samples, convergence, number of warnings, and any error
 #'   message), and the attribute `low_support` lists the features not fitted because
-#'   they had too few non-zero samples.
+#'   they had too few non-zero samples. A warning lists estimates whose standard error is
+#'   below 2 per cent of the median in the study (see [check_effects_quality()]).
 #' @family per-study models
 #' @export
-fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
+fit_study <- function(study, formula, engine = NULL, rank = NULL,
                       longitudinal = NULL, min_prevalence = 0.05, min_mean = 5e-05,
                       n_cycles = 100, exclude_unassigned = TRUE, prevalence = NULL,
                       zero_inflation = TRUE, pseudocount = NULL, cores = getOption("metamicrobiomeR.cores", 1L),
                       min_nonzero = NULL) {
   .check_class(study, "mm_study", "study", "as_study()")
-  engine <- match.arg(engine, .mm_engines)
+  if (!is.null(engine)) engine <- match.arg(engine, .mm_engines)
   if (!inherits(formula, "formula") || length(formula) != 2) {
     stop("'formula' must be one-sided, e.g. ~ group + age.", call. = FALSE)
   }
@@ -130,6 +140,15 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (defaulted) longitudinal <- !is.na(subject)
   if (defaulted && longitudinal) {
     .inform("Using '", subject, "' as a subject random intercept (set longitudinal = FALSE to ignore it).", once = "longitudinal-default")
+  }
+  if (is.null(engine)) {                                                   # default: the zero-inflated beta model, fitted as a mixed model with repeated samples
+    has_tmb <- longitudinal && requireNamespace("glmmTMB", quietly = TRUE)
+    engine <- if (longitudinal && has_tmb) "bezi_glmmtmb" else "bezi_gamlss"
+    if (longitudinal) {
+      .inform(if (has_tmb) "Using the 'bezi_glmmtmb' engine for repeated samples (the zero-inflated beta model with a subject random intercept)."
+              else "Using the 'bezi_gamlss' engine because glmmTMB is not installed; for repeated samples install.packages(\"glmmTMB\") is recommended.",
+              once = "default-engine-longitudinal")
+    }
   }
   if (longitudinal && engine %in% c("lm_asin", "lm_clr")) .need("lme4", "a subject random effect with the linear engines (longitudinal = FALSE avoids it)")
   if (longitudinal && is.na(subject)) {
@@ -169,9 +188,10 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
     idx <- idx[!unassigned]
   }
   composition <- idx                                   # the features that make up the composition (for CLR)
-  n_all <- ncol(ra)
+  used <- stats::complete.cases(d0)                    # the filters count the samples the model can use
+  n_all <- sum(used)
   keep <- vapply(idx, function(i) {
-    x <- ra[i, ]
+    x <- ra[i, used]
     sum(!is.na(x) & x > 0) >= min_prevalence * n_all && mean(x, na.rm = TRUE) > min_mean
   }, logical(1))
   n_filtered <- sum(!keep)
@@ -302,6 +322,13 @@ fit_study <- function(study, formula, engine = "bezi_gamlss", rank = NULL,
   if (!is.null(fit_info) && any(fit_info$singular)) {
     .inform(sum(fit_info$singular), " of ", nrow(fit_info), " mixed-model fits were singular (the subject variance is estimated as zero), ",
             "so those estimates equal a model without the subject effect.")
+  }
+  tiny <- .se_within_flags(as.data.frame(out))
+  if (any(tiny)) {
+    o <- as.data.frame(out)[tiny, , drop = FALSE]; o <- o[order(o$se), , drop = FALSE]
+    warning(sum(tiny), " of ", nrow(out), " estimates have a standard error below 2% of the median in this study (smallest ", signif(o$se[1], 2),
+            ", feature '", o$feature[1], "'). This usually means the feature has too little information for the model, and such an estimate ",
+            "would carry almost all the weight when pooled. They are kept; see check_effects_quality() and filter_effects().", call. = FALSE)
   }
   out
 }

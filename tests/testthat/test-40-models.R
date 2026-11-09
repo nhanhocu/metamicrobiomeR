@@ -246,7 +246,7 @@ test_that("fit_alpha returns standardised effects equal to a direct linear model
   # the effects can be pooled across studies like any feature
   e2 <- as.data.frame(e); e2$study <- "al2"; class(e2) <- class(e)
   two <- bind_effects(e, e2)
-  expect_equal(nrow(pool_effects(two, method = "DL", test = "z")), 2)
+  expect_equal(nrow(suppressWarnings(pool_effects(two, method = "DL", test = "z"))), 2)   # toy data: one standard error is 1e-16
 })
 
 mk_beta <- function(n = 40, seed = 8, effect = TRUE, between = FALSE) {
@@ -419,7 +419,7 @@ test_that("bezi_gamlss survives a sparse feature whose coefficients are aliased"
   m <- rbind(common = stats::rbeta(18, 2, 20), rare = c(0.001, rep(0, 8), 0.002, rep(0, 8)))
   m <- rbind(m, other = 1 - colSums(m)); colnames(m) <- rownames(sam)
   st <- as_study(relabund = m, samples = sam, study = list(id = "sparse", feature_type = "otu", subject = "subj"))
-  f <- suppressWarnings(suppressMessages(fit_study(st, ~ group + food, longitudinal = TRUE, min_nonzero = 0)))
+  f <- suppressWarnings(suppressMessages(fit_study(st, ~ group + food, engine = "bezi_gamlss", longitudinal = TRUE, min_nonzero = 0)))
   expect_true(all(c("common", "rare") %in% f$feature))
   expect_false(any(grepl("Intercept", f$term)))
 })
@@ -476,6 +476,17 @@ test_that("bezi_gamlss with a subject effect points to bezi_glmmtmb once", {
   st <- make_bezi_study(subject = "person")
   st_state <- metamicrobiomeR:::.mm_state
   st_state$told <- setdiff(st_state$told, "gamlss-random")
-  expect_message(suppressWarnings(fit_study(st, ~ group, longitudinal = TRUE)), "bezi_glmmtmb")
-  expect_no_message(suppressWarnings(fit_study(st, ~ group, longitudinal = TRUE)), message = "bezi_glmmtmb")
+  expect_message(suppressWarnings(fit_study(st, ~ group, engine = "bezi_gamlss", longitudinal = TRUE)), "bezi_glmmtmb")
+  expect_no_message(suppressWarnings(fit_study(st, ~ group, engine = "bezi_gamlss", longitudinal = TRUE)), message = "bezi_glmmtmb")
+})
+
+test_that("the default engine is bezi_glmmtmb with repeated samples and bezi_gamlss otherwise", {
+  skip_if_not_installed("gamlss"); skip_if_not_installed("glmmTMB"); skip_on_cran()
+  st <- make_bezi_study(subject = "person")
+  assign("told", character(), envir = metamicrobiomeR:::.mm_state)
+  expect_message(e <- suppressWarnings(fit_study(st, ~ group)), "Using the 'bezi_glmmtmb' engine for repeated samples")
+  expect_true(all(e$engine == "bezi_glmmtmb")); expect_equal(attr(e, "fit_settings")$engine, "bezi_glmmtmb")
+  e2 <- suppressWarnings(suppressMessages(fit_study(st, ~ group, longitudinal = FALSE)))
+  expect_true(all(e2$engine == "bezi_gamlss"))
+  expect_true(all(suppressWarnings(fit_study(make_bezi_study(), ~ group))$engine == "bezi_gamlss"))
 })

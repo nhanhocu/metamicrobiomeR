@@ -76,11 +76,14 @@ test_that("check_effects_quality flags implausibly small standard errors of one 
   expect_equal(q$studies$flagged_se[q$studies$study == "C"], 3); expect_lt(q$studies$se_min[q$studies$study == "C"], 0.01)
   expect_gt(q$studies$reference_se_q[q$studies$study == "C"], 0.1)
   expect_output(print(q), "study C")
-  expect_equal(sum(check_effects_quality(eff, se_ratio = 0.001)$rows$flag_se), 0)                  # a stricter ratio flags nothing
+  expect_equal(sum(check_effects_quality(eff, se_ratio = 0.001, within_ratio = 0)$rows$flag_se), 0)  # stricter settings flag nothing
   big <- check_effects_quality(eff, max_abs_estimate = 5)$rows; expect_equal(sum(big$flag_estimate), 1); expect_equal(abs(big$estimate[big$flag_estimate]), 10)
   nc <- check_effects_quality(bind_effects(A, mkq("B", rnorm(10), base_se(10), converged = c(rep(TRUE, 8), FALSE, FALSE))))
   expect_equal(sum(nc$rows$flag_converged), 2)
-  one <- check_effects_quality(A); expect_equal(sum(one$rows$flag_se), 0)                          # no reference without other studies
+  one <- check_effects_quality(A); expect_equal(sum(one$rows$flag_se), 0)                          # nothing to flag in a clean study
+  alone <- check_effects_quality(C)                                                               # one study: the within-study comparison still works
+  expect_equal(alone$rows$se[alone$rows$flag_se_within], 0.003); expect_equal(sum(alone$rows$flag_se), 1)  # 2% of the median is strict
+  expect_equal(sum(check_effects_quality(C, min_estimates = 11)$rows$flag_se), 0)                 # too few estimates for a stable median
   expect_error(check_effects_quality(data.frame(a = 1)), "mm_effects")
 })
 
@@ -90,7 +93,10 @@ test_that("filter_effects removes the flagged estimates, records why, and change
   dr <- attr(f, "dropped"); expect_equal(nrow(dr), 3); expect_true(all(grepl("implausible standard error", dr$reason)))
   # one feature whose pooled result depends on the degenerate study
   dom <- bind_effects(mkq("A", 0.01, 0.43, "g"), mkq("B", 0.55, 0.35, "g"), mkq("C", 0.43, 0.005, "g"), mkq("A", 0.2, 0.3, "h"), mkq("B", 0.3, 0.3, "h"), mkq("C", 0.25, 0.3, "h"))
-  before <- pool_effects(dom, method = "DL", test = "z"); after <- pool_effects(suppressMessages(filter_effects(dom)), method = "DL", test = "z")
+  expect_warning(before <- pool_effects(dom, method = "DL", test = "z"), "1 pooled feature includes an estimate with an implausibly small standard error")
+  expect_equal(before$n_flagged_se[before$feature == "g"], 1); expect_equal(before$n_flagged_se[before$feature == "h"], 0)
+  after <- pool_effects(suppressMessages(filter_effects(dom)), method = "DL", test = "z")
+  expect_true(all(after$n_flagged_se == 0))
   expect_lt(before$p_value[before$feature == "g"], 1e-6)
   expect_equal(after$k[after$feature == "g"], 2); expect_gt(after$p_value[after$feature == "g"], 0.1)
   expect_equal(nrow(suppressMessages(filter_effects(eff, drop_implausible_se = FALSE))), 30)
@@ -146,4 +152,17 @@ test_that("combine_pvalues computes missing p-values, adjusts within the family 
   expect_equal(nrow(cp), 2); expect_true(all(!is.na(cp$p_value))); expect_equal(cp$p_adjust, stats::p.adjust(cp$p_value, "fdr"))
   expect_equal(nrow(combine_pvalues(e, min_studies = 2, term = "x")), 2)
   expect_error(combine_pvalues(e, min_studies = 3), "at least 3 studies"); expect_error(combine_pvalues(data.frame(a = 1)), "mm_effects")
+})
+
+test_that("fit_study and the 1.x meta.taxa() warn about standard errors far below the study median", {
+  tab <- as.data.frame(metamicrobiomeR::tabsex4)
+  m <- suppressWarnings(meta.taxa(taxcomdat = tab, summary.measure = "RR", pool.var = "id", studylab = "study", percent.meta = 0.5))
+  ss <- attr(m, "small_se")
+  expect_true(all(grepl("USA\\(NC\\)", ss$study)))
+  expect_true(any(grepl("g__coprococcus$", ss$id[ss$term == "genderMale"])))
+  expect_warning(meta.taxa(taxcomdat = tab, summary.measure = "RR", pool.var = "id", studylab = "study", percent.meta = 0.5), "standard error below 2% of the median")
+  sub <- tab[grepl("k__bacteria.p__fusobacteria", tab$id), ]
+  expect_null(attr(suppressWarnings(meta.taxa(taxcomdat = sub, summary.measure = "RR", pool.var = "id", studylab = "study")), "small_se"))
+  d <- data.frame(study = "s", part = "abundance", term = "x", se = c(rep(0.3, 12), 0.001))
+  expect_equal(which(metamicrobiomeR:::.se_within_flags(d)), 13)
 })

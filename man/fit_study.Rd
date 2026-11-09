@@ -7,7 +7,7 @@
 fit_study(
   study,
   formula,
-  engine = "bezi_gamlss",
+  engine = NULL,
   rank = NULL,
   longitudinal = NULL,
   min_prevalence = 0.05,
@@ -27,7 +27,11 @@ fit_study(
 \item{formula}{One-sided formula with the covariates, e.g. `~ group + age`.
 Variables are looked up in the sample data.}
 
-\item{engine}{Model engine (see Details), default `"bezi_gamlss"`.}
+\item{engine}{Model engine (see Details). The default (`NULL`) is `"bezi_glmmtmb"` when the
+model has a subject random intercept and glmmTMB is installed, and `"bezi_gamlss"` otherwise.
+In null simulations with repeated samples, GAMLSS standard errors with a subject random effect
+were too small (27 to 81 per cent of null tests significant), while `"bezi_glmmtmb"` stayed near
+5 per cent. Set `engine = "bezi_gamlss"` to reproduce version 1.x analyses.}
 
 \item{rank}{Optional character vector of feature ranks to analyse (matched
 against the `rank` column of the feature data). `NULL` analyses all features.}
@@ -77,7 +81,8 @@ An `mm_effects` object with one row per feature, model part and covariate
   term. The attribute `fit_info` is a data.frame with one row per fitted feature
   (samples used, non-zero samples, convergence, number of warnings, and any error
   message), and the attribute `low_support` lists the features not fitted because
-  they had too few non-zero samples.
+  they had too few non-zero samples. A warning lists estimates whose standard error is
+  below 2 per cent of the median in the study (see [check_effects_quality()]).
 }
 \description{
 Fits the same model to each feature and returns the estimates as an effect
@@ -104,9 +109,13 @@ table. Five engines are available.
   the penalised fitting that GAMLSS uses. Does not need counts. Scale
   `"logit_mean"`, so its estimates are on the same scale as `"bezi_gamlss"`.
   `prevalence` gives effects on the probability of a zero, as for `"zibb_glmmtmb"`.
+  P-values are Wald tests. In null simulations with 40 subjects and 4 samples each they
+  were significant at 0.05 in 4 to 6 per cent of data sets, and in 8 to 12 per cent when
+  85 per cent of samples were zero.
 * `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
   (the transformation used by MaAsLin), a linear mixed model with a subject random
-  intercept when `longitudinal` (p-values from the normal approximation),
+  intercept when `longitudinal` (p-values from the normal approximation, which is
+  optimistic with few subjects),
   otherwise `lm()` with t-based p-values. Scale `"asin_sqrt_mean"`.
 * `"lm_clr"`: the same linear (mixed) model on the centred log-ratio transform of the
   features at the analysed rank, as a compositional sensitivity analysis. A pseudocount
@@ -116,8 +125,9 @@ Estimates from different engines are on different scales and are not comparable;
 [bind_effects()] refuses to combine them.
 
 Features are kept if they are present (abundance above zero) in at least
-`min_prevalence` of all samples and their mean relative abundance exceeds
-`min_mean`. Samples with a missing value in the model are dropped for that feature.
+`min_prevalence` of the samples with complete model variables and their mean relative
+abundance in those samples exceeds `min_mean`. Samples with a missing value in the model
+are dropped.
 
 A feature that is non-zero in only a few samples gives an estimate that is
 essentially the difference between those few values, often with a tiny standard
@@ -127,12 +137,12 @@ a feature needs more non-zero samples than the mean model has coefficients
 `low_support`.
 }
 \seealso{
-Other per-study models: 
-\code{\link{alpha_diversity}()},
-\code{\link{bind_effects}()},
-\code{\link{check_effects}()},
-\code{\link{fit_alpha}()},
-\code{\link{fit_beta}()},
-\code{\link{new_effect_table}()}
+Other per-study models:
+\code{\link[=alpha_diversity]{alpha_diversity()}},
+\code{\link[=bind_effects]{bind_effects()}},
+\code{\link[=check_effects]{check_effects()}},
+\code{\link[=fit_alpha]{fit_alpha()}},
+\code{\link[=fit_beta]{fit_beta()}},
+\code{\link[=new_effect_table]{new_effect_table()}}
 }
 \concept{per-study models}
