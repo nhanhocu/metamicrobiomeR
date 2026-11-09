@@ -49,7 +49,7 @@ Changes that keep legacy results the same:
 * `meta.taxa()`: a new warning flags estimates with a standard error below 2% of the median of their study, and
   `attr(result, "small_se")` lists them. On the stored 2019 example it flags 23 estimates, all from the USA(NC) cohort,
   including Coprococcus. The pooled results are unchanged. The help page also showed only part of its value section,
-  because of an unescaped percent sign.
+  because a percent sign was not escaped.
 * Adjusted p-value columns use the full covariate name, such as `pval.adjust.age.sample`. The old truncated name,
   `pval.adjust.sample`, stays as an alias so that scripts do not break.
 
@@ -98,7 +98,9 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
   with `random()` were too small for sparse features and for covariates that vary between subjects, so `bezi_gamlss` with a
   subject effect now points to `bezi_glmmtmb` once per session. `fit_study()` now uses `bezi_glmmtmb` by default when the
   model has a subject random intercept and glmmTMB is installed, and `bezi_gamlss` otherwise. Set `engine = "bezi_gamlss"`
-  to reproduce version 1.x analyses. A `bezi_glmmtmb` estimate without a finite standard error is
+  to reproduce version 1.x analyses.
+* `fit_study()`: the `min_prevalence` and `min_mean` filters now count only the samples with complete model variables,
+  the same samples the model uses. A `bezi_glmmtmb` estimate without a finite standard error is
   marked `converged = FALSE`.
 * `fit_study()` no longer fits features with too few non-zero samples: a feature needs more non-zero samples than the mean model
   has coefficients. A warning gives the count, `attr(, "low_support")` lists them, and `min_nonzero` changes the threshold
@@ -110,6 +112,11 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `pool_effects()`: REML with the ad hoc Hartung-Knapp test by default, heterogeneity, prediction intervals, `max_weight`
   and `top_study`, false discovery rate within rank, part and term. REML, DerSimonian-Laird and Paule-Mandel need no
   extra package; `metafor` is used for EB, ML, HE and SJ. Estimates from different engines or scales are refused.
+* REML pooling: when the estimating equation for the between-study variance has several roots, `pool_effects()` now
+  picks the one with the highest restricted likelihood. Before, it took the first root found, which in about 1 in 1,000
+  random problems was a lower maximum and could change the p-value substantially. Paule-Mandel solves its equation
+  exactly, so it can differ slightly from metafor, whose iterations stop earlier. The help page now says which
+  estimators use the internal engine and which use metafor.
 * When features are pooled from fewer than 5 studies with a Hartung-Knapp test, `pool_effects()` says so once per session
   and suggests `test = "z"` or `pool_sensitivity()` as a sensitivity analysis. The default test is unchanged. Version 1.x
   (`meta.taxa()`) pooled with DerSimonian-Laird and the normal test, which is less conservative with few studies.

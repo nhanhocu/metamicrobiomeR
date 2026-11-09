@@ -3,3 +3,4 @@
 .RData
 *.Rcheck/
 dev/cache/
+tests/testthat/_problems/

@@ -68,6 +68,10 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     if (nrow(w)) warning("The studies may not be safe to pool: ", paste0(w$issue, " (", w$detail, ")", collapse = "; "), ". See check_poolable().", call. = FALSE)
     if (nrow(nt)) .inform("Note: ", paste(nt$issue, collapse = "; "), ". See check_poolable().")
   }
+  # small standard errors are handled by the 'quality' step below, so the warnings of fit_study() and pool_effects() about them are not repeated
+  quiet_se <- function(expr) withCallingHandlers(expr, warning = function(w) {
+    if (grepl("implausibly small standard error|standard error below 2% of the median", conditionMessage(w))) invokeRestart("muffleWarning")
+  })
   fits <- vector("list", length(xs)); prep <- xs
   for (i in seq_along(xs)) {
     x <- xs[[i]]
@@ -78,7 +82,7 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
         if (!("rank" %in% colnames(f) && any(f$rank %in% rank))) x <- agglomerate(x, rank, key = "name")
       }
       prep[[i]] <- x
-      do.call(fit_study, c(list(study = x, formula = formula, engine = engine, rank = rank, cores = cores), fit_args))
+      quiet_se(do.call(fit_study, c(list(study = x, formula = formula, engine = engine, rank = rank, cores = cores), fit_args)))
     }), error = function(e) stop("Study '", ids[i], "': ", conditionMessage(e), call. = FALSE))
   }
   bound <- bind_effects(fits)
@@ -89,18 +93,18 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     if (n_flag && quality == "warn") {
       by_study <- table(q$rows$study[q$rows$flagged])
       warning(n_flag, " of ", nrow(bound), " estimates look doubtful (", paste0(names(by_study), ": ", by_study, collapse = ", "),
-              "): a standard error far smaller than in the other studies, or a fit that did not converge. They are kept; use quality = \"filter\" to drop them, ",
+              "): a standard error far smaller than in the other studies or the rest of the same study, or a fit that did not converge. They are kept; use quality = \"filter\" to drop them, ",
               "or see check_effects_quality().", call. = FALSE)
     } else if (n_flag && quality == "filter") bound <- filter_effects(bound)
   }
-  pooled <- do.call(pool_effects, c(list(effects = bound, term = term, method = method, test = test), pool_args))
+  pooled <- quiet_se(do.call(pool_effects, c(list(effects = bound, term = term, method = method, test = test), pool_args)))
   per_study <- function(fun, what, args) lapply(seq_along(prep), function(i) tryCatch(.with_study(ids[i], do.call(fun, c(list(study = prep[[i]], formula = formula), args))),
                                                                                    error = function(e) stop("Study '", ids[i], "' (", what, "): ", conditionMessage(e), call. = FALSE)))
   alpha_effects <- alpha_pooled <- beta_pooled <- beta_fits <- NULL
   if (alpha) {
     a_args <- utils::modifyList(if (!is.null(fit_args$longitudinal)) list(longitudinal = fit_args$longitudinal) else list(), alpha_args)
     alpha_effects <- bind_effects(per_study(fit_alpha, "alpha diversity", a_args))
-    alpha_pooled <- do.call(pool_effects, c(list(effects = alpha_effects, term = term, method = method, test = test), pool_args[setdiff(names(pool_args), "min_prop")], list(min_prop = 0)))
+    alpha_pooled <- quiet_se(do.call(pool_effects, c(list(effects = alpha_effects, term = term, method = method, test = test), pool_args[setdiff(names(pool_args), "min_prop")], list(min_prop = 0))))
   }
   if (beta) {
     .need("vegan", "beta diversity (PERMANOVA)")

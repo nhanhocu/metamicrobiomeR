@@ -184,7 +184,7 @@ test_that("legacy_to_study() moves a table to the modern workflow and gives the 
   s <- suppressWarnings(legacy_to_study(sub6, list(id = "Bangladesh", feature_type = "otu", subject = "personid")))
   expect_s3_class(s, "mm_study")
   expect_equal(mm_features(s)["k__bacteria.p__fusobacteria", "rank"], "phylum")
-  f <- suppressWarnings(suppressMessages(fit_study(s, ~ bf + age.sample, rank = "phylum", longitudinal = TRUE, n_cycles = 20, exclude_unassigned = FALSE)))
+  f <- suppressWarnings(suppressMessages(fit_study(s, ~ bf + age.sample, engine = "bezi_gamlss", rank = "phylum", longitudinal = TRUE, n_cycles = 20, exclude_unassigned = FALSE)))
   f <- f[f$term == "bfNon_exclusiveBF", ]
   old <- ref$tc_gamlss_long
   old <- old[old$id == "k__bacteria.p__fusobacteria", ]

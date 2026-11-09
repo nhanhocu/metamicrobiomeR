@@ -21,11 +21,11 @@ pool_effects(
 
 \item{term, part}{Optional character vectors restricting the terms and model parts.}
 
-\item{method}{Estimator of the between-study variance, passed to
-`metafor::rma.uni()`: "REML" (default), "DL" (DerSimonian-Laird),
-"PM", "EB", "ML", "HE" or "SJ".}
+\item{method}{Estimator of the between-study variance: "REML" (default), "DL"
+(DerSimonian-Laird), "PM" (Paule-Mandel), or "EB", "ML", "HE" or "SJ" through
+`metafor::rma.uni()`.}
 
-\item{test}{Test and confidence interval for the pooled effect, passed to
+\item{test}{Test and confidence interval for the pooled effect, with the same meaning as in
 `metafor::rma.uni()`: `"adhoc"` (default) is the Hartung-Knapp adjustment
 with the ad hoc correction that keeps the interval from becoming narrower than
 the normal-theory one; `"knha"` is plain Hartung-Knapp, which can give
@@ -47,7 +47,9 @@ An object of class `mm_pooled` (a data.frame), one row per feature,
   part and term, with the number of studies `k`, the pooled `estimate`, `se`,
   confidence limits, test `statistic` and `p_value`, the heterogeneity measures
   `tau2`, `I2`, `Q` and `Q_p`, the prediction interval (`pi_lo`, `pi_hi`; `NA`
-  unless there are at least 3 studies), the share of the total random-effects
+  unless there are at least 3 studies; it uses a t distribution with `k - 1` degrees of
+  freedom with the Hartung-Knapp tests, as metafor does, and the normal distribution with
+  `test = "z"`, while some authors prefer `k - 2`), the share of the total random-effects
   weight carried by the most influential study (`max_weight`, between 0 and 1) and
   that study (`top_study`), the number of contributing estimates flagged by
   [check_effects_quality()] for an implausibly small standard error (`n_flagged_se`, with a
@@ -57,7 +59,12 @@ An object of class `mm_pooled` (a data.frame), one row per feature,
 }
 \description{
 Random-effects meta-analysis of the per-study estimates in an effect table,
-separately for every feature, model part and term, using `metafor::rma.uni()`.
+separately for every feature, model part and term. The "REML", "DL" and "PM" estimators use
+a fast internal implementation that agrees with `metafor::rma.uni()` (DerSimonian-Laird and the
+Hartung-Knapp tests to about 1e-12, REML to about 1e-9 at a tight tolerance). REML picks the
+solution with the highest restricted likelihood when its estimating equation has several
+roots, and Paule-Mandel solves its equation exactly, so either can differ slightly from
+metafor, whose iterations stop at a looser tolerance. The other estimators call metafor.
 }
 \details{
 A feature is pooled only if it was estimated in at least `min_studies` studies

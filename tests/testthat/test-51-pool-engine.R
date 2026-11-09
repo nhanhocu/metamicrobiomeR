@@ -119,3 +119,35 @@ test_that("the scalar pooling path equals the matrix path", {
   }
   expect_lt(worst, 1e-9)
 })
+
+test_that("REML picks the solution with the highest restricted likelihood when the score has several roots", {
+  skip_if_not_installed("metafor")
+  # random problems, including some with one very precise study; in 2 of 2000 the first root found was not the maximum
+  set.seed(1); worse <- 0
+  for (i in 1:300) {
+    k <- sample(2:12, 1); v <- exp(rnorm(k, log(0.04), 2)); y <- rnorm(k, 0.3, sqrt(v + rexp(1, 5)))
+    if (i %% 7 == 0) v[1] <- v[1] * 1e-4
+    a <- metamicrobiomeR:::.rma_fast(y, v, method = "REML", test = "z")
+    b <- tryCatch(suppressWarnings(metafor::rma.uni(y, v, method = "REML", control = list(threshold = 1e-12, maxiter = 10000, tau2.max = 1e6))), error = function(e) NULL)
+    if (is.null(a) || is.null(b)) next
+    ll <- function(t) as.numeric(stats::logLik(suppressWarnings(metafor::rma.uni(y, v, tau2 = t, method = "REML"))))
+    if (ll(a$tau2) < ll(b$tau2) - 1e-8) worse <- worse + 1
+  }
+  expect_equal(worse, 0)
+  # a case with two local maxima: the internal engine must not stop at the lower one
+  set.seed(1); for (i in 1:970) { k <- sample(2:12, 1); v <- exp(rnorm(k, log(0.04), 2)); y <- rnorm(k, 0.3, sqrt(v + rexp(1, 5))); if (i %% 7 == 0) v[1] <- v[1] * 1e-4 }
+  a <- metamicrobiomeR:::.rma_fast(y, v, method = "REML", test = "z")
+  ll <- function(t) as.numeric(stats::logLik(suppressWarnings(metafor::rma.uni(y, v, tau2 = t, method = "REML"))))
+  grid <- seq(0, 2, length.out = 2001)
+  expect_gte(ll(a$tau2), max(vapply(grid, ll, numeric(1))) - 1e-6)
+})
+
+test_that("Paule-Mandel solves its estimating equation exactly", {
+  set.seed(2)
+  for (i in 1:50) {
+    k <- sample(3:12, 1); v <- exp(rnorm(k, log(0.04), 1.5)); y <- rnorm(k, 0.3, sqrt(v + 0.1))
+    a <- metamicrobiomeR:::.rma_fast(y, v, method = "PM", test = "z")
+    w <- 1 / (v + a$tau2); mu <- sum(w * y) / sum(w); Q <- sum(w * (y - mu)^2)
+    if (a$tau2 > 0) expect_equal(Q, k - 1, tolerance = 1e-6) else expect_lte(Q, k - 1)
+  }
+})

@@ -30,7 +30,8 @@
     PM = { f <- function(t) { s <- wls(t); sum(s$w * s$r^2) - (k - p) }; root(f, QE - (k - p)) },
     REML = {
       f <- function(t) { s <- wls(t); -0.5 * (sum(s$w) - sum(diag(s$Ainv %*% crossprod(X, X * s$w^2)))) + 0.5 * sum(s$w^2 * s$r^2) }
-      root(f, f(0))
+      ll <- function(t) { s <- wls(t); -0.5 * (sum(log(v + t)) + as.numeric(determinant(crossprod(X, X * s$w))$modulus) + sum(s$w * s$r^2)) }
+      .reml_max(f, ll, y, v)
     })
   if (!is.finite(tau2)) return(NULL)
   s <- wls(tau2)
@@ -57,13 +58,30 @@
   out
 }
 
-# f is decreasing in tau2; its root is the estimate, or 0 if f(0) <= 0
+# Root of f, which is decreasing in tau2 (true for the Paule-Mandel equation): 0 if f(0) <= 0
 .rma_root <- function(f, f0, y, v) {
   if (f0 <= 0) return(0)
   hi <- max(1, 10 * max(stats::var(y), v)); n <- 0
   while (f(hi) > 0 && n < 12) { hi <- hi * 10; n <- n + 1 }
   if (f(hi) > 0) return(hi)
   stats::uniroot(f, c(0, hi), tol = 1e-10)$root
+}
+
+# REML estimate of tau2: the score f need not be monotone, so it can have several roots. Every local maximum (a root
+# where f changes from positive to negative, or tau2 = 0 when f(0) <= 0) is found on a grid and refined, and the one
+# with the highest restricted log-likelihood ll is returned.
+.reml_max <- function(f, ll, y, v) {
+  hi <- max(1, 10 * max(stats::var(y), v)); n <- 0
+  while (f(hi) > 0 && n < 12) { hi <- hi * 10; n <- n + 1 }
+  grid <- c(0, hi * 10^seq(-10, 0, length.out = 61))
+  fg <- vapply(grid, f, numeric(1))
+  if (any(!is.finite(fg))) return(NA_real_)
+  cand <- if (fg[1] <= 0) 0 else numeric()
+  up <- which(fg[-length(fg)] > 0 & fg[-1] <= 0)
+  for (j in up) cand <- c(cand, if (fg[j + 1] == 0) grid[j + 1] else stats::uniroot(f, grid[c(j, j + 1)], tol = 1e-10)$root)
+  if (!length(cand)) return(hi)
+  if (length(cand) == 1) return(cand)
+  cand[which.max(vapply(cand, ll, numeric(1)))]
 }
 
 # The intercept-only case with plain arithmetic: same results as the matrix version, several times faster
@@ -74,7 +92,9 @@
   tau2 <- switch(method,
     DL = max(0, (QE - (k - 1)) / trP0),
     PM = { f <- function(t) { s <- state(t); sum(s$w * s$r^2) - (k - 1) }; .rma_root(f, QE - (k - 1), y, v) },
-    REML = { f <- function(t) { s <- state(t); -0.5 * (s$sw - sum(s$w^2) / s$sw) + 0.5 * sum(s$w^2 * s$r^2) }; .rma_root(f, f(0), y, v) })
+    REML = { f <- function(t) { s <- state(t); -0.5 * (s$sw - sum(s$w^2) / s$sw) + 0.5 * sum(s$w^2 * s$r^2) }
+             ll <- function(t) { s <- state(t); -0.5 * (sum(log(v + t)) + log(s$sw) + sum(s$w * s$r^2)) }
+             .reml_max(f, ll, y, v) })
   s <- state(tau2)
   q <- sum(s$w * s$r^2) / (k - 1)
   var_b <- switch(test, z = 1, knha = q, adhoc = max(1, q)) / s$sw

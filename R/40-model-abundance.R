@@ -32,9 +32,13 @@
 #'   the penalised fitting that GAMLSS uses. Does not need counts. Scale
 #'   `"logit_mean"`, so its estimates are on the same scale as `"bezi_gamlss"`.
 #'   `prevalence` gives effects on the probability of a zero, as for `"zibb_glmmtmb"`.
+#'   P-values are Wald tests. In null simulations with 40 subjects and 4 samples each they
+#'   were significant at 0.05 in 4 to 6 per cent of data sets, and in 8 to 12 per cent when
+#'   85 per cent of samples were zero.
 #' * `"lm_asin"`: a linear model on the arcsine square root of the relative abundance
 #'   (the transformation used by MaAsLin), a linear mixed model with a subject random
-#'   intercept when `longitudinal` (p-values from the normal approximation),
+#'   intercept when `longitudinal` (p-values from the normal approximation, which is
+#'   optimistic with few subjects),
 #'   otherwise `lm()` with t-based p-values. Scale `"asin_sqrt_mean"`.
 #' * `"lm_clr"`: the same linear (mixed) model on the centred log-ratio transform of the
 #'   features at the analysed rank, as a compositional sensitivity analysis. A pseudocount
@@ -44,8 +48,9 @@
 #' [bind_effects()] refuses to combine them.
 #'
 #' Features are kept if they are present (abundance above zero) in at least
-#' `min_prevalence` of all samples and their mean relative abundance exceeds
-#' `min_mean`. Samples with a missing value in the model are dropped for that feature.
+#' `min_prevalence` of the samples with complete model variables and their mean relative
+#' abundance in those samples exceeds `min_mean`. Samples with a missing value in the model
+#' are dropped.
 #'
 #' A feature that is non-zero in only a few samples gives an estimate that is
 #' essentially the difference between those few values, often with a tiny standard
@@ -137,7 +142,7 @@ fit_study <- function(study, formula, engine = NULL, rank = NULL,
     .inform("Using '", subject, "' as a subject random intercept (set longitudinal = FALSE to ignore it).", once = "longitudinal-default")
   }
   if (is.null(engine)) {                                                   # default: the zero-inflated beta model, fitted as a mixed model with repeated samples
-    has_tmb <- requireNamespace("glmmTMB", quietly = TRUE)
+    has_tmb <- longitudinal && requireNamespace("glmmTMB", quietly = TRUE)
     engine <- if (longitudinal && has_tmb) "bezi_glmmtmb" else "bezi_gamlss"
     if (longitudinal) {
       .inform(if (has_tmb) "Using the 'bezi_glmmtmb' engine for repeated samples (the zero-inflated beta model with a subject random intercept)."
@@ -183,9 +188,10 @@ fit_study <- function(study, formula, engine = NULL, rank = NULL,
     idx <- idx[!unassigned]
   }
   composition <- idx                                   # the features that make up the composition (for CLR)
-  n_all <- ncol(ra)
+  used <- stats::complete.cases(d0)                    # the filters count the samples the model can use
+  n_all <- sum(used)
   keep <- vapply(idx, function(i) {
-    x <- ra[i, ]
+    x <- ra[i, used]
     sum(!is.na(x) & x > 0) >= min_prevalence * n_all && mean(x, na.rm = TRUE) > min_mean
   }, logical(1))
   n_filtered <- sum(!keep)
