@@ -15,6 +15,18 @@ library(metamicrobiomeR)
 The 1.x functions are still in the package, with the same arguments and output, so you do not have to move. This
 vignette is for when you want the newer importers, engines and diagnostics.
 
+## Results that differ from version 1.2 and the 2019 paper
+
+* **Mixed-model p-values.** In version 1.2, `taxa.compare()` and `pathway.compare()` computed the p-values of linear
+  mixed models as `1.96 * pnorm(-|z|)` in place of `2 * pnorm(-|z|)`, so they were about 2% too small (for example
+  0.0088 in place of 0.0089 in Table 3 of the 2019 paper). Version 2.0 corrects this, so rerunning an old script gives
+  slightly larger p-values. GAMLSS models and cross-sectional linear models are not affected, and no conclusion of the
+  2019 paper changes.
+* **Pooling.** `meta.taxa()` now pools a taxon only when at least two studies have an estimate, and it warns when one
+  study holds most of the weight or a standard error is implausibly small. See `vignette("notes-earlier-results")` for
+  the Coprococcus example.
+* The full list is in the package NEWS (`news(package = "metamicrobiomeR")`).
+
 ## Function map
 
 | 1.x | Modern workflow |
@@ -35,6 +47,8 @@ vignette is for when you want the newer importers, engines and diagnostics.
 * **Pooling** uses REML with the ad hoc Hartung-Knapp test, in place of DerSimonian-Laird with a normal test.
 * **False discovery rate** is adjusted within a rank, in place of across all ranks.
 * **Iterations:** see `?fit_study` for the current default of the GAMLSS engine.
+* **Engine with repeated samples:** `fit_study()` uses `bezi_glmmtmb` when the model has a subject random intercept and
+  glmmTMB is installed. Set `engine = "bezi_gamlss"` to match 1.x.
 
 ## Converting a table
 

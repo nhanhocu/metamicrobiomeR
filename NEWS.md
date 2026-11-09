@@ -1,5 +1,11 @@
 # metamicrobiomeR 2.0.0.9000
 
+**Results that differ from version 1.2.** Linear mixed-model p-values in `taxa.compare()` and `pathway.compare()` were
+`1.96 * pnorm(-|z|)` in version 1.2, about 2% too small, and are now `2 * pnorm(-|z|)`. Rerunning a 1.x script therefore
+gives slightly larger p-values than the 2019 paper (for example 0.0089 in place of 0.0088), with no change in its
+conclusions. `meta.taxa()` also pools fewer taxa when few studies have an estimate. Details are below and in
+`vignette("migrating-from-1x")`.
+
 ## Legacy functions (version 1.x)
 
 The 12 functions and 6 of the 7 datasets of 1.x stay available, with the same arguments and output shape, so existing
