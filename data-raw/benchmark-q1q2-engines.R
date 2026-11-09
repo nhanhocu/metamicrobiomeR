@@ -3,6 +3,8 @@
 # Usage: Rscript data-raw/benchmark-q1q2-engines.R <set> <replicates> <output-dir> [cores]
 #   set = "cross" (generator A, counts, cross-sectional, all five engines)
 #         "long"  (generator B, zero-inflated beta with a subject random intercept, one feature per data set)
+#         "longc" (generator C, not the BEZI model: logistic-normal binomial counts with a subject random intercept,
+#                  zeros from sampling only, one feature per data set; added after Payton's review of the protocol)
 #
 # Truth (protocol section 6): a feature is differential when its generating effect is not zero. Non-differential features
 # in a data set with differential ones can still shift through compositional effects, and count as false positives here.
@@ -78,8 +80,44 @@ long_one <- function(r, sc) {
   }))
 }
 
-grid <- if (set == "cross") cross_grid else long_grid
-one <- if (set == "cross") cross_one else long_one
+# ---- Generator C: logistic-normal counts with a subject random intercept, not the BEZI model ---------------------------
+# Feature F1 against the rest of the community. Its log odds are b0 + subject effect (SD 0.5) + 0.1 * age + effect * (g == b)
+# + sample-level noise (SD 1, logistic-normal rather than beta), and its count is binomial on a library size of about 5,000
+# reads (log-normal, SD 0.5). Zeros come from sampling only. b0 = -3, -8.9 and -11.2 give about 100%, 60% and 15% non-zero.
+longc_grid <- rbind(
+  expand.grid(effect = 0, prev = c(1, 0.6, 0.15), term = c("between", "within"), stringsAsFactors = FALSE),
+  expand.grid(effect = c(0.5, 1), prev = 0.6, term = c("between", "within"), stringsAsFactors = FALSE)
+)
+longc_grid$scenario <- sprintf("C-%s-eff%02d-prev%03d", longc_grid$term, round(10 * longc_grid$effect), round(100 * longc_grid$prev))
+longc_engines <- c(long_engines, list(zibb_glmmtmb = list(engine = "zibb_glmmtmb", longitudinal = TRUE),
+                                      lm_clr = list(engine = "lm_clr", longitudinal = TRUE)))
+longc_b0 <- c("1" = -3, "0.6" = -8.9, "0.15" = -11.2)
+
+longc_one <- function(r, sc) {
+  set.seed(40000 + r)
+  n <- 40; m <- 4; id <- rep(seq_len(n), each = m)
+  g <- if (sc$term == "between") rep(rep(c("a", "b"), length.out = n), each = m) else rep(c("a", "b"), length.out = n * m)
+  age <- stats::runif(n * m, 0, 6); u <- stats::rnorm(n, sd = 0.5)[id]
+  depth <- round(exp(stats::rnorm(n * m, log(5000), 0.5)))
+  p <- stats::plogis(longc_b0[[as.character(sc$prev)]] + u + 0.1 * age + sc$effect * (g == "b") + stats::rnorm(n * m, sd = 1))
+  y <- stats::rbinom(n * m, depth, p)
+  sam <- data.frame(subj = paste0("s", id), g = g, age = age, row.names = paste0("S", seq_len(n * m)))
+  cn <- rbind(F1 = y, other = depth - y); colnames(cn) <- rownames(sam)
+  st <- as_study(counts = cn, samples = sam, study = list(id = "sim", feature_type = "otu", subject = "subj"))
+  do.call(rbind, lapply(names(longc_engines), function(nm) {
+    cfg <- longc_engines[[nm]]
+    t0 <- proc.time()[["elapsed"]]
+    e <- quiet_fit(st, ~ g + age, engine = cfg$engine, longitudinal = cfg$longitudinal, min_prevalence = 0, min_mean = 0,
+                   exclude_unassigned = FALSE)
+    secs <- proc.time()[["elapsed"]] - t0
+    row <- if (is.null(e)) NULL else e[e$feature == "F1" & e$part == "abundance" & e$term == "gb", ]
+    if (is.null(row) || !nrow(row)) return(data.frame(rep = r, engine = nm, estimate = NA, se = NA, p = NA, converged = NA, secs = secs))
+    data.frame(rep = r, engine = nm, estimate = row$estimate, se = row$se, p = row$p_value, converged = row$converged, secs = secs)
+  }))
+}
+
+grid <- switch(set, cross = cross_grid, long = long_grid, longc = longc_grid)
+one <- switch(set, cross = cross_one, long = long_one, longc = longc_one)
 only <- Sys.getenv("BENCH_ONLY")                                   # optional comma-separated scenario names
 if (nzchar(only)) grid <- grid[grid$scenario %in% strsplit(only, ",")[[1]], , drop = FALSE]
 for (i in seq_len(nrow(grid))) {

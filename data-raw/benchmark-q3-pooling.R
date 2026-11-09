@@ -14,12 +14,23 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 grid <- expand.grid(k = c(3, 5, 10), tau = c(0, 0.3), effect = c(0, 1), stringsAsFactors = FALSE)
 grid$scenario <- sprintf("Q3-k%02d-tau%02d-eff%02d", grid$k, round(10 * grid$tau), round(10 * grid$effect))
+grid$hetnull <- FALSE
+# simulate_studies() adds between-study variation only to differential features, so the null scenarios above have none.
+# The "Q3h" scenarios give every feature a study-specific effect drawn from N(0, tau) with mean 0 (all 20 features are
+# generated as differential with effect 0), so a pooled p-value below 0.05 is a false positive under real heterogeneity.
+# Their power scenarios use tau = 0.6 and 1.0 with 2 differential features of mean effect 1, as above.
+hn <- expand.grid(k = c(3, 5, 10), tau = c(0.3, 0.6, 1), effect = 0, stringsAsFactors = FALSE); hn$hetnull <- TRUE
+hp <- expand.grid(k = c(3, 5, 10), tau = c(0.6, 1), effect = 1, stringsAsFactors = FALSE); hp$hetnull <- FALSE
+h <- rbind(hn, hp); h$scenario <- sprintf("Q3h-k%02d-tau%02d-eff%02d", h$k, round(10 * h$tau), round(10 * h$effect))
+grid <- rbind(grid, h[names(grid)])
+if (Sys.getenv("BENCH_SET") == "h") grid <- grid[startsWith(grid$scenario, "Q3h"), , drop = FALSE]
 methods <- list(REML_adhoc = list(method = "REML", test = "adhoc"), REML_z = list(method = "REML", test = "z"),
                 DL_z = list(method = "DL", test = "z"))
 
 one <- function(r, sc) {
-  sim <- simulate_studies(n_studies = sc$k, tau = sc$tau, n_samples = 100, n_features = 20, n_diff = if (sc$effect == 0) 0 else 2,
-                          effect = sc$effect, seed = 30000 + r)
+  sim <- simulate_studies(n_studies = sc$k, tau = sc$tau, n_samples = 100, n_features = 20,
+                          n_diff = if (sc$hetnull) 20 else if (sc$effect == 0) 0 else 2, effect = sc$effect, seed = 30000 + r)
+  if (sc$hetnull) { sim$truth$diff <- FALSE; sim$truth$beta <- 0 }       # every feature has mean effect 0 across studies
   fits <- lapply(sim$studies, function(st) suppressWarnings(suppressMessages(
     fit_study(st, ~ group, engine = "lm_asin", longitudinal = FALSE, min_prevalence = 0.1))))
   eff <- suppressMessages(do.call(bind_effects, fits))
@@ -41,7 +52,7 @@ for (i in seq_len(nrow(grid))) {
   f <- file.path(out_dir, paste0(sc$scenario, ".csv"))
   if (file.exists(f)) next
   res <- do.call(rbind, mclapply(seq_len(nrep), one, sc = sc, mc.cores = cores))
-  res <- cbind(scenario = sc$scenario, res, sc[c("k", "tau", "effect")], row.names = NULL)
+  res <- cbind(scenario = sc$scenario, res, sc[c("k", "tau", "effect", "hetnull")], row.names = NULL)
   utils::write.csv(res, f, row.names = FALSE)
   cat(sc$scenario, "done", format(Sys.time()), "\n")
 }
