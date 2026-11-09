@@ -173,5 +173,5 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * The dependencies of version 1.x (`dplyr`, `gamlss`, `gridExtra`, `lme4`, `meta`, `plyr`, `RColorBrewer`, `tidyr`) stay
   required, so the legacy functions work as before. `glmmTMB`, `vegan`, `metafor`, `phyloseq`, `SummarizedExperiment` and
   `biomformat` are optional, and a function that needs one says which and how to install it.
-* The help pages of the six legacy datasets give their sources as DOIs (Subramanian et al. 2014 and Ho et al. 2019) in place
+* The help pages of the six legacy datasets cite their sources by DOI (Subramanian et al. 2014 and Ho et al. 2019) in place
   of a link to a laboratory web page that often timed out.
