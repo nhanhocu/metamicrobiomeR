@@ -1,9 +1,10 @@
 Package: metamicrobiomeR
 Type: Package
 Title: Differential Abundance and Meta-Analysis of Microbiome Studies
-Version: 2.0.0.9000
+Version: 2.0.0
 Authors@R: c(
-    person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut"),
+    person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0002-7898-0956")),
     person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3283-0370")),
     person("Jun", "Chen", role = c("ctb", "cph"), comment = "GMPR code in taxa.compare()")
