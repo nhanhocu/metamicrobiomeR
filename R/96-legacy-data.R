@@ -14,7 +14,7 @@
 #' @references Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 #'
 #' @examples
 #' data(alphadat)
@@ -51,13 +51,13 @@
 #' Bender et al. Sci Transl Med. 2016 Jul 27; 8(349): 349ra100.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC5301310/}{PubMed Central})
 #'
-#' Pannaraj et al. JAMA Pediatr. 2017;90095(7):647–54.
+#' Pannaraj et al. JAMA Pediatr. 2017;171(7):647–54.
 #' (\doi{10.1001/jamapediatrics.2017.0378})
 #'
 #' Thompson et al. Front Cell Infect Microbiol. 2015;5:3.
 #' (\doi{10.3389/fcimb.2015.00003})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Analyses of four infant cohorts (see References) in Ho et al. (2019), \doi{10.1186/s12859-019-2744-2}.
 #'
 #' @examples
 #' data(asum4)
@@ -79,7 +79,7 @@
 #' @references Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 #'
 #' @examples
 #' data(covar.rm)
@@ -112,7 +112,7 @@
 #' @references Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 #'
 #' @examples
 #' data(kegg.12)
@@ -149,13 +149,13 @@
 #' Bender et al. Sci Transl Med. 2016 Jul 27; 8(349): 349ra100.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC5301310/}{PubMed Central})
 #'
-#' Pannaraj et al. JAMA Pediatr. 2017;90095(7):647–54.
+#' Pannaraj et al. JAMA Pediatr. 2017;171(7):647–54.
 #' (\doi{10.1001/jamapediatrics.2017.0378})
 #'
 #' Thompson et al. Front Cell Infect Microbiol. 2015;5:3.
 #' (\doi{10.3389/fcimb.2015.00003})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Analyses of four infant cohorts (see References) in Ho et al. (2019), \doi{10.1186/s12859-019-2744-2}.
 #'
 #' @examples
 #' # load saved GAMLSS-BEZI results of four studies
@@ -192,7 +192,7 @@
 #' @references Subramanian et al. Nature. 2014 Jun 19; 510(7505): 417–421.
 #' (\href{https://pmc.ncbi.nlm.nih.gov/articles/PMC4189846/}{PubMed Central})
 #'
-#' @source \href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+#' @source Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 #'
 #' @examples
 #' #Load summary tables of bacterial taxa relative abundance from Bangladesh data

@@ -170,5 +170,8 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
   filters, features not pooled, unassigned reads, a subject effect added by default) and stay quiet otherwise;
   `options(metamicrobiomeR.quiet = TRUE)` silences them. Errors name the IDs and values involved and say what to do.
   Third-party console output is captured and reported once. See `dev/MESSAGES.md`.
-* Only `ggplot2` is required. `glmmTMB`, `gamlss`, `lme4`, `vegan`, `metafor`, `phyloseq`, `SummarizedExperiment` and
+* The dependencies of version 1.x (`dplyr`, `gamlss`, `gridExtra`, `lme4`, `meta`, `plyr`, `RColorBrewer`, `tidyr`) stay
+  required, so the legacy functions work as before. `glmmTMB`, `vegan`, `metafor`, `phyloseq`, `SummarizedExperiment` and
   `biomformat` are optional, and a function that needs one says which and how to install it.
+* The help pages of the six legacy datasets give their sources as DOIs (Subramanian et al. 2014 and Ho et al. 2019) in place
+  of a link to a laboratory web page that often timed out.

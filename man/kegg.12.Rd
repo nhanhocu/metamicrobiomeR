@@ -8,7 +8,7 @@
 A list of 2 dataframes for level 1 and level 2 of KEGG pathways.
 }
 \source{
-\href{https://gordonlab.wustl.edu/supplemental-data/supplemental-data-portal/subramanian-et-al-2014/}{Gordon Lab}
+Bangladesh infant cohort of Subramanian et al. (2014), \doi{10.1038/nature13421}.
 }
 \usage{
 data(kegg.12)
