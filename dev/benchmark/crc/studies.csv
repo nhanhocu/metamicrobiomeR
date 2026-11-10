@@ -1,0 +1,17 @@
+"study","platform","region","country","CRC","control","genera","median_depth","age_sex"
+"FengQ_2015","shotgun","WGS","AUT",46,61,175,52887610,107
+"GuptaA_2019","shotgun","WGS","IND",30,30,105,8709694,60
+"HanniganGD_2017","shotgun","WGS","USA;CAN",27,28,102,6104151,55
+"ThomasAM_2018a","shotgun","WGS","ITA",29,24,153,86331371,53
+"ThomasAM_2018b","shotgun","WGS","ITA",32,28,165,39357800,59
+"ThomasAM_2019_c","shotgun","WGS","JPN",40,40,172,42508992,80
+"VogtmannE_2016","shotgun","WGS","USA",52,52,180,66595082,104
+"WirbelJ_2018","shotgun","WGS","DEU",60,65,177,46736946,125
+"YachidaS_2019","shotgun","WGS","JPN",258,251,212,43373711,509
+"YuJ_2015","shotgun","WGS","CHN",74,54,189,58511316,128
+"ZellerG_2014","shotgun","WGS","FRA",53,61,198,61777432,114
+"BaxterNT_2016_16S","16S","V4","USA;CAN",120,172,251,10499,292
+"ZackularJP_2014_16S","16S","V4","USA",30,30,226,58466,60
+"ZellerG_2014_16S","16S","V4","FRA",41,75,254,123212,116
+"WangT_2012_16S","16S","V3","CHN",46,56,75,178,0
+"ChenW_2012_16S","16S","V1-V3","CHN",21,22,107,1236,0
