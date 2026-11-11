@@ -24,8 +24,9 @@
 #'   subject column, unless the fitting arguments set `longitudinal = FALSE`) it is the centred log-ratio linear
 #'   mixed model (`"lm_clr"`), which kept false positives near 5 per cent in every simulated setting with
 #'   repeated samples, while the count and beta mixed models exceeded 7.5 per cent with sparse taxa and the
-#'   count model often failed to converge. Otherwise it is the count model if every study has counts and
-#'   `glmmTMB` is installed, and the fast arcsine-square-root linear model if not.
+#'   count model often failed to converge. Otherwise it is the count model if every study has counts,
+#'   no study has a median library size above one million (as in shotgun profiles) and `glmmTMB` is
+#'   installed, and the fast arcsine-square-root linear model if not.
 #' @param rank Optional taxonomic rank to analyse. Studies that are not yet agglomerated are
 #'   agglomerated to it, matching taxa by harmonised name.
 #' @param method,test Pooling settings, see [pool_effects()].
@@ -63,9 +64,10 @@ meta_analyse <- function(studies, formula, term = NULL, engine = c("auto", .mm_e
     # repeated samples: as in fit_study(), unless fit_args says otherwise, a study with a subject column is fitted with a subject random intercept
     long <- if (!is.null(fit_args$longitudinal)) isTRUE(fit_args$longitudinal) else any(vapply(xs, function(x) !is.na(mm_study_info(x)$subject), logical(1)))
     all_counts <- all(vapply(xs, function(x) !is.null(mm_counts(x)), logical(1)))
-    ok <- all_counts && requireNamespace("glmmTMB", quietly = TRUE)
+    deep <- all_counts && any(vapply(xs, .large_depth, logical(1)))
+    ok <- all_counts && !deep && requireNamespace("glmmTMB", quietly = TRUE)
     engine <- if (long) "lm_clr" else if (ok) "zibb_glmmtmb" else "lm_asin"
-    .inform("Using the '", engine, "' engine (", if (long) "repeated samples: in simulations it kept false positives near 5% with sparse taxa, where the count and beta mixed models did not" else if (ok) "every study has counts; about a second per feature and study, engine = \"lm_asin\" is much faster for a first look" else if (!all_counts) "not every study has counts" else "glmmTMB is not installed", ").")
+    .inform("Using the '", engine, "' engine (", if (long) "repeated samples: in simulations it kept false positives near 5% with sparse taxa, where the count and beta mixed models did not" else if (ok) "every study has counts; about a second per feature and study, engine = \"lm_asin\" is much faster for a first look" else if (!all_counts) "not every study has counts" else if (deep) "a study has a median library size above one million, as in shotgun profiles, where the count model often fails to converge" else "glmmTMB is not installed", ").")
   }
   pc <- NULL
   if (check) {

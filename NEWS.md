@@ -152,6 +152,11 @@ Version 2.0 is a redesign built around two data contracts, the **study object** 
 * `meta_analyse()` runs the whole workflow (checks, per-study models, quality check, pooling, optionally alpha and beta
   diversity) and returns an object with `print()`, `summary()`, `plot()` and `as.data.frame()` methods. Messages and warnings
   are labelled with the study they come from.
+* `fit_study(engine = "zibb_glmmtmb")` warns when the median library size is above one million, as in shotgun profiles
+  or proportions scaled to read numbers. In 11 public shotgun studies the count model converged for only 40% to 72% of
+  genera at that depth, against 86% to 100% for 16S read counts. `meta_analyse(engine = "auto")` then uses `lm_asin`.
+* `vignette("migrating-from-1x")` explains that the 1.x model reports only the abundance part, and how to report the
+  prevalence part as well.
 * `meta_analyse(engine = "auto")` uses `lm_clr` with repeated samples (a study with a subject column, unless
   `fit_args = list(longitudinal = FALSE)`). In the benchmark it kept false positives between 4% and 6% in every setting with
   repeated samples, while `zibb_glmmtmb` and `bezi_glmmtmb` exceeded 7.5% with sparse taxa and `zibb_glmmtmb` failed to

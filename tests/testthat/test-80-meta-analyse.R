@@ -296,3 +296,15 @@ test_that("the sensitivity check reports a problem once, not once per pooling se
   w <- testthat::capture_warnings(suppressMessages(pool_sensitivity(eff, min_prop = 0)))
   expect_length(w, 1); expect_match(w, "1 estimate not used")
 })
+
+test_that("shotgun-scale library sizes: the count model warns and the automatic choice avoids it", {
+  skip_if_not_installed("glmmTMB")
+  deep <- simulate_studies(n_studies = 3, n_samples = 30, n_features = 8, n_diff = 3, effect = 1.5, tau = 0.2, depth = 5e6, seed = 4)$studies
+  expect_warning(suppressMessages(fit_study(deep[[1]], ~ group, engine = "zibb_glmmtmb", longitudinal = FALSE, min_prevalence = 0)),
+                 "median library size of study 'sim1' is [0-9,]+, as in shotgun profiles")
+  m <- testthat::capture_messages(r <- meta_analyse(deep, ~ group, term = "groupb", fit_args = list(longitudinal = FALSE, min_prevalence = 0)))
+  expect_true(any(grepl("Using the 'lm_asin' engine \\(a study has a median library size above one million", m)))
+  expect_equal(r$settings$engine, "lm_asin")
+  # ordinary 16S depths keep the count model
+  expect_false(metamicrobiomeR:::.large_depth(sims()[[1]]))
+})

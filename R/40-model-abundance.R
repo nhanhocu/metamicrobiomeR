@@ -14,7 +14,9 @@
 #'
 #' * `"zibb_glmmtmb"`: a zero-inflated beta-binomial model on the counts with the
 #'   sequencing depth as the number of trials (`glmmTMB`), a logit link for the mean
-#'   abundance and an optional subject random intercept. Needs counts. Returns the
+#'   abundance and an optional subject random intercept. Needs counts, and warns when the
+#'   median library size is above one million, as in shotgun profiles, because it then
+#'   often fails to converge. Returns the
 #'   abundance effects (`part = "abundance"`, scale `"logit_mean"`) and, if
 #'   `prevalence` is given, effects on the probability of a structural zero
 #'   (`part = "prevalence"`, scale `"logit_zero_prob"`; a positive value means the
@@ -164,6 +166,11 @@ fit_study <- function(study, formula, engine = NULL, rank = NULL,
   counts <- mm_counts(study)
   if (engine == "zibb_glmmtmb" && is.null(counts)) {
     stop("The 'zibb_glmmtmb' engine needs counts; this study only has relative abundances.", call. = FALSE)
+  }
+  if (engine == "zibb_glmmtmb" && .large_depth(study)) {
+    warning("The median library size of study '", study$study$id, "' is ", format(round(stats::median(mm_depth(study))), big.mark = ","),
+            ", as in shotgun profiles or proportions scaled to read numbers. The count model often fails to converge at this ",
+            "depth; engine = \"lm_clr\" or \"lm_asin\" is usually the better choice.", call. = FALSE)
   }
 
   d0 <- sdat[, vars, drop = FALSE]
@@ -504,4 +511,10 @@ fit_study <- function(study, formula, engine = NULL, rank = NULL,
   suggest <- min(0.5, max(2 * min_prevalence, ceiling(stats::quantile(prev_failed, 0.75, names = FALSE) / 0.05) * 0.05))
   paste0(" The features that did not converge are rarer (present in a median of ", .pct(stats::median(prev_failed)), " of the samples, against ",
          .pct(stats::median(prev_ok)), " for the others); try a higher 'min_prevalence', for example ", format(suggest), ".")
+}
+
+# Library sizes typical of shotgun profiles, or of proportions scaled to read numbers, where the count model often fails
+.large_depth <- function(study, limit = 1e6) {
+  d <- mm_depth(study)
+  !is.null(d) && length(d) > 0 && isTRUE(stats::median(d) > limit)
 }

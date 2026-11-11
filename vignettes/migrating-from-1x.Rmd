@@ -50,6 +50,21 @@ vignette is for when you want the newer importers, engines and diagnostics.
 * **Engine with repeated samples:** `fit_study()` uses `bezi_glmmtmb` when the model has a subject random intercept and
   glmmTMB is installed. Set `engine = "bezi_gamlss"` to match 1.x.
 
+## Presence as well as abundance
+
+The zero-inflated beta model of version 1.x reports only the abundance part: how the relative abundance changes in
+samples where a taxon is present. A taxon that differs mainly in how many people carry it can therefore look unchanged.
+In a meta-analysis of 15 public colorectal cancer studies, Fusobacterium was not significant with this model (adjusted p
+0.37), while the mixed-model engine found it present in more people with cancer (adjusted p 0.0016). To report both parts,
+add a prevalence formula:
+
+```{r, eval = FALSE}
+fit_study(study, ~ group, engine = "bezi_glmmtmb", prevalence = ~ group)
+```
+
+The result then has rows with `part = "abundance"` and `part = "prevalence"`, and `pool_effects()` pools each part
+separately. A negative prevalence effect means fewer zeros, so the taxon is present in more samples.
+
 ## Converting a table
 
 `legacy_to_study()` takes a table with samples in rows and taxa in columns named in the QIIME 1 style.
