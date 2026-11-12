@@ -91,7 +91,9 @@ table. Five engines are available.
 \details{
 * `"zibb_glmmtmb"`: a zero-inflated beta-binomial model on the counts with the
   sequencing depth as the number of trials (`glmmTMB`), a logit link for the mean
-  abundance and an optional subject random intercept. Needs counts. Returns the
+  abundance and an optional subject random intercept. Needs counts, and warns when the
+  median library size is above one million, as in shotgun profiles, because it then
+  often fails to converge. Returns the
   abundance effects (`part = "abundance"`, scale `"logit_mean"`) and, if
   `prevalence` is given, effects on the probability of a structural zero
   (`part = "prevalence"`, scale `"logit_zero_prob"`; a positive value means the
