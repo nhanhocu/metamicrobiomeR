@@ -124,7 +124,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
                       labels = levels(test$esticat),
                       name = "log(OR)")+
     #ggplot2::scale_y_discrete(limits = rev(levels(test$taxas)))+
-    ggplot2::geom_segment(data=my.lines, ggplot2::aes(x,y,xend=xend, yend=yend), size=2, inherit.aes=F)+
+    ggplot2::geom_segment(data=my.lines, ggplot2::aes(x,y,xend=xend, yend=yend), linewidth=2, inherit.aes=F)+
     ggplot2::ylab("") +ggplot2::xlab("")+
     ggplot2::theme(legend.title = ggplot2::element_text(size = 12,face="bold"),
           legend.text = ggplot2::element_text(size = leg.text.size,face="bold"),
@@ -219,7 +219,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
     f<-ggplot2::ggplot(data=testf,ggplot2::aes(x=estimate,y=plotvar,colour=psigcol))+
       ggplot2::geom_point(shape=as.numeric(as.character(testf$padjustsign)),size=as.numeric(as.character(testf$padjustsize)))+
       ggplot2::scale_y_discrete(position = "right")+ #,limits = rev(levels(testf$taxa2))
-      ggplot2::geom_errorbarh(ggplot2::aes(xmin=ll,xmax=ul,colour=psigcol),height=0.0,size=1)+
+      ggplot2::geom_errorbar(ggplot2::aes(xmin=ll,xmax=ul,colour=psigcol),orientation="y",width=0.0,linewidth=1)+
       ggplot2::geom_vline(xintercept=0,linetype="dashed")+
       ggplot2::scale_colour_manual(breaks=testf$psigcol,values = levels(testf$psigcol))+
       ggplot2::theme(legend.position="none",
@@ -234,7 +234,7 @@ meta.niceplot<-function(metadat,sumtype="taxa",level="main",p,p.adjust,phyla.col
     f<-ggplot2::ggplot(data=testf,ggplot2::aes(x=estimate,y=plotvar,colour=esticol))+
       ggplot2::geom_point(shape=as.numeric(as.character(testf$padjustsign)),size=as.numeric(as.character(testf$psigsize)))+
       ggplot2::scale_y_discrete(position = "right")+ #,limits = rev(levels(testf$taxa2))
-      ggplot2::geom_errorbarh(ggplot2::aes(xmin=ll,xmax=ul,colour=esticol),height=0.0, size=as.numeric(as.character(testf$psigsize2)))+
+      ggplot2::geom_errorbar(ggplot2::aes(xmin=ll,xmax=ul,colour=esticol),orientation="y",width=0.0, linewidth=as.numeric(as.character(testf$psigsize2)))+
       ggplot2::geom_vline(xintercept=0,linetype="dashed")+
       ggplot2::scale_colour_manual(breaks=testf$esticol,values = levels(testf$esticol))+
       ggplot2::theme(legend.position="none",

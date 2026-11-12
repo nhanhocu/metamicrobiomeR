@@ -27,6 +27,21 @@ vignette is for when you want the newer importers, engines and diagnostics.
   the Coprococcus example.
 * The full list is in the package NEWS (`news(package = "metamicrobiomeR")`).
 
+## Running old scripts
+
+Old scripts run unchanged. The worked example of the 1.2 vignette gives the same tables and identical plots in version
+2.0, apart from the differences listed above. One thing to check: version 1.x installed the `gdata` package, and its
+vignette used `gdata::drop.levels()` to remove unused factor levels. Version 2.0 no longer needs `gdata`, so a script that
+calls it stops with "there is no package called 'gdata'". Either install it once with `install.packages("gdata")`, or
+replace the call with base R:
+
+```{r, eval = FALSE}
+# version 1.x vignette
+taxa.meansdn.rm$bf <- gdata::drop.levels(taxa.meansdn.rm$bf, reorder = FALSE)
+# base R, same result
+taxa.meansdn.rm$bf <- droplevels(taxa.meansdn.rm$bf)
+```
+
 ## Function map
 
 | 1.x | Modern workflow |
