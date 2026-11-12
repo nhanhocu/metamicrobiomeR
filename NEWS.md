@@ -68,7 +68,10 @@ Other changes:
 * `class(x) == "try-error"` is replaced by `inherits()`. `taxtab6` is a plain `data.frame`.
 * `microbiomeage()` gains a `seed` argument. Its example and the `read.multi()` example no longer download anything.
 * `gtab.3stud` is no longer in the package, because it holds sample-level data obtained from investigators.
-* `lmerTest` and other unused dependencies are removed. `gdata` and `matrixStats` are replaced by base R.
+* `lmerTest` and other unused dependencies are removed. `gdata` and `matrixStats` are replaced by base R. Old scripts that
+  call `gdata::drop.levels()` themselves need `gdata` installed, or base `droplevels()` (see `vignette("migrating-from-1x")`).
+* `meta.niceplot()` draws its lines with `linewidth` and `geom_errorbar(orientation = "y")`, so current ggplot2 versions no
+  longer print deprecation notes. The plots are unchanged. ggplot2 3.4.0 or later is required.
 * The licence is GPL-3, because the GMPR code in `taxa.compare()` comes from a package licensed GPL-3.
 * `fit_study(engine = "bezi_gamlss")` no longer stops on a sparse feature with aliased coefficients.
 * New maintainer: Payton Yau. Nhan Ho remains an author.
