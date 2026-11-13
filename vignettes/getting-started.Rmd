@@ -1,0 +1,221 @@
+---
+title: "Getting started with metamicrobiomeR 2.0"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with metamicrobiomeR 2.0}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.height = 5, dpi = 80)
+has_tmb <- requireNamespace("glmmTMB", quietly = TRUE)
+library(metamicrobiomeR)
+options(metamicrobiomeR.quiet = FALSE)   # show the notes the functions print (another vignette may have changed this)
+```
+
+metamicrobiomeR analyses microbiome studies one at a time and then pools the results. The
+workflow has four steps: put each study into a **study object**, fit a model to every feature
+of each study to get an **effect table**, **pool** the effect tables across studies, and look
+at the result (forest plot, diagnostics, manifest).
+
+## 1. Studies
+
+`example_studies` is a small **simulated** data set that ships with the package: the genus names are
+real, the numbers are invented. It has four case-control studies on different platforms (two 16S studies with
+ASVs, one shotgun study, and a second 16S study of another region), with different genus lists, naming conventions
+(`[Eubacterium]`, `Blautia_A`) and sequencing depths. Six genera were given a known difference between cases and
+controls (see `?example_studies`): *Escherichia*, *Enterococcus* and *Fusobacterium* higher,
+*Faecalibacterium*, *Roseburia* and *Butyricicoccus* lower. *Fusobacterium* is in one study only, so it cannot be
+pooled.
+
+```{r data}
+study_table(example_studies)[, c("study", "n_samples", "n_features", "platform", "region", "database")]
+```
+
+Can they be pooled? The check compares the metadata and matches taxon names across databases:
+
+```{r poolcheck}
+check_poolable(example_studies, rank = "genus")
+```
+
+The studies hold ASVs (16S) or genera (shotgun). Bring them to genus level, matching names across databases:
+
+```{r agglomerate}
+studies <- lapply(example_studies, agglomerate, rank = "genus", key = "name")
+studies[[1]]
+```
+
+A study holds counts (or relative abundances), the feature annotation with taxonomy in rank
+columns, the sample data, and study-level metadata. Build one yourself with `as_study()`, or
+import it with `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`,
+`study_from_phyloseq()` or `study_from_se()`:
+
+```{r import, eval = FALSE}
+study <- read_dada2(seqtab, taxa, samples, list(id = "cohort1", region = "V4", database = "SILVA 138"))
+genus <- agglomerate(study, "genus")                         # ASVs to genera
+```
+
+`manifest()` records what is in a study and `check_study()` validates it:
+
+```{r manifest}
+m <- manifest(studies[[1]]); m$samples; m$depth
+```
+
+## Your own QIIME 2 output
+
+`read_qiime2()` reads the feature table, the taxonomy and the sample metadata of a QIIME 2 project. The package
+ships a small simulated example laid out the way QIIME 2 writes it (a feature table converted with `biom convert --to-tsv`,
+the `taxonomy.tsv` of an exported taxonomy artifact, and a metadata file):
+
+```{r qiime2}
+dir <- system.file("extdata", "qiime2-example", package = "metamicrobiomeR")
+list.files(dir)
+mine <- read_qiime2(file.path(dir, "feature-table.tsv"), file.path(dir, "taxonomy.tsv"),
+                    file.path(dir, "sample-metadata.tsv"), list(id = "mine", region = "V4", database = "SILVA 138"))
+mine
+```
+
+The messages say which samples were left out: here two controls that are in the metadata but not in the feature table,
+and two samples of the table that have no metadata. The `#q2:types` row of the metadata file decides the type of each column, so
+a numeric covariate such as `age` is a number and not a category:
+
+```{r qiime2-types}
+sapply(mm_samples(mine), function(x) class(x)[1])
+levels(mm_samples(mine)$group)
+```
+
+QIIME 2 metadata has no level order, so the levels of a category are alphabetical and the first one is the reference of a model
+(here `case`, so the model term would be `groupcontrol`). To compare cases with controls, put the reference first:
+
+```{r qiime2-reference}
+mine$samples$group <- factor(mine$samples$group, levels = c("control", "case"))
+```
+
+From here it is the same as for any study: `agglomerate(mine, "genus", key = "name")`, then `fit_study()` or `meta_analyse()`
+together with your other studies.
+
+If you have the artifacts (`.qza`) instead of exported files, `read_qiime2()` reads them directly: the taxonomy artifact needs nothing extra, and the
+feature-table artifact needs the `biomformat` and `rhdf5` packages (QIIME 2 stores tables as HDF5). Otherwise export first:
+
+If you already read your QIIME 2 files into phyloseq, for example with the `qiime2R` package, `study_from_phyloseq()` gives the same study (phyloseq
+keeps only the samples common to the table and the metadata, so nothing is left to align). `qiime2R` is a separate package that is not on CRAN:
+
+```{r qiime2-phyloseq, eval = FALSE}
+# remotes::install_github("jbisanz/qiime2R")
+ps <- qiime2R::qza_to_phyloseq(features = "table.qza", taxonomy = "taxonomy.qza", metadata = "sample-metadata.tsv")
+study <- study_from_phyloseq(ps, list(id = "mystudy", region = "V4", database = "SILVA 138"))
+```
+
+```{r qiime2-artifacts, eval = FALSE}
+# in a shell:
+#   qiime tools export --input-path table.qza --output-path export
+#   biom convert -i export/feature-table.biom -o feature-table.tsv --to-tsv
+#   qiime tools export --input-path taxonomy.qza --output-path export          # writes export/taxonomy.tsv
+study <- read_qiime2("table.qza", "taxonomy.qza", "sample-metadata.tsv", list(id = "mystudy"))
+```
+
+## The short way, once you have the studies
+
+If you have several studies and want a pooled result, one call does the whole workflow:
+
+```{r short}
+res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
+res
+```
+
+With four studies the default test is conservative, so no genus passes the 5% line here, but the four strongest
+are planted differences (see below for how this depends on the test).
+
+Add `alpha = TRUE, beta = TRUE` for diversity and `write_report(res)` for a shareable report. `summary(res)` describes how much the studies differ and what could explain it. `plot(res)` draws a forest plot of the strongest features (`plot(res, "heatmap")`, `"volcano"`, `"alpha"`, `"beta"` and
+`"influence"` give the others), and `as.data.frame(res)` is the pooled table. The rest of this vignette goes through the same steps one at
+a time, which gives you full control over each.
+
+## 2. One model per feature
+
+`fit_study()` fits the same model to every feature and returns an effect table. The engines are
+`"zibb_glmmtmb"` (a zero-inflated beta-binomial on counts that uses the sequencing depth),
+`"bezi_gamlss"` (the GAMLSS-BEZI model of Ho et al. 2019), `"lm_asin"` and `"lm_clr"` (compositional sensitivity).
+Estimates of different engines are on different scales, so use the same engine for all studies.
+
+```{r fit}
+effects <- lapply(studies, fit_study, ~ group + age, engine = "lm_asin", longitudinal = FALSE)
+effects[[1]]                              # a short header (study, engine, scale, convergence), then the first rows
+```
+
+Here we use the fast `"lm_asin"` engine. The count model uses the sequencing depth and takes about 40 seconds on this
+data; with it, four genera pass the 5% line in this example, all of them planted:
+
+```{r fit-count, eval = FALSE}
+effects <- lapply(studies, fit_study, ~ group + age, engine = "zibb_glmmtmb", longitudinal = FALSE)
+```
+
+## 3. Pooling
+
+```{r pool}
+bound <- bind_effects(effects)            # refuses to mix engines or effect scales
+pooled <- pool_effects(bound, term = "groupcase")
+pooled                                    # the header counts features, studies per feature and flags dominance
+```
+
+Functions tell you when they make a decision for you or leave data out (for example "Fitting 8 of
+10 features", or "2 of 12 features not pooled"), and warn only about things that are likely to affect
+the result. Silence the messages with `options(metamicrobiomeR.quiet = TRUE)`; warnings stay.
+
+The default is random-effects meta-analysis with REML and the ad hoc Hartung-Knapp test
+(`test = "adhoc"`), which stays safe with few studies. `method = "DL", test = "z"` gives the
+DerSimonian-Laird estimator with the normal-theory test, which is anti-conservative with few studies. `max_weight` is the share of the result carried by the most influential
+study: a value near 1 means one study decides the result.
+
+```{r loo}
+loo <- leave_one_out(bound, feature = pooled$feature[1], term = "groupcase")
+loo[, c("omitted", "estimate", "p_value")]
+```
+
+## 4. Looking at the result
+
+```{r forest}
+plot_forest(bound, pooled, feature = pooled$feature[1:2], term = "groupcase")
+```
+
+## Checks before you trust a pooled result
+
+Pooled results can be dominated by one study, or hide differences between studies. Check the
+studies, check the estimates, and see how much the answer depends on the method:
+
+```{r checks}
+check_poolable(studies)                                   # metadata, sample sizes, overlap
+q <- check_effects_quality(bound); q                       # implausibly small standard errors?
+bound2 <- filter_effects(bound)                            # drops flagged estimates (if any)
+pool_sensitivity(bound, term = "groupcase", min_prop = 0)     # same data, several pooling settings
+```
+
+Here the normal-theory tests (DL and REML with the z test) call 47 of the 57 genera significant, the plain
+Hartung-Knapp test 13, and the default test none. Neither extreme is right. The four strongest genera are planted
+differences, but many others shift only because relative abundances are compositional (when some genera rise,
+all others fall), and the z test ignores the uncertainty of the between-study variance, which is large with four
+studies. Report which setting you used, and treat features that are significant under all settings as the most
+reliable.
+
+Two further ways to combine studies are `combine_pvalues()` (needs only p-values and signs, so
+it also works across engines or tools, but is just as vulnerable to a degenerate study) and
+`merge_studies()` for a one-stage analysis with the study as a covariate. Results from other
+tools are brought in with `effects_from()`.
+
+```{r overview, fig.height = 4.5}
+plot_heatmap(bound, pooled, term = "groupcase", top = 8)
+```
+
+## More
+
+* **Study characteristics:** `meta_regress()` asks whether the effect differs with, say, the
+  sequencing region; `study_table()` collects the study metadata.
+* **Taxonomic ranks:** `agglomerate()`, `parse_taxonomy()` and `harmonise_names()` bring studies
+  with different databases onto common taxa; `adjust_hierarchical()` controls the false
+  discovery rate top-down through the taxonomy.
+* **Diversity:** `fit_alpha()` returns standardised alpha-diversity effects as an effect table
+  that pools like any feature; `fit_beta()` and `pool_beta()` do PERMANOVA and combine studies.
+* **Function tables:** `read_function_table()` needs you to say whether functions were measured
+  or predicted; `subset_samples()` can filter on a quality column such as `nsti`.
+* **Reporting:** `write_manifest()` stores the data summary, settings and software versions.

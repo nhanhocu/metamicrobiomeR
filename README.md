@@ -1,169 +1,202 @@
+# metamicrobiomeR
 
+**Meta-analysis for microbiome studies that do not share a platform, a pipeline or a database.**
+Analyse each study on its own terms and **pool the results across studies**, with checks for when pooling would mislead.
+It complements a combined analysis of merged tables rather than replacing it: it still works when the tables cannot be
+merged, and it shows how much the studies disagree (see `vignette("cross-platform")` and `dev/POSITIONING.md`).
+The zero-inflated beta model follows Ho et al. (2019), *BMC Bioinformatics* 20:188,
+<https://doi.org/10.1186/s12859-019-2744-2>.
 
+> **Status: version 2.0 is a pre-release and is not on CRAN.** The API may still change.
 
-The most updated version of the package "metamicrobiomeR" is in R cran at <https://cran.r-project.org/web/packages/metamicrobiomeR/index.html> .  There are some updates/ minor changes in the R cran version as compared to this initial version of the package deposited in Github.  Users are recommended to use the R cran version. 
+## If you used version 1.x
 
-The published paper describing the methodology as well as simulations and example analyses/results can be found at BMC Bioinformatics. 2019 Apr 16;20(1):188. <https://doi.org/10.1186/s12859-019-2744-2> . 
+Your scripts keep working. `taxa.compare()`, `meta.taxa()`, `metatab.show()`, `meta.niceplot()` and the other 1.x functions are all here, with the same
+arguments and output, and `vignette("my-vignette")` is the original tutorial. See `NEWS.md` for the few changes that can alter results, and
+`vignette("migrating-from-1x")` when you want to move a table to the new functions with `legacy_to_study()`.
 
-For Github version, please download and view the steps/examples/workflow in the tutorial file "metamicrobiomeR_Supplementary_file". 
+## The short way
 
-The *metamicrobiomeR* package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
-    with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data (with various         
-    options for data transformation/normalization to address compositional effects) and 
-    random effect meta-analysis models for meta-analysis pooling estimates across microbiome studies.
-    Random Forest model to predict microbiome age based on relative abundances of  
-    shared bacterial genera with the Bangladesh data (Subramanian et al 2014), 
-    comparison of multiple diversity indexes using linear/linear mixed effect models 
-    and some data display/visualization are also implemented.
-
-
-## Some snapshots
-
-### Example 1: Comparison between breastfeeding statuses in infants < 6 months of age
-#### Plot of mean relative abundance by breastfeeding statuses and age at phylum level  
-
+Try it with the built-in simulated example (`?example_studies`), then use your own studies:
 
 ```r
-rm(list=ls()) # clear all
-library(devtools)
-#install and load package metamicrobiomeR
-install_github("nhanhocu/metamicrobiomeR")
-library(metamicrobiomeR) 
-#Load other needed packages 
-library(knitr)
-library(plyr)
-library(dplyr)
-library(gdata)
-library(gridExtra)
-library(ggplot2)
-library(lme4) 
-library(lmerTest)
-library(mgcv) 
-library(meta) 
-
-data(taxtab.rm7)
-taxlist.rm<-taxa.filter(taxtab=taxtab.rm[[5]],percent.filter = 0.05, relabund.filter = 0.00005)
-taxa.meansdn.rm<-taxa.meansdn(taxtab=taxtab.rm[[5]],sumvar="bf",groupvar="age.sample")
-taxa.meansdn.rm<-taxa.meansdn.rm[taxa.meansdn.rm$bf!="No_BF" &taxa.meansdn.rm$age.sample<=6,]
-taxa.meansdn.rm$bf<-drop.levels(taxa.meansdn.rm$bf,reorder=FALSE)
-#phylum
-p.bf.l2<-taxa.mean.plot(tabmean=taxa.meansdn.rm,tax.lev="l2", comvar="bf", groupvar="age.sample",mean.filter=0.005, show.taxname="short")
-p.bf.l2$p
+res <- meta_analyse(example_studies, ~ group + age, term = "groupcase", rank = "genus", engine = "lm_asin",
+                    fit_args = list(longitudinal = FALSE))
+res
 ```
-
-#### Comparison between breastfeeding statuses adjusting for age of infants at sample collection using GAMLSS 
 
 ```r
-# Comparison of bacterial taxa relative abundance using GAMLSS 
-taxacom6.zi.rmg<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="bf",adjustvar="age.sample",longitudinal="yes",p.adjust.method="fdr")
-#phylum
-kable(taxcomtab.show(taxcomtab=taxacom6.zi.rmg,tax.select=p.bf.l2$taxuse.rm, showvar="bfNon_exclusiveBF", tax.lev="l2",readjust.p=TRUE,p.adjust.method="fdr",p.cutoff = 1))
+library(metamicrobiomeR)
+
+studies <- list(study1, study2, study3)            # mm_study objects: see "Getting your data in" below
+res <- meta_analyse(studies, ~ group + age, term = "groupb", rank = "genus")
+res                                                 # summary: studies, engine, features pooled, top results
+plot(res)                                           # forest plots of the strongest features (also "heatmap", "volcano")
+as.data.frame(res)                                  # the pooled table
 ```
 
+Add `alpha = TRUE` and `beta = TRUE` for alpha and beta diversity with the same model, and `write_report(res)` for a
+shareable Markdown report with figures. `meta_analyse()` checks that the studies can be pooled, matches taxa across databases by name, fits the same model to every
+study, flags implausible estimates, and pools. Messages and warnings are labelled with the study they come from.
+Everything it did is kept in `res$effects`, `res$studies`, `res$checks` and `res$quality`.
 
-### Example 2: Comparison of bacterial taxa relative abundance in infants < 6 months between gender adjusting for breastfeeding statuses and age of infants at sample collection with GAMLSS 
+## Step by step (full control)
 
 ```r
-# Comparison of bacterial taxa relative abundance up to genus level 
-taxacom6.zi.rm.sex.adjustbfage<-taxa.compare(taxtab=taxtab6.rm[[5]],propmed.rel="gamlss",comvar="gender",adjustvar=c("bf","age.sample"),longitudinal="yes")
-#phylum
-kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none", showvar="genderMale", tax.lev="l2",p.adjust.method="fdr"))
-#order
-kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none", showvar="genderMale", tax.lev="l4",p.adjust.method="fdr"))
-#family
-kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none", showvar="genderMale", tax.lev="l5",p.adjust.method="fdr"))
-#genus
-kable(taxcomtab.show(taxcomtab=taxacom6.zi.rm.sex.adjustbfage,tax.select="none", showvar="genderMale", tax.lev="l6",p.adjust.method="fdr"))
+# 1. studies: counts or proportions, taxonomy in rank columns, study metadata
+study <- read_dada2(seqtab, taxa, samples, list(id = "cohort1", region = "V4", database = "SILVA 138"))
+genus <- agglomerate(study, "genus")
+
+# 2. one model per feature -> effect table (cores = 4 fits the features in parallel on Linux/macOS)
+eff <- fit_study(genus, ~ group + age, engine = "zibb_glmmtmb")
+
+# 3. check, then pool across studies
+bound <- bind_effects(eff1, eff2, eff3)             # refuses to mix engines or scales
+check_effects_quality(bound)                        # an implausibly small standard error gives one study all the weight
+pooled <- pool_effects(bound, term = "groupb")      # REML + ad hoc Hartung-Knapp, FDR within rank
+pool_sensitivity(bound, term = "groupb")            # does the answer depend on the test?
+
+# 4. look, check influence, report
+plot_forest(bound, pooled, feature = "g__Blautia", term = "groupb")
+leave_one_out(bound, feature = "g__Blautia", term = "groupb")
+write_manifest(genus, "cohort1-manifest.txt")
 ```
 
-The analysis for other studies was done similarly. 
+## Graphs
 
-#### Meta-analysis of four studies (Bangladesh, Haiti, USA(CA_FL), USA(NC))
-##### Load and combine saved results of four studies for the comparison of bacterial taxa relative abundance between genders adjusted for breastfeeding and infant age at sample collection.   
+All graphs are `ggplot2` objects in one style, so you can adjust them with `+ theme(...)`, `+ labs(...)` and so on. From the result of
+`meta_analyse()`, `plot(res, type)` draws:
+
+| `type` | Shows | Notes |
+|---|---|---|
+| `"forest"` (default) | each study and the pooled effect, with the prediction interval, for the strongest features | `top = 3`, or `feature = "Blautia"` |
+| `"heatmap"` | studies by features, with a pooled column and significance stars | `top = 25` |
+| `"volcano"` | pooled estimate against evidence, for all features | extreme estimates are drawn at the edge |
+| `"alpha"` | forest plot of the alpha-diversity metrics | needs `alpha = TRUE` |
+| `"beta"` | PERMANOVA R2 of each study and the combined result | needs `beta = TRUE` |
+| `"influence"` | the pooled effect with each study left out in turn | shows whether one study drives a result |
+
+With several terms in the model, choose one with `term = "groupcase"`. The functions behind them (`plot_forest()`, `plot_heatmap()`,
+`plot_volcano()`) take effect tables from the step-by-step workflow.
+
+## Getting your data in
+
+`read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`,
+`study_from_se()` (SummarizedExperiment / TreeSummarizedExperiment), or `as_study()` from plain matrices.
+
+**From QIIME 2:** `read_qiime2(table, taxonomy, metadata, study)` takes the feature table, the taxonomy and the usual tab-separated
+metadata file, either as the native artifacts (`.qza`; the feature-table artifact needs `biomformat` and `rhdf5`) or as exported text files.
+The `#q2:types` row of the metadata decides which columns are numbers and which are categories, and samples that are in only one of the table and
+the metadata (controls, for example) are left out, with a message saying which. A small simulated example in QIIME 2's layout is in
+`system.file("extdata", "qiime2-example", package = "metamicrobiomeR")`; see the vignette.
+
+If you already read your QIIME 2 files into phyloseq, for example with the `qiime2R` package (`qiime2R::qza_to_phyloseq()`), use
+`study_from_phyloseq(ps, study)`: it gives the same study as `read_qiime2()`. That is tested with a phyloseq object shaped like `qiime2R`'s output;
+`qiime2R` itself is a separate package (not on CRAN) that is not run in the tests.
+
+Results from other tools (MaAsLin2, ANCOM-BC2, LinDA) can be pooled too: `effects_from()`.
+
+## How much do the studies differ, and why?
+
+A meta-analysis shows how much the evidence differs between studies, which is often the most useful result.
+`summary(res)` reports the between-study variation (I2, tau2, the heterogeneity test), whether a pooled effect would
+hold in a new study (prediction intervals), the most heterogeneous features, and what can explain the differences:
+study characteristics (`meta_regress()`), one influential study (`leave_one_out()`), or batch effects within studies.
+
+Batch effects show up in a meta-analysis only when they matter for the group comparison. In a simulation (mock data,
+5 studies, 6 truly different features; one run, simple per-feature multiplicative batch effects):
+
+| Batch effect planted | Median I2 | Features with significant heterogeneity |
+|---|---|---|
+| None | 4% | 8% |
+| Same distortion for every sample of a study | 0% | 10% |
+| Distortion on one group only, in 3 of 5 studies | 43% | 44% |
+
+A shift that affects every sample of a study equally cancels in the within-study comparison, so it does not bias the
+pooled effect and does not raise I2. A batch effect that differs between the groups does bias the effect, and the
+heterogeneity is the warning. Heterogeneity does not say *why*: batch, population and protocol differences look alike,
+and with a handful of studies I2 is imprecise.
+
+What to do about it: for batches *within* a study (plates, runs), add the batch as a covariate (`~ group + batch`) in
+`fit_study()`. To estimate or correct batch effects in the abundance data, use a dedicated package (for example
+ComBat-seq or MMUPHin, as far as we know the main ones), then re-run. This package does not correct batch effects: it
+does not remove them from the data, and data corrected elsewhere is tested as if it were raw, which makes p-values
+over-confident. Adjusting with a covariate in the model is preferred.
+
+## Scope: what this package is and is not
+
+It is the **meta-analysis layer for microbiome studies**: it takes per-study abundance tables, fits comparable
+models, and pools them with the checks that matter when there are only a few studies. It is not a complete
+microbiome analysis environment, and does not try to be.
+
+| | |
+|---|---|
+| **Covered** | Import from common formats; taxonomy harmonisation by name across databases; per-study differential abundance (four engines) and alpha and beta diversity; random-effects pooling, meta-regression, leave-one-out, hierarchical FDR; p-value combination; one-stage analysis of merged studies; checks before and after pooling; forest, heatmap and volcano plots; a reproducibility manifest; simulation |
+| **Bring your own** | Preprocessing (DADA2, QIIME 2, MetaPhlAn), descriptive plots and ordination (phyloseq, mia, vegan), other differential-abundance methods (pool their output with `effects_from()`) |
+| **Not covered** | Batch-effect correction across studies; a compositional-bias-corrected estimator of its own (a CLR model is offered as a sensitivity analysis, and a pilot benchmark showed it does not control false positives when many features differ); network and co-occurrence analysis; strain-level analysis; publication-bias methods (they need many more studies than microbiome meta-analyses usually have); random slopes and other longitudinal structure beyond a subject intercept |
+
+Evidence so far: a pilot simulation compares the engines (`dev/BENCHMARK-PILOT.md`) and a cross-platform simulation
+compares two-stage and combined analyses (`dev/BENCHMARK-CROSSPLATFORM.md`). Neither is a substitute for peer review
+or a full benchmark.
+
+Functions say what they decided or left out (for example "6 of 40 samples have missing values and are left
+out") and stay quiet otherwise; `options(metamicrobiomeR.quiet = TRUE)` silences the messages, not the warnings.
+
+See `vignette("getting-started")` and `vignette("cross-platform")` for runnable examples.
+
+## What is in the package
+
+| Area | Functions |
+|---|---|
+| Studies | `as_study()`, `check_study()`, `subset_samples()`, `subset_features()`, `study_table()`, `agglomerate()` |
+| Import | `read_dada2()`, `read_qiime2()`, `read_metaphlan()`, `read_biom_study()`, `study_from_phyloseq()`, `study_from_se()`, `read_function_table()`; export with `as_phyloseq()`, `as_summarized_experiment()` |
+| Taxonomy | `parse_taxonomy()`, `harmonise_names()`, `feature_parents()` |
+| Per-study models | `fit_study()` with engines `zibb_glmmtmb` (counts, uses depth, optional prevalence part), `bezi_gamlss` (the GAMLSS-BEZI model of Ho et al. 2019), `bezi_glmmtmb` (the same model as a mixed model, the default with repeated samples), `lm_asin`, `lm_clr`; `fit_alpha()`, `fit_beta()` |
+| Before pooling | `check_poolable()`, `feature_coverage()`, `check_effects_quality()`, `filter_effects()` |
+| Pooling | `bind_effects()`, `pool_effects()`, `leave_one_out()`, `pool_sensitivity()`, `meta_regress()`, `combine_pvalues()`, `merge_studies()` (one-stage), `pool_beta()`, `adjust_hierarchical()` |
+| Other tools' results | `effects_from()` (MaAsLin2, ANCOM-BC2, LinDA, generic) |
+| Output | `plot_forest()`, `plot_heatmap()`, `plot_volcano()`, `manifest()`, `write_manifest()` |
+| Simulation | `simulate_study()`, `simulate_studies()` |
+
+The two data contracts (the study object and the effect table) are specified in
+[`dev/SPEC.md`](dev/SPEC.md).
+The source is organised by workflow stage (numbered files in `R/`, with matching numbered tests); see
+[`dev/STRUCTURE.md`](dev/STRUCTURE.md).
+
+## Install
+
+Version 2.0 is planned for CRAN in December 2026. Until then, install it from GitHub (needs the `remotes` package):
 
 ```r
-data(taxacom.rm.sex.adjustbfage)
-data(taxacom.ha.sex.adjustbfage)
-data(taxacom6.zi.usbmk.sex.adjustbfage)
-data(taxacom6.unc.sex.adjustedbfage)
-taxacom6.zi.rm.sex.adjustbfage$study<-"Subramanian et al 2014 (Bangladesh)"
-taxacom6.zi.rm.sex.adjustbfage$pop<-"Bangladesh"
-taxacom.zi.ha.sex.adjustbfage$study<-"Bender et al 2016 (Haiti)"
-taxacom.zi.ha.sex.adjustbfage$pop<-"Haiti"
-taxacom6.zi.usbmk.sex.adjustbfage$study<-"Pannaraj et al 2017 (USA(CA_FL))"
-taxacom6.zi.usbmk.sex.adjustbfage$pop<-"USA(CA_FL)"
-taxacom6.zi.unc.sex.adjustedbfage$study<-"Thompson et al 2015 (USA(NC))"
-taxacom6.zi.unc.sex.adjustedbfage$pop<-"USA(NC)"
-tabsex4<-rbind.fill(taxacom6.zi.rm.sex.adjustbfage,taxacom.zi.ha.sex.adjustbfage,taxacom6.zi.usbmk.sex.adjustbfage,taxacom6.zi.unc.sex.adjustedbfage)
+remotes::install_github("nhanhocu/metamicrobiomeR@dev-2.0")
 ```
 
-##### Meta-analysis 
-```r
-metab.sex<-meta.taxa(taxcomdat=tabsex4,summary.measure="RR",pool.var="id",studylab="study",backtransform=FALSE,percent.meta=0.5,p.adjust.method="fdr")
-```
-##### Display results as tables and figures. 
-Phylum
-```r
-#table 
-kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
-#plot
-metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l2",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="main",p="p",p.adjust="p.adjust",phyla.col="rainbow",forest.col="by.estimate",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,heat.text.x.angle=0,forest.axis.text.y=8,forest.axis.text.x=7, point.ratio = c(4,2),line.ratio = c(2,1))
-```
-Family
-```r
-#table 
-kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
-#Plot with different color palette, heatmap-forest width ratio
-metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l5",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",heat.forest.width.ratio =c(1,1.5), neg.palette = "Greens",pos.palette = "Purples",p.sig.heat="yes",leg.key.size=1,leg.text.size=8,heat.text.x.size=7,forest.axis.text.y=8,forest.axis.text.x=7)
-```
-Genus 
-```r
-#table 
-kable(metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l6",showvar="genderMale",p.cutoff.type="p", p.cutoff=0.05,display="table"))
-# Plot with some different options: pooled estimates in forest plot with the same color scales as heatmap, those with p-values<0.05 in bold, FDR adjusted p-values<0.1 in triangles
-metadat<-metatab.show(metatab=metab.sex$random,com.pooled.tab=tabsex4,tax.lev="l6",showvar="genderMale",p.cutoff.type="p", p.cutoff=1,display="data")
-meta.niceplot(metadat=metadat,sumtype="taxa",level="sub",p="p",p.adjust="p.adjust",phyla.col="rainbow",p.sig.heat="yes",heat.forest.width.ratio =c(1,1.3),forest.col="by.estimate",leg.key.size=0.8,leg.text.size=10,heat.text.x.size=6,forest.axis.text.y=7,forest.axis.text.x=6, point.ratio = c(4,2),line.ratio = c(2,1))
-```
-### Alpha diversity 
-#### Calculate mean alpha diversity indexes for a selected rarefaction depth, standardize and compare standardized alpha diversity indexes between groups adjusting for covariates using Bangladesh data 
+Older versions stay available by tag: `remotes::install_github("nhanhocu/metamicrobiomeR@v1.2")` for CRAN 1.2, and
+`@v1.1-github` for the earlier GitHub version.
 
-```r
-data(sam.rm)
-patht<-system.file("extdata/QIIME_outputs/Bangladesh/alpha_div_collated", package = "metamicrobiomeR", mustWork = TRUE)
-alpha.rm<-read.multi(patht=patht,patternt=".txt",assignt="no",study="Bangladesh")
-names(alpha.rm)<-sub(patht,"",names(alpha.rm))
-samfile<-merge(samde, he50[,c("child.id","gender","month.exbf","month.food")],by="child.id")
-samfile$age.sample<-samfile$age.months
-samfile$bf<-factor(samfile$bf,levels=c("ExclusiveBF","Non_exclusiveBF","No_BF"))
-samfile$personid<-samfile$child.id
-samfile$sampleid<-tolower(samfile$fecal.sample.id)
-#comparison of standardized alpha diversity indexes between genders adjusting for breastfeeding and infant age at sample collection in infants <=6 months of age 
-alphacom6.rm.sexsg<-alpha.compare(datlist=alpha.rm,depth=3,mapfile=samfile,mapsampleid="fecal.sample.id",comvar="gender",adjustvar=c("age.sample","bf"),longitudinal="yes",age.limit=6,standardize=TRUE)
-kable(alphacom6.rm.sexsg$alphasum[,1:5])
-```
+The packages for the 1.x functions and the GAMLSS model (`dplyr`, `gamlss`, `ggplot2`, `lme4`, `meta` and a few others) are
+installed with the package. Everything else is optional, and a function that needs a package says which one and how to
+install it:
 
-### Microbiome age
-#### Predicting microbiome age, checking model performance, and replicate the results of the Bangladesh study
-The *microbiomeage* function get the shared genera list between the Bangladesh study and all other included studies,  get the training and test sets from Bangladesh data based on the shared genera list, fit the train Random Forest model and predict microbiome age in the test set of Bangladesh data and data from all included studies, check for performance of the model based on the shared genera list on Bangladesh healthy cohort data, reproduce the findings of the Bangladesh malnutrition study.   
+| Package | Needed for |
+|---|---|
+| `glmmTMB` | the count model (`engine = "zibb_glmmtmb"`, the `"auto"` choice in `meta_analyse()` when every study has counts and samples are not repeated) |
+| `vegan` | beta diversity |
+| `metafor` | the pooling estimators EB, ML, HE and SJ (REML, DL and Paule-Mandel need nothing) |
+| `phyloseq`, `SummarizedExperiment`, `biomformat` | the matching importers |
 
-```r
-#load Bangladesh taxa relative abundance summary up to genus level merged with mapping file (output from QIIME)
-bal6<-read.delim(system.file("extdata/QIIME_outputs/Bangladesh/tax_mapping7", "Subramanian_et_al_mapping_file_L6.txt", package = "metamicrobiomeR", mustWork = TRUE))
-colnames(bal6)<-tolower(colnames(bal6))
-#View(bal6)
-#format for data of other studies should be similar to Bangladesh data, must have 'age.sample' variable as age of infant at stool sample collection 
-# Load data of 3 other studies 
-data(gtab.3stud)
-names(gtab.3stud)
-#predict microbiome age on Bangladesh data and data of other three studies based on shared genera across 4 studies  
-#(take time to run)
-miage<-microbiomeage(l6.relabundtab=gtab.3stud)
-# list of shared genera that are available in the Bangladesh study and other included studies 
-kable(miage$sharedgenera.importance)
-#check performance
-grid.arrange(miage$performanceplot$ptrain, miage$performanceplot$ptest,nrow=1)
-```
+## Benchmarks
 
+* [`dev/BENCHMARK-PILOT.md`](dev/BENCHMARK-PILOT.md): a small pilot benchmark of the engines on
+  simulated data (preliminary).
+* [`dev/BENCHMARK-CROSSPLATFORM.md`](dev/BENCHMARK-CROSSPLATFORM.md): two-stage meta-analysis against a combined analysis
+  on simulated studies from different platforms (preliminary).
 
+## Authors and licence
+
+Nhan Ho (author), Payton Yau (maintainer). GPL-3.
+
+## Citation
+
+If you use metamicrobiomeR, please cite the package and the paper describing the zero-inflated beta model:
+`citation("metamicrobiomeR")` gives both.

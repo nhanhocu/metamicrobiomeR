@@ -1,54 +1,38 @@
 Package: metamicrobiomeR
-Title: an R package for analysis of microbiome relative abundance data using zero inflated beta GAMLSS and meta-analysis across studies using random effect model
-Version: 1.1
-YEAR: 2019
-Authors@R: person("Nhan", "Ho", email = "nhanhocumc@gmail.com",
-                  role = c("aut", "cre")) 
-Description: The metamicrobiomeR package implements Generalized Additive Model for Location, Scale and Shape (GAMLSS) 
-    with zero inflated beta (BEZI) family for analysis of microbiome relative abundance data 
-    (with various options for data transformation/normalization to address compositional effects) and 
-    random effect meta-analysis models for meta-analysis pooling estimates across microbiome studies.
-    Random Forest model to predict microbiome age based on relative abundances of  
-    shared bacterial genera with the Bangladesh data (Subramanian et al 2014), 
-    comparison of multiple diversity indexes using linear/linear mixed effect models 
-    and some data display/visualization are also implemented.
-Depends: R (>= 3.4.2)
-License: GPL-2
-Encoding: UTF-8
-LazyData: true
-RoxygenNote: 6.1.1.9000
-Imports:
-	gdata,
-	plyr,
-	dplyr,
-	ggplot2,
-	gridExtra,
-	RColorBrewer,
-	lme4,
-	lmerTest,
-	mgcv,
-	meta,
-	gamlss,
-	reshape2,
-	caret,
-	randomForest,
-	grDevices,
-	gplots,
-	magrittr,
-	tools,
-	sas7bdat,
-	foreign,
-	knitr,
-	rmarkdown,
-	zCompositions,
-	compositions,
-	matrixStats,
-	RCurl,
-	httr,
-	repmis,
-	jsonlite
-Suggests: knitr,
-    rmarkdown
-VignetteBuilder: knitr
+Type: Package
+Title: Differential Abundance and Meta-Analysis of Microbiome Studies
+Version: 2.0.0
+Authors@R: c(
+    person("Nhan", "Ho", email = "nhanhocumc@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0002-7898-0956")),
+    person("Payton", "Yau", email = "tungon@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3283-0370")),
+    person("Jun", "Chen", role = c("ctb", "cph"), comment = "GMPR code in taxa.compare()")
+    )
+Description: Analyses microbiome studies one at a time and pools the results across studies.
+    Studies are held in a validated study object that accepts counts or relative
+    abundances, taxonomy in rank columns and study-level metadata, and can be imported from
+    DADA2, QIIME 2, MetaPhlAn, BIOM, phyloseq and SummarizedExperiment objects. Per-study
+    engines fit zero-inflated beta-binomial (counts), zero-inflated beta (GAMLSS),
+    arcsine-square-root and centred log-ratio models, with optional subject random effects, and
+    return estimates in a common effect table. Random-effects meta-analysis
+    (with Hartung-Knapp inference, heterogeneity, prediction intervals, influence diagnostics,
+    leave-one-out and meta-regression on study characteristics), hierarchical false discovery
+    control across taxonomic ranks, alpha diversity, PERMANOVA, forest plots and provenance
+    manifests complete the workflow. The zero-inflated beta model follows
+    Ho et al. (2019) <doi:10.1186/s12859-019-2744-2>.
+    The functions of version 1.x (taxa.compare(), meta.taxa() and others) remain available.
+License: GPL-3
 URL: https://github.com/nhanhocu/metamicrobiomeR
 BugReports: https://github.com/nhanhocu/metamicrobiomeR/issues
+Depends: R (>= 4.1.0)
+Imports: dplyr, gamlss, gamlss.dist, ggplot2 (>= 3.4.0), gridExtra, lme4, meta (>= 7.0-0), methods, parallel,
+        plyr, RColorBrewer, stats, tidyr, tools, utils
+Suggests: biomformat, caret, compositions, covr, glmmTMB, jsonlite, knitr, metafor (>= 4.0-0), permute, randomForest,
+        phyloseq, rmarkdown, S4Vectors, SummarizedExperiment, testthat (>= 3.0.0), vegan, zCompositions
+VignetteBuilder: knitr
+Encoding: UTF-8
+Language: en-GB
+Config/testthat/edition: 2
+LazyData: true
+Config/roxygen2/version: 8.1.0

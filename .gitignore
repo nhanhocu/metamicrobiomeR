@@ -1,1 +1,6 @@
 .Rproj.user
+.Rhistory
+.RData
+*.Rcheck/
+dev/cache/
+tests/testthat/_problems/
